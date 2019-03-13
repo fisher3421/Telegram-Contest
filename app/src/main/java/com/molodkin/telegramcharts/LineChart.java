@@ -3,19 +3,29 @@ package com.molodkin.telegramcharts;
 import android.animation.ValueAnimator;
 import android.content.Context;
 import android.graphics.Canvas;
+import android.graphics.Matrix;
 import android.graphics.Paint;
+import android.graphics.Rect;
 import android.text.TextPaint;
 import android.util.AttributeSet;
 import android.util.Log;
+import android.view.MotionEvent;
 import android.view.View;
 
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Date;
 
 import androidx.annotation.Nullable;
 import androidx.core.content.ContextCompat;
 
 public class LineChart extends View {
+
+
+    private static final boolean LOG_IS_ENABLED = true;
+    private static final String LOG_TAG = "LineChart";
 
 
     private ChartGraph [] graphs;
@@ -26,15 +36,20 @@ public class LineChart extends View {
     private int start = 0;
     private int end = xPoints.length;
 
+    private int maxYValueTemp;
     private int maxYValue;
 
     private int rowNumber = 6;
+    private int columnNumber = 5;
 
-    private String [] yAxesTexts = new String[rowNumber];
+    private String [] yAxisTexts = new String[rowNumber];
+    private String [] xAxisTexts = new String[columnNumber + 1];
 
     private int scrollHeight = Utils.dpToPx(this, 40);
     private int xAxisHeight = Utils.dpToPx(this, 33);
     private int xAxisWidth = Utils.dpToPx(this, 1);
+
+    private int xAxisSideMargin = Utils.dpToPx(this, 20);
 
     private int graphWidth = Utils.dpToPx(this, 2);
 
@@ -48,6 +63,11 @@ public class LineChart extends View {
 
     private float rowHeight;
     private float stepX;
+
+    private Rect xTextBounds = new Rect();
+
+    private DateFormat dateFormat = new SimpleDateFormat("MMM d");
+    private float xTextsStep;
 
     public LineChart(Context context) {
         super(context);
@@ -101,32 +121,93 @@ public class LineChart extends View {
         availableHeight = (float) getHeight() - scrollHeight - xAxisHeight;
         rowHeight = availableHeight / rowNumber;
 
+        maxYValue = getMaxYValue();
+        maxYValueTemp = maxYValue;
+
+        updateYAxis();
+
+        float coeffY = availableHeight / maxYValue;
+        stepX = ((float) getWidth()) / (xPoints.length - 1);
+
+        updateXAxis();
+
+        for (ChartGraph graph : graphs) {
+            graph.path.reset();
+            graph.path.moveTo(0, availableHeight - graph.values[0] * coeffY);
+        }
+
+        for (int i = 1; i < end; i++) {
+            for (ChartGraph graph : graphs) {
+                graph.path.lineTo(i * stepX, availableHeight - graph.values[i] * coeffY);
+            }
+        }
+    }
+
+    @Override
+    public boolean onTouchEvent(MotionEvent event) {
+        log("onTouchEvent ------------------------------------");
+
+        float x = event.getX();
+        int i = xIndexByCoord(x);
+        log("onTouchEvent x: " + x);
+        log("onTouchEvent i: " + i);
+        log("onTouchEvent graph0: " + graphs[0].values[i]);
+        log("onTouchEvent graph1: " + graphs[1].values[i]);
+        log("onTouchEvent graph2: " + graphs[2].values[i]);
+        log("onTouchEvent graph3: " + graphs[3].values[i]);
+
+        return super.onTouchEvent(event);
+    }
+
+    private int xIndexByCoord(float x) {
+        float [] touchPoints = new float[] {x, 0};
+        Matrix invert = Utils.invertMatrix(graphs[0].matrix);
+
+        invert.mapPoints(touchPoints);
+
+        return Math.round(touchPoints[0] / stepX);
+    }
+
+    private void updateYAxis() {
+        int rowStep = (int) (Math.ceil(maxYValueTemp * 1f / rowNumber));
+
+        for (int i = 0; i < rowNumber; i++) {
+            yAxisTexts[i] = String.valueOf(rowStep * i);
+        }
+    }
+
+    private void updateXAxis() {
+        int startIndex = xIndexByCoord(xAxisSideMargin);
+        int endIndex = xIndexByCoord(getWidth() - xAxisSideMargin);
+
+        int range = endIndex - startIndex;
+        float step = range * 1f / columnNumber;
+        if (step >= 1) {
+            for (int i = 0; i <= columnNumber; i++) {
+                long millsec = xPoints[startIndex + Math.round(i * step)];
+                xAxisTexts[i] = dateFormat.format(new Date(millsec));
+            }
+            xTextsStep = (getWidth() - (xAxisSideMargin * 2f)) / columnNumber;
+        } else {
+            for (int i = 0; i < range; i++) {
+                long millsec = xPoints[startIndex +i];
+                xAxisTexts[i] = dateFormat.format(new Date(millsec));
+            }
+            xAxisTexts[range] = null;
+            xTextsStep = getWidth() * 1f / range;
+        }
+
+        axisTextPaint.getTextBounds(xAxisTexts[0], 0, xAxisTexts[0].length(), xTextBounds);
+
+    }
+
+    private int getMaxYValue() {
         ArrayList<Integer> maxValues = new ArrayList<>(graphs.length);
         for (ChartGraph graph : graphs) {
             maxValues.add(graph.getMax(start, end));
         }
 
-        maxYValue = Collections.max(maxValues);
-
-        int rowStep = (int) (Math.ceil(maxYValue * 1f / rowNumber));
-
-        for (int i = 0; i < rowNumber; i++) {
-            yAxesTexts[i] = String.valueOf(rowStep * i);
-        }
-
-        float koeffY = availableHeight / maxYValue;
-        stepX = ((float) getWidth()) / (xPoints.length - 1);
-
-        for (ChartGraph graph : graphs) {
-            graph.path.reset();
-            graph.path.moveTo(0, availableHeight - graph.values[0] * koeffY);
-        }
-
-        for (int i = 1; i < end; i++) {
-            for (ChartGraph graph : graphs) {
-                graph.path.lineTo(i * stepX, availableHeight - graph.values[i] * koeffY);
-            }
-        }
+        return Collections.max(maxValues);
     }
 
     @Override
@@ -136,11 +217,12 @@ public class LineChart extends View {
 
         drawXAxes(canvas);
 
+        drawXTexts(canvas);
+
         drawPoints(canvas);
     }
 
     private void drawXAxes(Canvas canvas) {
-
         canvas.save();
 
         canvas.translate(0f, availableHeight);
@@ -152,7 +234,7 @@ public class LineChart extends View {
 
             canvas.translate(0f, -xTextMargin);
 
-            canvas.drawText(yAxesTexts[i], 0, 0, axisTextPaint);
+            canvas.drawText(yAxisTexts[i], 0, 0, axisTextPaint);
 
             canvas.restore();
 
@@ -160,6 +242,23 @@ public class LineChart extends View {
         }
 
         canvas.restore();
+    }
+
+    private void drawXTexts(Canvas canvas) {
+        if (xAxisTexts[0] == null) return;
+
+        canvas.save();
+
+        canvas.translate(0, availableHeight + xTextMargin + xTextBounds.height());
+
+        for (String xAxisText : xAxisTexts) {
+            if (xAxisText == null) break;
+            canvas.drawText(xAxisText, 0, 0, axisTextPaint);
+            canvas.translate(xTextsStep, 0);
+        }
+
+        canvas.restore();
+
     }
 
     private void drawPoints(Canvas canvas) {
@@ -183,7 +282,42 @@ public class LineChart extends View {
         float toScale = xPoints.length / (end - start * 1f);
         startScaleAnimation(toScale, true);
         this.start = start;
+        updateXAxis();
         invalidate();
+    }
+
+    public void adjustYAxis() {
+        int newTempMaxYValue = getMaxYValue();
+
+        float toScale = this.maxYValue * 1f / newTempMaxYValue;
+
+        float fromScale = this.maxYValue * 1f / this.maxYValueTemp;
+
+        this.maxYValueTemp = newTempMaxYValue;
+
+        Log.d("LineChart_adjustYAxis", "fromScale: " + fromScale);
+        Log.d("LineChart_adjustYAxis", "toScale: " + toScale);
+
+        final float [] prev = new float[1];
+        prev[0] = fromScale;
+
+        ValueAnimator valueAnimator = ValueAnimator.ofFloat(fromScale, toScale);
+        valueAnimator.setDuration(250L);
+        valueAnimator.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
+            @Override
+            public void onAnimationUpdate(ValueAnimator animation) {
+                float value = (float) animation.getAnimatedValue();
+                for (ChartGraph graph : graphs) {
+                    graph.matrix.postScale(1, value / prev[0], 0f, availableHeight);
+                }
+                prev[0] = value;
+                invalidate();
+
+            }
+        });
+        valueAnimator.start();
+
+        updateYAxis();
     }
 
     public void setEnd(int end) {
@@ -195,6 +329,7 @@ public class LineChart extends View {
         startScaleAnimation(toScale, false);
 
         this.end = end;
+        updateXAxis();
         invalidate();
     }
 
@@ -223,6 +358,7 @@ public class LineChart extends View {
 
         this.start = start;
         this.end = end;
+        updateXAxis();
         invalidate();
     }
 
@@ -252,4 +388,33 @@ public class LineChart extends View {
         valueAnimator.start();
     }
 
+    private void startScaleVerticalAnimation(float toScale) {
+//        float fromScale = xPoints.length / (end - start * 1f);
+//
+//        Log.d("LineChart", "fromScale: " + fromScale);
+//        Log.d("LineChart", "toScale: " + toScale);
+//
+//        final float [] prev = new float[1];
+//        prev[0] = fromScale;
+//
+//        ValueAnimator valueAnimator = ValueAnimator.ofFloat(fromScale, toScale);
+//        valueAnimator.setDuration(250L);
+//        valueAnimator.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
+//            @Override
+//            public void onAnimationUpdate(ValueAnimator animation) {
+//                float value = (float) animation.getAnimatedValue();
+//                for (ChartGraph graph : graphs) {
+//                    graph.matrix.postScale(value / prev[0], 1, isStart ? getWidth() : 0, 0f);
+//                }
+//                prev[0] = value;
+//                invalidate();
+//
+//            }
+//        });
+//        valueAnimator.start();
+    }
+
+    private void log(String text) {
+        if (LOG_IS_ENABLED) Log.d(LOG_TAG, text);
+    }
 }

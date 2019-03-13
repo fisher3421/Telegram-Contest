@@ -1,6 +1,7 @@
 package com.molodkin.telegramcharts;
 
 import android.content.Context;
+import android.graphics.Matrix;
 import android.view.View;
 
 public class Utils {
@@ -24,5 +25,11 @@ public class Utils {
 
     public static int spToPx(Context c, int sp) {
         return (int) (c.getResources().getDisplayMetrics().scaledDensity * sp);
+    }
+
+    public static Matrix invertMatrix(Matrix matrix) {
+        Matrix invertMatrix = new Matrix();
+        matrix.invert(invertMatrix);
+        return invertMatrix;
     }
 }

@@ -11,6 +11,7 @@ import java.util.TreeMap;
 
 public class ChartGraph {
 
+    //wrong structure
     private final TreeMap<Integer, Integer> treeMap = new TreeMap<>(Collections.<Integer>reverseOrder());
 
     public final int [] values;
