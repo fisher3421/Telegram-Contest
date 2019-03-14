@@ -32,6 +32,7 @@ public class LineChart extends View {
 
     private long [] xPoints = ChartData.X;
 
+    public final Matrix chartMatrix = new Matrix();
 
     private int start = 0;
     private int end = xPoints.length;
@@ -161,7 +162,7 @@ public class LineChart extends View {
 
     private int xIndexByCoord(float x) {
         float [] touchPoints = new float[] {x, 0};
-        Matrix invert = Utils.invertMatrix(graphs[0].matrix);
+        Matrix invert = Utils.invertMatrix(chartMatrix);
 
         invert.mapPoints(touchPoints);
 
@@ -263,7 +264,7 @@ public class LineChart extends View {
 
     private void drawPoints(Canvas canvas) {
         for (ChartGraph graph : graphs) {
-            graph.draw(canvas);
+            graph.draw(canvas, chartMatrix);
         }
     }
 
@@ -307,9 +308,7 @@ public class LineChart extends View {
             @Override
             public void onAnimationUpdate(ValueAnimator animation) {
                 float value = (float) animation.getAnimatedValue();
-                for (ChartGraph graph : graphs) {
-                    graph.matrix.postScale(1, value / prev[0], 0f, availableHeight);
-                }
+                chartMatrix.postScale(1, value / prev[0], 0f, availableHeight);
                 prev[0] = value;
                 invalidate();
 
@@ -346,9 +345,7 @@ public class LineChart extends View {
             @Override
             public void onAnimationUpdate(ValueAnimator animation) {
                 float value = (float) animation.getAnimatedValue();
-                for (ChartGraph graph : graphs) {
-                    graph.matrix.postTranslate(value - prev[0], 0);
-                }
+                chartMatrix.postTranslate(value - prev[0], 0);
                 prev[0] = value;
                 invalidate();
 
@@ -377,9 +374,7 @@ public class LineChart extends View {
             @Override
             public void onAnimationUpdate(ValueAnimator animation) {
                 float value = (float) animation.getAnimatedValue();
-                for (ChartGraph graph : graphs) {
-                    graph.matrix.postScale(value / prev[0], 1, isStart ? getWidth() : 0, 0f);
-                }
+                chartMatrix.postScale(value / prev[0], 1, isStart ? getWidth() : 0, 0f);
                 prev[0] = value;
                 invalidate();
 
