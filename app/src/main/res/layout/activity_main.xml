@@ -13,22 +13,4 @@
         android:layout_width="match_parent"
         android:layout_height="400dp" />
 
-    <SeekBar
-        android:layout_marginTop="10dp"
-        android:id="@+id/seek1"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content" />
-
-    <SeekBar
-        android:layout_marginTop="10dp"
-        android:id="@+id/seek2"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content" />
-
-    <SeekBar
-        android:layout_marginTop="10dp"
-        android:id="@+id/seek3"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content" />
-
 </LinearLayout>

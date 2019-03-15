@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <color name="colorPrimary">#008577</color>
+    <color name="colorPrimary">#567CA2</color>
     <color name="colorPrimaryDark">#00574B</color>
     <color name="colorAccent">#D81B60</color>
     <color name="white">#ffffffff</color>
@@ -11,4 +11,8 @@
     <color name="graph2">#0040FF</color>
     <color name="graph3">#F10E3D</color>
     <color name="graph4">#FCBF03</color>
+
+    <color name="scroll_cover">#10567CA2</color>
+    <color name="scroll_border">#23567CA2</color>
+
 </resources>

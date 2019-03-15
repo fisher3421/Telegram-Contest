@@ -16,6 +16,8 @@ public class ChartGraph {
 
     public final Paint paint;
 
+    public final Paint scrollPaint;
+
     public boolean isEnable = true;
 
     public Path path = new Path();
@@ -46,6 +48,9 @@ public class ChartGraph {
         paint.setStyle(Paint.Style.STROKE);
         paint.setStrokeWidth(width);
         paint.setColor(color);
+
+        scrollPaint = new Paint(paint);
+        scrollPaint.setStrokeWidth(width / 2);
     }
 
     public void draw(Canvas canvas, Matrix matrix) {
@@ -54,6 +59,14 @@ public class ChartGraph {
         transform.transform(matrix);
 
         canvas.drawPath(transform, paint);
+    }
+
+    public void drawScroll(Canvas canvas, Matrix matrix) {
+        Path transform = new Path(path);
+
+        transform.transform(matrix);
+
+        canvas.drawPath(transform, scrollPaint);
     }
 
     private static class Point implements Comparable<Point> {
