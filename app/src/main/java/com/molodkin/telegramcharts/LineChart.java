@@ -1,11 +1,13 @@
 package com.molodkin.telegramcharts;
 
 import android.animation.ValueAnimator;
+import android.annotation.SuppressLint;
 import android.content.Context;
 import android.graphics.Canvas;
 import android.graphics.Matrix;
 import android.graphics.Paint;
 import android.graphics.Rect;
+import android.graphics.drawable.NinePatchDrawable;
 import android.text.TextPaint;
 import android.util.AttributeSet;
 import android.util.Log;
@@ -18,12 +20,8 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
 
-import androidx.annotation.Nullable;
-import androidx.core.content.ContextCompat;
-import androidx.core.os.ConfigurationCompat;
-
-public class LineChart extends View {
-
+//TODO: rtl support
+public final class LineChart extends View {
 
     private static final boolean LOG_IS_ENABLED = true;
     private static final String LOG_TAG = "LineChart";
@@ -51,12 +49,13 @@ public class LineChart extends View {
     private int scrollHeight = Utils.dpToPx(this, 40);
     private final int scrollWindowMinWidth = Utils.dpToPx(this, 40);
     private int scrollWindowMinWidthInSteps;
-    private int scrollTouchBorderPaddng = Utils.dpToPx(this, 10);
+    private int scrollTouchBorderPadding = Utils.dpToPx(this, 10);
     private int scrollBorderTopBottomWidth = Utils.dpToPx(this, 2);
     private int scrollBorderLeftRightWidth = Utils.dpToPx(this, 5);
     private int xAxisHeight = Utils.dpToPx(this, 33);
     private int xAxisWidth = Utils.dpToPx(this, 1);
-    private int xAxisTextHeight = Utils.dpToPx(this, 16);
+
+    private float xAxisTextHeight;
 
     private int xAxisSideMargin = Utils.dpToPx(this, 20);
 
@@ -64,7 +63,7 @@ public class LineChart extends View {
 
     private float availableChartHeight;
 
-    private int textSize = Utils.spToPx(this.getContext(), 14);
+    private int axesTextSize = Utils.spToPx(this, 14);
     private int xTextMargin = Utils.dpToPx(this, 4);
 
     private Paint axisPaint = new Paint();
@@ -73,62 +72,66 @@ public class LineChart extends View {
     private Paint scrollCoverPaint = new Paint();
     private Paint scrollBorderPaint = new Paint();
 
+
     private float rowHeight;
     private float stepX;
 
     private Rect xTextBounds = new Rect();
 
-    private DateFormat dateFormat;
+    private Date tempDate = new Date();
+    private DateFormat xAxisDateFormat;
+
     private float xTextsStep;
     private float[] tempPoint = new float[2];
+
+    private final InfoWindow infoWindow = new InfoWindow(getContext());
+    private float stepY;
 
     public LineChart(Context context) {
         super(context);
         init();
     }
 
-    public LineChart(Context context, @Nullable AttributeSet attrs) {
+    public LineChart(Context context, AttributeSet attrs) {
         super(context, attrs);
         init();
     }
 
-    public LineChart(Context context, @Nullable AttributeSet attrs, int defStyleAttr) {
+    public LineChart(Context context, AttributeSet attrs, int defStyleAttr) {
         super(context, attrs, defStyleAttr);
         init();
     }
 
     private void init() {
-        dateFormat = new SimpleDateFormat(
-                "MMM d",
-                ConfigurationCompat.getLocales(getContext().getResources().getConfiguration()).get(0)
-        );
+        xAxisDateFormat = new SimpleDateFormat("MMM d", Utils.getLocale(getContext()));
 
         initPaints();
-        initGapths();
+        initGraphs();
     }
 
     private void initPaints() {
-        axisPaint.setColor(ContextCompat.getColor(getContext(), R.color.gray));
+        axisPaint.setColor(Utils.getColor(getContext(), R.color.gray));
         axisPaint.setStyle(Paint.Style.STROKE);
         axisPaint.setStrokeWidth(xAxisWidth);
 
-        axisTextPaint.setColor(ContextCompat.getColor(getContext(), R.color.gray_text));
-        axisTextPaint.setTextSize(textSize);
+        axisTextPaint.setColor(Utils.getColor(getContext(), R.color.gray_text));
+        axisTextPaint.setTextSize(axesTextSize);
+        xAxisTextHeight = Utils.getFontHeight(axisTextPaint);
 
         scrollCoverPaint.setStyle(Paint.Style.FILL);
-        scrollCoverPaint.setColor(ContextCompat.getColor(getContext(), R.color.scroll_cover));
+        scrollCoverPaint.setColor(Utils.getColor(getContext(), R.color.scroll_cover));
 
         scrollBorderPaint.setStyle(Paint.Style.FILL);
-        scrollBorderPaint.setColor(ContextCompat.getColor(getContext(), R.color.scroll_border));
+        scrollBorderPaint.setColor(Utils.getColor(getContext(), R.color.scroll_border));
     }
 
-    private void initGapths() {
+    private void initGraphs() {
         graphs = new ChartGraph[4];
 
-        ChartGraph chartGraph0 = new ChartGraph(ChartData.Y0, ContextCompat.getColor(getContext(), R.color.graph1), graphLineWidth);
-        ChartGraph chartGraph1 = new ChartGraph(ChartData.Y1, ContextCompat.getColor(getContext(), R.color.graph2), graphLineWidth);
-        ChartGraph chartGraph2 = new ChartGraph(ChartData.Y2, ContextCompat.getColor(getContext(), R.color.graph3), graphLineWidth);
-        ChartGraph chartGraph3 = new ChartGraph(ChartData.Y3, ContextCompat.getColor(getContext(), R.color.graph4), graphLineWidth);
+        ChartGraph chartGraph0 = new ChartGraph(ChartData.Y0, Utils.getColor(getContext(), R.color.graph1), graphLineWidth);
+        ChartGraph chartGraph1 = new ChartGraph(ChartData.Y1, Utils.getColor(getContext(), R.color.graph2), graphLineWidth);
+        ChartGraph chartGraph2 = new ChartGraph(ChartData.Y2, Utils.getColor(getContext(), R.color.graph3), graphLineWidth);
+        ChartGraph chartGraph3 = new ChartGraph(ChartData.Y3, Utils.getColor(getContext(), R.color.graph4), graphLineWidth);
 
         graphs[0] = chartGraph0;
         graphs[1] = chartGraph1;
@@ -148,7 +151,7 @@ public class LineChart extends View {
 
         updateYAxis();
 
-        float coeffY = availableChartHeight / maxYValue;
+        stepY = availableChartHeight / maxYValue;
         stepX = ((float) getWidth()) / (xPoints.length - 1);
 
         scrollWindowMinWidthInSteps = Math.round(scrollWindowMinWidth / stepX);
@@ -157,12 +160,12 @@ public class LineChart extends View {
 
         for (ChartGraph graph : graphs) {
             graph.path.reset();
-            graph.path.moveTo(0, availableChartHeight - graph.values[0] * coeffY);
+            graph.path.moveTo(0, availableChartHeight - graph.values[0] * stepY);
         }
 
         for (int i = 1; i < end; i++) {
             for (ChartGraph graph : graphs) {
-                graph.path.lineTo(i * stepX, availableChartHeight - graph.values[i] * coeffY);
+                graph.path.lineTo(i * stepX, availableChartHeight - graph.values[i] * stepY);
             }
         }
 
@@ -177,6 +180,7 @@ public class LineChart extends View {
     private boolean isScrollWindowGrabbed = false;
     private boolean isChartLineGrabbed = false;
 
+    @SuppressLint("ClickableViewAccessibility")
     @Override
     public boolean onTouchEvent(MotionEvent event) {
 
@@ -206,15 +210,25 @@ public class LineChart extends View {
         return event.getAction() == MotionEvent.ACTION_DOWN || event.getAction() == MotionEvent.ACTION_MOVE;
     }
 
+
     private void handleChartTouch(MotionEvent event) {
+        switch (event.getAction()) {
+            case MotionEvent.ACTION_DOWN:
+                isChartLineGrabbed = true;
+                break;
+
+        }
+
         float x = event.getX();
-        int i = xIndexByCoord(x);
+        int chartLineXPoint = xIndexByCoord(x);
+        infoWindow.measure(xPoints[chartLineXPoint], chartLineXPoint, graphs);
         log("onTouchEvent x: " + x);
-        log("onTouchEvent i: " + i);
-        log("onTouchEvent graph0: " + graphs[0].values[i]);
-        log("onTouchEvent graph1: " + graphs[1].values[i]);
-        log("onTouchEvent graph2: " + graphs[2].values[i]);
-        log("onTouchEvent graph3: " + graphs[3].values[i]);
+        log("onTouchEvent i: " + chartLineXPoint);
+        log("onTouchEvent graph0: " + graphs[0].values[chartLineXPoint]);
+        log("onTouchEvent graph1: " + graphs[1].values[chartLineXPoint]);
+        log("onTouchEvent graph2: " + graphs[2].values[chartLineXPoint]);
+        log("onTouchEvent graph3: " + graphs[3].values[chartLineXPoint]);
+        invalidate();
     }
 
     private void handleScrollTouch(MotionEvent event) {
@@ -225,9 +239,9 @@ public class LineChart extends View {
         switch (event.getAction()) {
             case MotionEvent.ACTION_DOWN: {
                 prevScrollX = x;
-                if (Math.abs(left + scrollBorderLeftRightWidth / 2f - x) < scrollTouchBorderPaddng) {
+                if (Math.abs(left + scrollBorderLeftRightWidth / 2f - x) < scrollTouchBorderPadding) {
                     isScrollLeftBorderGrabbed = true;
-                } else if (Math.abs(right - scrollBorderLeftRightWidth / 2f - x) < scrollTouchBorderPaddng) {
+                } else if (Math.abs(right - scrollBorderLeftRightWidth / 2f - x) < scrollTouchBorderPadding) {
                     isScrollRightBorderGrabbed = true;
                 } else if (x > left && x < right) {
                     isScrollWindowGrabbed = true;
@@ -314,13 +328,15 @@ public class LineChart extends View {
         if (step >= 1) {
             for (int i = 0; i <= columnNumber; i++) {
                 long millsec = xPoints[startIndex + Math.round(i * step)];
-                xAxisTexts[i] = dateFormat.format(new Date(millsec));
+                tempDate.setTime(millsec);
+                xAxisTexts[i] = xAxisDateFormat.format(tempDate);
             }
             xTextsStep = (getWidth() - (xAxisSideMargin * 2f)) / columnNumber;
         } else {
             for (int i = 0; i < range; i++) {
                 long millsec = xPoints[startIndex +i];
-                xAxisTexts[i] = dateFormat.format(new Date(millsec));
+                tempDate.setTime(millsec);
+                xAxisTexts[i] = xAxisDateFormat.format(tempDate);
             }
             xAxisTexts[range] = null;
             xTextsStep = getWidth() * 1f / range;
@@ -351,6 +367,10 @@ public class LineChart extends View {
         drawPoints(canvas);
 
         drawScroll(canvas);
+
+        if (isChartLineGrabbed) {
+            drawInfoWindow(canvas);
+        }
     }
 
     private void drawXAxes(Canvas canvas) {
@@ -430,12 +450,8 @@ public class LineChart extends View {
         canvas.restore();
     }
 
-    public int getStart() {
-        return start;
-    }
-
-    public int getEnd() {
-        return end;
+    private void drawInfoWindow(Canvas canvas) {
+        infoWindow.draw(canvas, availableChartHeight, chartMatrix, stepX, stepY);
     }
 
     public void setStart(int start) {

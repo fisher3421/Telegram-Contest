@@ -1,12 +1,10 @@
 package com.molodkin.telegramcharts;
 
-import androidx.appcompat.app.AppCompatActivity;
 
+import android.app.Activity;
 import android.os.Bundle;
-import android.util.Log;
-import android.widget.SeekBar;
 
-public class MainActivity extends AppCompatActivity {
+public class MainActivity extends Activity {
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {

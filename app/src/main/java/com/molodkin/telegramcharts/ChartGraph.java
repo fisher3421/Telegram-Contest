@@ -6,6 +6,7 @@ import android.graphics.Paint;
 import android.graphics.Path;
 
 import java.util.Arrays;
+import java.util.Random;
 
 public class ChartGraph {
 
@@ -21,6 +22,8 @@ public class ChartGraph {
     public boolean isEnable = true;
 
     public Path path = new Path();
+
+    public final String name;
 
     public int getMax(int start, int end) {
         for (int i = sortedValues.length - 1; i >= 0; i--) {
@@ -52,6 +55,8 @@ public class ChartGraph {
 
         scrollPaint = new Paint(paint);
         scrollPaint.setStrokeWidth(width / 2);
+
+        name = String.valueOf(new Random().nextInt());
     }
 
     public void draw(Canvas canvas, Matrix matrix) {
