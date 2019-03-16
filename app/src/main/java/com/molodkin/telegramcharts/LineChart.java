@@ -52,19 +52,20 @@ public class LineChart extends View {
     private final int scrollWindowMinWidth = Utils.dpToPx(this, 40);
     private int scrollWindowMinWidthInSteps;
     private int scrollTouchBorderPaddng = Utils.dpToPx(this, 10);
-    private int scrollBorderTopBottomWidth = Utils.dpToPx(this, 1);
-    private int scrollBorderLeftRightWidth = Utils.dpToPx(this, 3);
+    private int scrollBorderTopBottomWidth = Utils.dpToPx(this, 2);
+    private int scrollBorderLeftRightWidth = Utils.dpToPx(this, 5);
     private int xAxisHeight = Utils.dpToPx(this, 33);
     private int xAxisWidth = Utils.dpToPx(this, 1);
+    private int xAxisTextHeight = Utils.dpToPx(this, 16);
 
     private int xAxisSideMargin = Utils.dpToPx(this, 20);
 
-    private int graphWidth = Utils.dpToPx(this, 2);
+    private int graphLineWidth = Utils.dpToPx(this, 2);
 
     private float availableChartHeight;
 
     private int textSize = Utils.spToPx(this.getContext(), 14);
-    private int xTextMargin = Utils.dpToPx(this, 2);
+    private int xTextMargin = Utils.dpToPx(this, 4);
 
     private Paint axisPaint = new Paint();
     private TextPaint axisTextPaint = new TextPaint();
@@ -124,10 +125,10 @@ public class LineChart extends View {
     private void initGapths() {
         graphs = new ChartGraph[4];
 
-        ChartGraph chartGraph0 = new ChartGraph(ChartData.Y0, ContextCompat.getColor(getContext(), R.color.graph1), graphWidth);
-        ChartGraph chartGraph1 = new ChartGraph(ChartData.Y1, ContextCompat.getColor(getContext(), R.color.graph2), graphWidth);
-        ChartGraph chartGraph2 = new ChartGraph(ChartData.Y2, ContextCompat.getColor(getContext(), R.color.graph3), graphWidth);
-        ChartGraph chartGraph3 = new ChartGraph(ChartData.Y3, ContextCompat.getColor(getContext(), R.color.graph4), graphWidth);
+        ChartGraph chartGraph0 = new ChartGraph(ChartData.Y0, ContextCompat.getColor(getContext(), R.color.graph1), graphLineWidth);
+        ChartGraph chartGraph1 = new ChartGraph(ChartData.Y1, ContextCompat.getColor(getContext(), R.color.graph2), graphLineWidth);
+        ChartGraph chartGraph2 = new ChartGraph(ChartData.Y2, ContextCompat.getColor(getContext(), R.color.graph3), graphLineWidth);
+        ChartGraph chartGraph3 = new ChartGraph(ChartData.Y3, ContextCompat.getColor(getContext(), R.color.graph4), graphLineWidth);
 
         graphs[0] = chartGraph0;
         graphs[1] = chartGraph1;
@@ -261,10 +262,11 @@ public class LineChart extends View {
                         setEnd(newPoint);
                     }
                 } else if (isScrollWindowGrabbed) {
+                    int range = end - start;
                     if (start + scrollDistanceInSteps <= 0) {
-                        setStartEnd(0, end - start);
+                        setStartEnd(0, range);
                     } else if (end + scrollDistanceInSteps >= xPoints.length) {
-                        setStartEnd(end - start, xPoints.length);
+                        setStartEnd(xPoints.length - range, xPoints.length);
                     } else {
                         setStartEnd(start + scrollDistanceInSteps, end + scrollDistanceInSteps);
                     }
@@ -378,7 +380,7 @@ public class LineChart extends View {
 
         canvas.save();
 
-        canvas.translate(0, availableChartHeight + xTextMargin + xTextBounds.height());
+        canvas.translate(0, availableChartHeight + xTextMargin + xAxisTextHeight);
 
         for (String xAxisText : xAxisTexts) {
             if (xAxisText == null) break;

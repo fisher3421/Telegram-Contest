@@ -46,6 +46,7 @@ public class ChartGraph {
 
         paint = new Paint();
         paint.setStyle(Paint.Style.STROKE);
+        paint.setAntiAlias(true);
         paint.setStrokeWidth(width);
         paint.setColor(color);
 

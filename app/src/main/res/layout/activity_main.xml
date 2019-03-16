@@ -7,7 +7,16 @@
     android:background="@color/white"
     android:orientation="vertical">
 
+    <TextView
+        android:text="Followers"
+        android:layout_margin="16dp"
+        android:textSize="18sp"
+        android:textColor="#0080CE"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content" />
+
     <com.molodkin.telegramcharts.LineChart
+        tools:background="#10000000"
         android:id="@+id/chart"
         android:layout_margin="16dp"
         android:layout_width="match_parent"
