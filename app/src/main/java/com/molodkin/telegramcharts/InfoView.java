@@ -13,7 +13,7 @@ import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 
-public class InfoView extends ContexHolder {
+class InfoView extends ContexHolder {
 
     private final int dateTextSize = Utils.spToPx(context, 12);
     private final int valueTextSize = Utils.spToPx(context, 16);
@@ -42,13 +42,12 @@ public class InfoView extends ContexHolder {
 
     private NinePatchDrawable background;
 
-    private final Paint backgroundPaint = new Paint();
     private final TextPaint dateTextPaint = new TextPaint();
     private final TextPaint valueTextPaint = new TextPaint();
     private final TextPaint nameTextPaint = new TextPaint();
 
-    public final Paint circleFillPaint = new Paint();
-    public final Paint circleStrokePaint = new Paint();
+    private final Paint circleFillPaint = new Paint();
+    private final Paint circleStrokePaint = new Paint();
 
     private final Paint verticalLinePaint = new Paint();
 
@@ -78,7 +77,7 @@ public class InfoView extends ContexHolder {
 
     private boolean isMoving;
 
-    public InfoView(Context c) {
+    InfoView(Context c) {
         super(c);
         dateFormat = new SimpleDateFormat("EEE, MMM d", Utils.getLocale(c));
 
@@ -96,11 +95,6 @@ public class InfoView extends ContexHolder {
         circleStrokePaint.setStyle(Paint.Style.STROKE);
         circleStrokePaint.setAntiAlias(true);
         circleStrokePaint.setStrokeWidth(circleStrokeWidth);
-
-        backgroundPaint.setStyle(Paint.Style.FILL);
-        backgroundPaint.setColor(Utils.getColor(c, R.color.white));
-        backgroundPaint.setAntiAlias(true);
-        backgroundPaint.setShadowLayer(40, 40, 40, 0);
 
         dateTextPaint.setTextSize(dateTextSize);
         dateTextHeight = Utils.getFontHeight(dateTextPaint);
@@ -121,11 +115,11 @@ public class InfoView extends ContexHolder {
         height = dateNameY + topBottomPadding + backgroundPadding.bottom;
     }
 
-    public void cancelMoving() {
+    void cancelMoving() {
         isMoving = false;
     }
 
-    public void handleTouch(MotionEvent event) {
+    void handleTouch(MotionEvent event) {
         switch (event.getAction()) {
             case MotionEvent.ACTION_DOWN:
                 isMoving = true;
@@ -134,7 +128,7 @@ public class InfoView extends ContexHolder {
         }
     }
 
-    public void measure(long date, int x, ChartGraph [] graphs) {
+    void measure(long date, int x, ChartGraph [] graphs) {
         tempDate.setTime(date);
 
         dateText = dateFormat.format(tempDate);
@@ -175,7 +169,7 @@ public class InfoView extends ContexHolder {
         background.setBounds(backgroundSize);
     }
 
-    public void draw(Canvas canvas, float chartHeight, Matrix matrix, float stepX, float stepY) {
+    void draw(Canvas canvas, float chartHeight, Matrix matrix, float stepX, float stepY) {
         if (!isMoving) return;
 
         tempPoint[0] = x * stepX;
@@ -227,7 +221,6 @@ public class InfoView extends ContexHolder {
         }
 
         canvas.restore();
-
     }
 
 }

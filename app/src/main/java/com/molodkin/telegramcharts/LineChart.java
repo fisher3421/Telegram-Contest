@@ -25,16 +25,14 @@ public final class LineChart extends View {
     private static final boolean LOG_IS_ENABLED = true;
     private static final String LOG_TAG = "LineChart";
 
+    ChartGraph [] graphs;
 
-    private ChartGraph [] graphs;
-
-    private long [] xPoints = ChartData.X;
+    long [] xPoints = ChartData.X;
 
     public final Matrix chartMatrix = new Matrix();
-    public final Matrix scrollMatrix = new Matrix();
 
-    private int start = 0;
-    private int end = xPoints.length;
+    int start = 0;
+    int end = xPoints.length;
 
     private int maxYValueTemp;
     private int maxYValue;
@@ -45,13 +43,7 @@ public final class LineChart extends View {
     private String [] yAxisTexts = new String[rowNumber];
     private String [] xAxisTexts = new String[columnNumber + 1];
 
-    private int scrollHeight = Utils.dpToPx(this, 40);
-    private final int scrollWindowMinWidth = Utils.dpToPx(this, 40);
-    private int scrollWindowMinWidthInSteps;
-    private int scrollTouchBorderPadding = Utils.dpToPx(this, 10);
-    private int scrollBorderTopBottomWidth = Utils.dpToPx(this, 2);
-    private int scrollBorderLeftRightWidth = Utils.dpToPx(this, 5);
-    private int xAxisHeight = Utils.dpToPx(this, 33);
+    int xAxisHeight = Utils.dpToPx(this, 33);
     private int xAxisWidth = Utils.dpToPx(this, 1);
 
     private float xAxisTextHeight;
@@ -60,7 +52,7 @@ public final class LineChart extends View {
 
     private int graphLineWidth = Utils.dpToPx(this, 2);
 
-    private float availableChartHeight;
+    float availableChartHeight;
 
     private int axesTextSize = Utils.spToPx(this, 14);
     private int xTextMargin = Utils.dpToPx(this, 4);
@@ -68,12 +60,8 @@ public final class LineChart extends View {
     private Paint axisPaint = new Paint();
     private TextPaint axisTextPaint = new TextPaint();
 
-    private Paint scrollCoverPaint = new Paint();
-    private Paint scrollBorderPaint = new Paint();
-
-
     private float rowHeight;
-    private float stepX;
+    float stepX;
 
     private Rect xTextBounds = new Rect();
 
@@ -84,6 +72,7 @@ public final class LineChart extends View {
     private float[] tempPoint = new float[2];
 
     private final InfoView infoView = new InfoView(getContext());
+    private final ScrollChartView scrollChartView = new ScrollChartView(getContext(), this);
     private float stepY;
 
     public LineChart(Context context) {
@@ -116,12 +105,6 @@ public final class LineChart extends View {
         axisTextPaint.setColor(Utils.getColor(getContext(), R.color.gray_text));
         axisTextPaint.setTextSize(axesTextSize);
         xAxisTextHeight = Utils.getFontHeight(axisTextPaint);
-
-        scrollCoverPaint.setStyle(Paint.Style.FILL);
-        scrollCoverPaint.setColor(Utils.getColor(getContext(), R.color.scroll_cover));
-
-        scrollBorderPaint.setStyle(Paint.Style.FILL);
-        scrollBorderPaint.setColor(Utils.getColor(getContext(), R.color.scroll_border));
     }
 
     private void initGraphs() {
@@ -142,7 +125,7 @@ public final class LineChart extends View {
     protected void onSizeChanged(int w, int h, int oldw, int oldh) {
         super.onSizeChanged(w, h, oldw, oldh);
 
-        availableChartHeight = (float) getHeight() - scrollHeight - xAxisHeight;
+        availableChartHeight = (float) getHeight() - scrollChartView.scrollHeight - xAxisHeight;
         rowHeight = availableChartHeight / rowNumber;
 
         maxYValue = getMaxYValue();
@@ -152,8 +135,6 @@ public final class LineChart extends View {
 
         stepY = availableChartHeight / maxYValue;
         stepX = ((float) getWidth()) / (xPoints.length - 1);
-
-        scrollWindowMinWidthInSteps = Math.round(scrollWindowMinWidth / stepX);
 
         updateXAxis();
 
@@ -168,15 +149,8 @@ public final class LineChart extends View {
             }
         }
 
-        scrollMatrix.postScale(1, scrollHeight / availableChartHeight, 0, 0);
+        scrollChartView.sizeChanged();
     }
-
-    private float prevScrollX = 0;
-    private int prevScrollXPoint = 0;
-
-    private boolean isScrollLeftBorderGrabbed = false;
-    private boolean isScrollRightBorderGrabbed = false;
-    private boolean isScrollWindowGrabbed = false;
 
     @SuppressLint("ClickableViewAccessibility")
     @Override
@@ -184,24 +158,18 @@ public final class LineChart extends View {
 
         log("onTouchEvent ------------------------------------");
 
-        float x = event.getX();
         float y = event.getY();
 
         if (y < availableChartHeight) {
             handleChartTouch(event);
         }
 
-        boolean isScrollMoving = event.getAction() == MotionEvent.ACTION_MOVE &&
-                (isScrollLeftBorderGrabbed || isScrollRightBorderGrabbed || isScrollWindowGrabbed);
-
-        if (y > availableChartHeight + xAxisHeight || isScrollMoving) {
-            handleScrollTouch(event);
+        if (y > availableChartHeight + xAxisHeight || scrollChartView.isMoving(event)) {
+            scrollChartView.handleScrollTouch(event);
         }
 
         if (event.getAction() == MotionEvent.ACTION_CANCEL || event.getAction() == MotionEvent.ACTION_UP) {
-            isScrollLeftBorderGrabbed = false;
-            isScrollRightBorderGrabbed = false;
-            isScrollWindowGrabbed = false;
+            scrollChartView.cancelMoving();
             infoView.cancelMoving();
         }
 
@@ -215,70 +183,6 @@ public final class LineChart extends View {
         float x = event.getX();
         int chartLineXPoint = xIndexByCoord(x);
         infoView.measure(xPoints[chartLineXPoint], chartLineXPoint, graphs);
-        invalidate();
-    }
-
-    private void handleScrollTouch(MotionEvent event) {
-        float x = event.getX();
-        float left = start * stepX;
-        float right = (end - 1) * stepX;
-
-        switch (event.getAction()) {
-            case MotionEvent.ACTION_DOWN: {
-                prevScrollX = x;
-                if (Math.abs(left + scrollBorderLeftRightWidth / 2f - x) < scrollTouchBorderPadding) {
-                    isScrollLeftBorderGrabbed = true;
-                } else if (Math.abs(right - scrollBorderLeftRightWidth / 2f - x) < scrollTouchBorderPadding) {
-                    isScrollRightBorderGrabbed = true;
-                } else if (x > left && x < right) {
-                    isScrollWindowGrabbed = true;
-                    prevScrollXPoint = Math.round(x / stepX);
-                }
-                break;
-            }
-
-            case MotionEvent.ACTION_MOVE: {
-                int newPoint = Math.round(x / stepX);
-
-                float scrollDistance = x - prevScrollX;
-                int scrollDistanceInSteps = newPoint - prevScrollXPoint;
-
-                prevScrollX = x;
-                prevScrollXPoint = newPoint;
-
-                if (isScrollLeftBorderGrabbed) {
-                    if (x < scrollBorderLeftRightWidth) {
-                        setStart(0);
-                    } else if (newPoint > end - scrollWindowMinWidthInSteps - 1) {
-                        setStart(end - scrollWindowMinWidthInSteps - 1);
-                    } else {
-                        setStart(newPoint);
-                    }
-                } else if (isScrollRightBorderGrabbed) {
-                    if (x + scrollBorderLeftRightWidth > getWidth()) {
-                        setEnd(xPoints.length);
-                    } else if (newPoint < start + scrollWindowMinWidthInSteps) {
-                        setEnd(start + scrollWindowMinWidthInSteps);
-                    } else {
-                        setEnd(newPoint);
-                    }
-                } else if (isScrollWindowGrabbed) {
-                    int range = end - start;
-                    if (start + scrollDistanceInSteps <= 0) {
-                        setStartEnd(0, range);
-                    } else if (end + scrollDistanceInSteps >= xPoints.length) {
-                        setStartEnd(xPoints.length - range, xPoints.length);
-                    } else {
-                        setStartEnd(start + scrollDistanceInSteps, end + scrollDistanceInSteps);
-                    }
-                }
-
-                log("scrollDistance: " + scrollDistance);
-                break;
-            }
-            default:
-                adjustYAxis();
-        }
         invalidate();
     }
 
@@ -353,8 +257,7 @@ public final class LineChart extends View {
 
         drawPoints(canvas);
 
-        drawScroll(canvas);
-
+        scrollChartView.draw(canvas);
 
         infoView.draw(canvas, availableChartHeight, chartMatrix, stepX, stepY);
     }
@@ -404,42 +307,6 @@ public final class LineChart extends View {
         }
     }
 
-    private void drawScroll(Canvas canvas) {
-        canvas.save();
-
-        canvas.translate(0, availableChartHeight + xAxisHeight);
-
-        for (ChartGraph graph : graphs) {
-            graph.drawScroll(canvas, scrollMatrix);
-        }
-
-
-        float left = start * stepX;
-        float right = (end - 1) * stepX;
-
-        if (start != 0) {
-            canvas.drawRect(0, 0, left, scrollHeight, scrollCoverPaint);
-        }
-
-        if (end != xPoints.length) {
-            canvas.drawRect(right, 0, getWidth(), scrollHeight, scrollCoverPaint);
-        }
-
-        //draw left right borders
-        canvas.drawRect(left, 0, left + scrollBorderLeftRightWidth, scrollHeight, scrollBorderPaint);
-        canvas.drawRect(right - scrollBorderLeftRightWidth, 0, right, scrollHeight, scrollBorderPaint);
-
-        //draw top bottom borders
-        canvas.drawRect(left + scrollBorderLeftRightWidth, 0, right - scrollBorderLeftRightWidth, scrollBorderTopBottomWidth, scrollBorderPaint);
-        canvas.drawRect(left + scrollBorderLeftRightWidth, scrollHeight - scrollBorderTopBottomWidth, right - scrollBorderLeftRightWidth, scrollHeight, scrollBorderPaint);
-
-        canvas.restore();
-    }
-
-    private void drawInfoWindow(Canvas canvas) {
-        infoView.draw(canvas, availableChartHeight, chartMatrix, stepX, stepY);
-    }
-
     public void setStart(int start) {
         if (start >= end - 2) return;
 
@@ -459,8 +326,8 @@ public final class LineChart extends View {
 
         this.maxYValueTemp = newTempMaxYValue;
 
-        Log.d("LineChart_adjustYAxis", "fromScale: " + fromScale);
-        Log.d("LineChart_adjustYAxis", "toScale: " + toScale);
+        log("adjustYAxis_fromScale: " + fromScale);
+        log("adjustYAxis_toScale: " + toScale);
 
         final float [] prev = new float[1];
         prev[0] = fromScale;
@@ -527,8 +394,8 @@ public final class LineChart extends View {
     private void startScaleAnimation(float toScale, final boolean isStart) {
         float fromScale = xPoints.length / (end - start * 1f);
 
-        Log.d("LineChart", "fromScale: " + fromScale);
-        Log.d("LineChart", "toScale: " + toScale);
+        log("fromScale: " + fromScale);
+        log("toScale: " + toScale);
 
         final float [] prev = new float[1];
         prev[0] = fromScale;
@@ -548,7 +415,7 @@ public final class LineChart extends View {
         valueAnimator.start();
     }
 
-    private void log(String text) {
+    void log(String text) {
         if (LOG_IS_ENABLED) Log.d(LOG_TAG, text);
     }
 }
