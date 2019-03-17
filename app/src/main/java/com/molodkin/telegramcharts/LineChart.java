@@ -7,7 +7,6 @@ import android.graphics.Canvas;
 import android.graphics.Matrix;
 import android.graphics.Paint;
 import android.graphics.Rect;
-import android.graphics.drawable.NinePatchDrawable;
 import android.text.TextPaint;
 import android.util.AttributeSet;
 import android.util.Log;
@@ -84,7 +83,7 @@ public final class LineChart extends View {
     private float xTextsStep;
     private float[] tempPoint = new float[2];
 
-    private final InfoWindow infoWindow = new InfoWindow(getContext());
+    private final InfoView infoView = new InfoView(getContext());
     private float stepY;
 
     public LineChart(Context context) {
@@ -203,7 +202,7 @@ public final class LineChart extends View {
             isScrollLeftBorderGrabbed = false;
             isScrollRightBorderGrabbed = false;
             isScrollWindowGrabbed = false;
-            infoWindow.cancelMoving();
+            infoView.cancelMoving();
         }
 
         return event.getAction() == MotionEvent.ACTION_DOWN || event.getAction() == MotionEvent.ACTION_MOVE;
@@ -211,11 +210,11 @@ public final class LineChart extends View {
 
 
     private void handleChartTouch(MotionEvent event) {
-        infoWindow.handleTouch(event);
+        infoView.handleTouch(event);
 
         float x = event.getX();
         int chartLineXPoint = xIndexByCoord(x);
-        infoWindow.measure(xPoints[chartLineXPoint], chartLineXPoint, graphs);
+        infoView.measure(xPoints[chartLineXPoint], chartLineXPoint, graphs);
         invalidate();
     }
 
@@ -357,7 +356,7 @@ public final class LineChart extends View {
         drawScroll(canvas);
 
 
-        infoWindow.draw(canvas, availableChartHeight, chartMatrix, stepX, stepY);
+        infoView.draw(canvas, availableChartHeight, chartMatrix, stepX, stepY);
     }
 
     private void drawXAxes(Canvas canvas) {
@@ -438,7 +437,7 @@ public final class LineChart extends View {
     }
 
     private void drawInfoWindow(Canvas canvas) {
-        infoWindow.draw(canvas, availableChartHeight, chartMatrix, stepX, stepY);
+        infoView.draw(canvas, availableChartHeight, chartMatrix, stepX, stepY);
     }
 
     public void setStart(int start) {

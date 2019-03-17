@@ -13,7 +13,7 @@ import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 
-public class InfoWindow extends ContexHolder {
+public class InfoView extends ContexHolder {
 
     private final int dateTextSize = Utils.spToPx(context, 12);
     private final int valueTextSize = Utils.spToPx(context, 16);
@@ -78,7 +78,7 @@ public class InfoWindow extends ContexHolder {
 
     private boolean isMoving;
 
-    public InfoWindow(Context c) {
+    public InfoView(Context c) {
         super(c);
         dateFormat = new SimpleDateFormat("EEE, MMM d", Utils.getLocale(c));
 
