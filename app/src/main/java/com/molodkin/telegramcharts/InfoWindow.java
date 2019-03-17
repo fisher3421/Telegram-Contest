@@ -7,6 +7,7 @@ import android.graphics.Paint;
 import android.graphics.Rect;
 import android.graphics.drawable.NinePatchDrawable;
 import android.text.TextPaint;
+import android.view.MotionEvent;
 
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
@@ -75,6 +76,8 @@ public class InfoWindow extends ContexHolder {
 
     private float [] tempPoint = new float[2];
 
+    private boolean isMoving;
+
     public InfoWindow(Context c) {
         super(c);
         dateFormat = new SimpleDateFormat("EEE, MMM d", Utils.getLocale(c));
@@ -116,6 +119,19 @@ public class InfoWindow extends ContexHolder {
         dateNameY = dateValueY + valueNameMargin + nameTextHeight;
 
         height = dateNameY + topBottomPadding + backgroundPadding.bottom;
+    }
+
+    public void cancelMoving() {
+        isMoving = false;
+    }
+
+    public void handleTouch(MotionEvent event) {
+        switch (event.getAction()) {
+            case MotionEvent.ACTION_DOWN:
+                isMoving = true;
+                break;
+
+        }
     }
 
     public void measure(long date, int x, ChartGraph [] graphs) {
@@ -160,8 +176,10 @@ public class InfoWindow extends ContexHolder {
     }
 
     public void draw(Canvas canvas, float chartHeight, Matrix matrix, float stepX, float stepY) {
+        if (!isMoving) return;
 
         tempPoint[0] = x * stepX;
+
         matrix.mapPoints(tempPoint);
         float xCoord = tempPoint[0];
         canvas.drawLine(xCoord, verticalLineTopMargin, xCoord, chartHeight, verticalLinePaint);

@@ -178,7 +178,6 @@ public final class LineChart extends View {
     private boolean isScrollLeftBorderGrabbed = false;
     private boolean isScrollRightBorderGrabbed = false;
     private boolean isScrollWindowGrabbed = false;
-    private boolean isChartLineGrabbed = false;
 
     @SuppressLint("ClickableViewAccessibility")
     @Override
@@ -204,7 +203,7 @@ public final class LineChart extends View {
             isScrollLeftBorderGrabbed = false;
             isScrollRightBorderGrabbed = false;
             isScrollWindowGrabbed = false;
-            isChartLineGrabbed = false;
+            infoWindow.cancelMoving();
         }
 
         return event.getAction() == MotionEvent.ACTION_DOWN || event.getAction() == MotionEvent.ACTION_MOVE;
@@ -212,22 +211,11 @@ public final class LineChart extends View {
 
 
     private void handleChartTouch(MotionEvent event) {
-        switch (event.getAction()) {
-            case MotionEvent.ACTION_DOWN:
-                isChartLineGrabbed = true;
-                break;
-
-        }
+        infoWindow.handleTouch(event);
 
         float x = event.getX();
         int chartLineXPoint = xIndexByCoord(x);
         infoWindow.measure(xPoints[chartLineXPoint], chartLineXPoint, graphs);
-        log("onTouchEvent x: " + x);
-        log("onTouchEvent i: " + chartLineXPoint);
-        log("onTouchEvent graph0: " + graphs[0].values[chartLineXPoint]);
-        log("onTouchEvent graph1: " + graphs[1].values[chartLineXPoint]);
-        log("onTouchEvent graph2: " + graphs[2].values[chartLineXPoint]);
-        log("onTouchEvent graph3: " + graphs[3].values[chartLineXPoint]);
         invalidate();
     }
 
@@ -368,9 +356,8 @@ public final class LineChart extends View {
 
         drawScroll(canvas);
 
-        if (isChartLineGrabbed) {
-            drawInfoWindow(canvas);
-        }
+
+        infoWindow.draw(canvas, availableChartHeight, chartMatrix, stepX, stepY);
     }
 
     private void drawXAxes(Canvas canvas) {
