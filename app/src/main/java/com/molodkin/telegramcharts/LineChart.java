@@ -1,12 +1,13 @@
 package com.molodkin.telegramcharts;
 
+import android.animation.Animator;
+import android.animation.AnimatorListenerAdapter;
 import android.animation.ValueAnimator;
 import android.annotation.SuppressLint;
 import android.content.Context;
 import android.graphics.Canvas;
 import android.graphics.Matrix;
 import android.graphics.Paint;
-import android.graphics.Rect;
 import android.text.TextPaint;
 import android.util.AttributeSet;
 import android.util.Log;
@@ -18,6 +19,8 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
+import java.util.Iterator;
+import java.util.ListIterator;
 
 //TODO: rtl support
 public final class LineChart extends View {
@@ -28,9 +31,11 @@ public final class LineChart extends View {
     static final long SCALE_ANIMATION_DURATION = 250L;
     static final long FADE_ANIMATION_DURATION = 125L;
 
-    ChartGraph [] graphs;
+    private enum UpdateXAxis {INIT, LEFT_IN, LEFT_OUT, RIGHT_IN, RIGHT_OUT, TRANSLATE_LEFT, TRANSLATE_RIGHT}
 
-    long [] xPoints = ChartData.X;
+    ChartGraph[] graphs;
+
+    long[] xPoints = ChartData.X;
 
     public final Matrix chartMatrix = new Matrix();
 
@@ -42,10 +47,11 @@ public final class LineChart extends View {
     int maxYValue;
 
     private int rowNumber = 6;
-    private int columnNumber = 5;
+    private int columnNumber;
 
-    private String [] yAxisTexts = new String[rowNumber];
-    private String [] xAxisTexts = new String[columnNumber + 1];
+    private String[] yAxisTexts = new String[rowNumber];
+
+    private final ArrayList<XAxisPoint> xAxisPoints = new ArrayList<>();
 
     int xAxisHeight = Utils.dpToPx(this, 33);
     private int xAxisWidth = Utils.dpToPx(this, 1);
@@ -60,14 +66,13 @@ public final class LineChart extends View {
 
     private int axesTextSize = Utils.spToPx(this, 14);
     private int xTextMargin = Utils.dpToPx(this, 4);
+    private int xAxisHalfOfMaxTextWidth = Utils.dpToPx(this, 27);
 
     private Paint axisPaint = new Paint();
     private TextPaint axisTextPaint = new TextPaint();
 
     private float rowHeight;
     float stepX;
-
-    private Rect xTextBounds = new Rect();
 
     private Date tempDate = new Date();
     private DateFormat xAxisDateFormat;
@@ -140,7 +145,9 @@ public final class LineChart extends View {
         stepY = availableChartHeight / maxYValue;
         stepX = ((float) getWidth()) / (xPoints.length - 1);
 
-        updateXAxis();
+        columnNumber = (int) (getWidth() / (xAxisHalfOfMaxTextWidth * 4f)) + 1;
+
+        updateXAxis(UpdateXAxis.INIT);
 
         for (ChartGraph graph : graphs) {
             graph.path.reset();
@@ -214,31 +221,236 @@ public final class LineChart extends View {
         }
     }
 
-    private void updateXAxis() {
+    private void updateXAxis(UpdateXAxis update) {
         int startIndex = xIndexByCoord(xAxisSideMargin);
         int endIndex = xIndexByCoord(getWidth() - xAxisSideMargin);
 
         int range = endIndex - startIndex;
         float step = range * 1f / columnNumber;
-        if (step >= 1) {
-            for (int i = 0; i <= columnNumber; i++) {
-                long millsec = xPoints[startIndex + Math.round(i * step)];
-                tempDate.setTime(millsec);
-                xAxisTexts[i] = xAxisDateFormat.format(tempDate);
-            }
-            xTextsStep = (getWidth() - (xAxisSideMargin * 2f)) / columnNumber;
-        } else {
-            for (int i = 0; i < range; i++) {
-                long millsec = xPoints[startIndex +i];
-                tempDate.setTime(millsec);
-                xAxisTexts[i] = xAxisDateFormat.format(tempDate);
-            }
-            xAxisTexts[range] = null;
-            xTextsStep = getWidth() * 1f / range;
+
+        switch (update) {
+            case INIT:
+
+                if (step >= 1) {
+                    for (int i = 0; i <= columnNumber; i++) {
+                        int x = startIndex + Math.round(i * step);
+                        xAxisPoints.add(buildXPoint(x));
+                    }
+//                    xTextsStep = (getWidth() - (xAxisSideMargin * 2f)) / columnNumber;
+                } else {
+                    for (int i = 0; i < range; i++) {
+                        int x = startIndex + i;
+                        xAxisPoints.add(buildXPoint(x));
+                    }
+//                    xTextsStep = getWidth() * 1f / range;
+                }
+                break;
+
+            case TRANSLATE_LEFT:
+                translateXAxis(step);
+//                clearTempPoint();
+//                tempPoint[0] = xAxisPoints.get(xAxisPoints.size() - 1).x * stepX;
+//                chartMatrix.mapPoints(tempPoint);
+//                float rightPointXCoord = tempPoint[0];
+//                if (rightPointXCoord - xAxisHalfOfMaxTextWidth > getWidth()) {
+//                    xAxisPoints.remove(xAxisPoints.size() - 1);
+//                    int newX = Math.round(xAxisPoints.get(0).x - step);
+//                    if (newX >= 0) {
+//                        long millsec = xPoints[newX];
+//                        tempDate.setTime(millsec);
+//                        String dateSring = xAxisDateFormat.format(tempDate);
+//                        xAxisPoints.add(new XAxisPoint(newX, dateSring, 255, axisTextPaint.measureText(dateSring)));
+//                    }
+//                }
+                break;
+
+            case TRANSLATE_RIGHT:
+                translateXAxis(step);
+//                clearTempPoint();
+//                tempPoint[0] = xAxisPoints.get(0).x * stepX;
+//                chartMatrix.mapPoints(tempPoint);
+//                float leftPointXCoord = tempPoint[0];
+//                if (leftPointXCoord + xAxisHalfOfMaxTextWidth < 0) {
+//                    xAxisPoints.remove(0);
+//                    int newX = Math.round(xAxisPoints.get(xAxisPoints.size() - 1).x + step);
+//                    if (newX < xPoints.length) {
+//                        long millsec = xPoints[newX];
+//                        tempDate.setTime(millsec);
+//                        String dateSring = xAxisDateFormat.format(tempDate);
+//                        xAxisPoints.add(new XAxisPoint(newX, dateSring, 255, axisTextPaint.measureText(dateSring)));
+//                    }
+//                }
+                break;
+
+            case LEFT_IN:
+
+                XAxisPoint left = xAxisPoints.get(0);
+                XAxisPoint nextLeft = xAxisPoints.get(1);
+                int xDistance = nextLeft.x - left.x;
+                int newX = left.x - xDistance;
+                if (newX >= 0 && isXTextVisible(newX)) {
+                    xAxisPoints.add(0, buildXPoint(newX));
+                }
+
+                final ArrayList<XAxisPoint> pointToHide = new ArrayList<>();
+
+                ListIterator<XAxisPoint> iteratorReverse = xAxisPoints.listIterator(xAxisPoints.size());
+                while (iteratorReverse.hasPrevious()) {
+                    XAxisPoint previous1 = iteratorReverse.previous();
+                    if (iteratorReverse.hasPrevious()) {
+                        XAxisPoint previous2 = iteratorReverse.previous();
+                        float xCoord1 = getXViewCoord(previous1.x);
+                        float xCoord2 = getXViewCoord(previous2.x);
+                        if (previous2.alpha == 255 && xCoord1 - xCoord2 < xAxisHalfOfMaxTextWidth * 2) {
+//                            iteratorReverse.remove();
+                            pointToHide.add(previous2);
+                        }
+                    }
+                }
+
+//                for (int i = xAxisPoints.size() - 1; i >= 0; i-=2) {
+//                    XAxisPoint previous1 = xAxisPoints.get(i);
+//                    XAxisPoint previous2 = xAxisPoints.get(i - 1);
+//                    float xCoord1 = getXViewCoord(previous1.x);
+//                    float xCoord2 = getXViewCoord(previous2.x);
+//                    if (previous2.alpha == 255 && xCoord1 - xCoord2 < xAxisHalfOfMaxTextWidth * 2) {
+//                        pointToHide.add(previous2);
+//                    }
+//                }
+
+                if (pointToHide.size() > 0) {
+
+                    ValueAnimator valueAnimator = ValueAnimator.ofInt(255, 0);
+                    valueAnimator.setDuration(SCALE_ANIMATION_DURATION);
+                    valueAnimator.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
+                        @Override
+                        public void onAnimationUpdate(ValueAnimator animation) {
+                            int value = (int) animation.getAnimatedValue();
+                            for (XAxisPoint point : pointToHide) {
+                                point.alpha = value;
+                            }
+                        }
+                    });
+
+                    valueAnimator.addListener(new AnimatorListenerAdapter() {
+                        @Override
+                        public void onAnimationEnd(Animator animation) {
+                            for (XAxisPoint point : pointToHide) {
+                                xAxisPoints.remove(point);
+                            }
+                        }
+                    });
+                    valueAnimator.start();
+                }
+
+                break;
+
+            case LEFT_OUT:
+
+                Iterator<XAxisPoint> iterator = xAxisPoints.iterator();
+                while (iterator.hasNext()) {
+                    XAxisPoint next = iterator.next();
+                    if (!isXTextVisible(next)) {
+                        iterator.remove();
+                    } else {
+                        break;
+                    }
+                }
+
+                final ArrayList<XAxisPoint> pointToAnimate = new ArrayList<>();
+
+                if (xAxisPoints.size() <= columnNumber / 2 + 1) {
+                    XAxisPoint right = xAxisPoints.get(xAxisPoints.size() - 1);
+                    XAxisPoint preRight = xAxisPoints.get(xAxisPoints.size() - 2);
+                    int distanceX = right.x - preRight.x;
+
+                    for (int i = 0; i <= columnNumber; i+=2) {
+                        XAxisPoint newPoint = buildXPointTransparent(xAxisPoints.get(xAxisPoints.size() - i - 1).x - distanceX / 2);
+                        xAxisPoints.add(xAxisPoints.size() - i - 1, newPoint);
+                        pointToAnimate.add(newPoint);
+                    }
+
+                    ValueAnimator hideValueAnimator = ValueAnimator.ofInt(0, 255);
+                    hideValueAnimator.setDuration(SCALE_ANIMATION_DURATION);
+                    hideValueAnimator.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
+                        @Override
+                        public void onAnimationUpdate(ValueAnimator animation) {
+                            int value = (int) animation.getAnimatedValue();
+                            for (XAxisPoint point : pointToAnimate) {
+                                point.alpha = value;
+                            }
+
+                        }
+                    });
+                    hideValueAnimator.start();
+                }
+
+                break;
         }
 
-        axisTextPaint.getTextBounds(xAxisTexts[0], 0, xAxisTexts[0].length(), xTextBounds);
 
+    }
+
+    private void translateXAxis(float step) {
+        Iterator<XAxisPoint> iterator = xAxisPoints.iterator();
+        while (iterator.hasNext()) {
+            XAxisPoint point = iterator.next();
+            if (!isXTextVisible(point)) {
+                iterator.remove();
+            }
+        }
+
+        for (int i = 1; i < columnNumber; i++) {
+            XAxisPoint lastPoint = xAxisPoints.get(xAxisPoints.size() - 1);
+            int newX = Math.round(lastPoint.x + step * i);
+            if (newX >= xPoints.length) break;
+            if (isXTextVisible(newX)) {
+                xAxisPoints.add(buildXPoint(newX));
+            } else {
+                break;
+            }
+        }
+        for (int i = 1; i < columnNumber; i++) {
+            XAxisPoint firstPoint = xAxisPoints.get(0);
+            int newX = Math.round(firstPoint.x - step * i);
+            if (newX < 0) break;
+            if (isXTextVisible(newX)) {
+                xAxisPoints.add(0, buildXPoint(newX));
+            } else {
+                break;
+            }
+        }
+    }
+
+    private XAxisPoint buildXPoint(int x) {
+        return buildXPoint(x, 255);
+    }
+
+    private XAxisPoint buildXPointTransparent(int x) {
+        return buildXPoint(x, 0);
+    }
+
+    private XAxisPoint buildXPoint(int x, int alpha) {
+        long millsec = xPoints[x];
+        tempDate.setTime(millsec);
+        String dateSring = xAxisDateFormat.format(tempDate);
+        return new XAxisPoint(x, dateSring, alpha, axisTextPaint.measureText(dateSring));
+    }
+
+    private boolean isXTextVisible(XAxisPoint point) {
+        float xCoord = getXViewCoord(point.x);
+        return xCoord + point.width / 2 > 0 && xCoord - point.width / 2 < getWidth();
+    }
+
+    private boolean isXTextVisible(int x) {
+        float xCoord = getXViewCoord(x);
+        return xCoord + xAxisHalfOfMaxTextWidth > 0 && xCoord - xAxisHalfOfMaxTextWidth / 2 < getWidth();
+    }
+
+    private float getXViewCoord(int x) {
+        tempPoint[0] = x * stepX;
+        chartMatrix.mapPoints(tempPoint);
+        return tempPoint[0];
     }
 
     private int getMaxYValue() {
@@ -278,6 +490,7 @@ public final class LineChart extends View {
 
             canvas.translate(0f, -xTextMargin);
 
+            axisTextPaint.setAlpha(255);
             canvas.drawText(yAxisTexts[i], 0, 0, axisTextPaint);
 
             canvas.restore();
@@ -289,16 +502,17 @@ public final class LineChart extends View {
     }
 
     private void drawXTexts(Canvas canvas) {
-        if (xAxisTexts[0] == null) return;
+        if (xAxisPoints.size() == 0) return;
 
         canvas.save();
 
         canvas.translate(0, availableChartHeight + xTextMargin + xAxisTextHeight);
 
-        for (String xAxisText : xAxisTexts) {
-            if (xAxisText == null) break;
-            canvas.drawText(xAxisText, 0, 0, axisTextPaint);
-            canvas.translate(xTextsStep, 0);
+        for (XAxisPoint point : xAxisPoints) {
+            float xCoord = getXViewCoord(point.x);
+            canvas.drawLine(xCoord, -xAxisHeight, xCoord, 0, axisPaint);
+            axisTextPaint.setAlpha(point.alpha);
+            canvas.drawText(point.date, tempPoint[0] - point.width / 2f, 0, axisTextPaint);
         }
 
         canvas.restore();
@@ -347,7 +561,7 @@ public final class LineChart extends View {
         log("adjustYAxis_fromScale: " + fromScale);
         log("adjustYAxis_toScale: " + toScale);
 
-        final float [] prev = new float[1];
+        final float[] prev = new float[1];
         prev[0] = fromScale;
 
         ValueAnimator valueAnimator = ValueAnimator.ofFloat(fromScale, toScale);
@@ -373,8 +587,9 @@ public final class LineChart extends View {
 
         float toScale = xPoints.length / (end - start * 1f);
         startScaleAnimation(toScale, true);
+        boolean isLeftIn = start < this.start;
         this.start = start;
-        updateXAxis();
+        updateXAxis(isLeftIn ? UpdateXAxis.LEFT_IN : UpdateXAxis.LEFT_OUT);
         invalidate();
     }
 
@@ -387,8 +602,10 @@ public final class LineChart extends View {
         float toScale = xPoints.length / (end - start * 1f);
         startScaleAnimation(toScale, false);
 
+        boolean isRightIn = end > this.end;
+
         this.end = end;
-        updateXAxis();
+        updateXAxis(isRightIn ? UpdateXAxis.RIGHT_IN : UpdateXAxis.RIGHT_OUT);
         invalidate();
     }
 
@@ -398,7 +615,7 @@ public final class LineChart extends View {
 
         if (start == this.start && end == this.end) return;
 
-        final float [] prev = new float[1];
+        final float[] prev = new float[1];
         prev[0] = 0f;
 
         float fromCoordStart = xCoordByIndex(this.start * stepX);
@@ -418,9 +635,11 @@ public final class LineChart extends View {
         });
         valueAnimator.start();
 
+        boolean isLeftTranslate = start < this.start;
+
         this.start = start;
         this.end = end;
-        updateXAxis();
+        updateXAxis(isLeftTranslate ? UpdateXAxis.TRANSLATE_LEFT : UpdateXAxis.TRANSLATE_RIGHT);
         invalidate();
     }
 
@@ -430,7 +649,7 @@ public final class LineChart extends View {
         log("fromScale: " + fromScale);
         log("toScale: " + toScale);
 
-        final float [] prev = new float[1];
+        final float[] prev = new float[1];
         prev[0] = fromScale;
 
         ValueAnimator valueAnimator = ValueAnimator.ofFloat(fromScale, toScale);
