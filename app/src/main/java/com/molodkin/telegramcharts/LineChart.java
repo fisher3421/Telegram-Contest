@@ -25,6 +25,9 @@ public final class LineChart extends View {
     private static final boolean LOG_IS_ENABLED = true;
     private static final String LOG_TAG = "LineChart";
 
+    static final long SCALE_ANIMATION_DURATION = 250L;
+    static final long FADE_ANIMATION_DURATION = 125L;
+
     ChartGraph [] graphs;
 
     long [] xPoints = ChartData.X;
@@ -34,8 +37,9 @@ public final class LineChart extends View {
     int start = 0;
     int end = xPoints.length;
 
+
     private int maxYValueTemp;
-    private int maxYValue;
+    int maxYValue;
 
     private int rowNumber = 6;
     private int columnNumber = 5;
@@ -240,7 +244,7 @@ public final class LineChart extends View {
     private int getMaxYValue() {
         ArrayList<Integer> maxValues = new ArrayList<>(graphs.length);
         for (ChartGraph graph : graphs) {
-            maxValues.add(graph.getMax(start, end));
+            if (graph.isEnable) maxValues.add(graph.getMax(start, end));
         }
 
         return Collections.max(maxValues);
@@ -303,18 +307,32 @@ public final class LineChart extends View {
 
     private void drawPoints(Canvas canvas) {
         for (ChartGraph graph : graphs) {
-            graph.draw(canvas, chartMatrix);
+            if (graph.paint.getAlpha() > 0) graph.draw(canvas, chartMatrix);
         }
     }
 
-    public void setStart(int start) {
-        if (start >= end - 2) return;
+    public void enableGraph(final int index, boolean enable) {
+        graphs[index].isEnable = enable;
 
-        float toScale = xPoints.length / (end - start * 1f);
-        startScaleAnimation(toScale, true);
-        this.start = start;
-        updateXAxis();
-        invalidate();
+        int fromAlpha = enable ? 0 : 255;
+        int toAlpha = enable ? 255 : 0;
+
+        ValueAnimator valueAnimator = ValueAnimator.ofInt(fromAlpha, toAlpha);
+        valueAnimator.setDuration(FADE_ANIMATION_DURATION);
+        valueAnimator.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
+            @Override
+            public void onAnimationUpdate(ValueAnimator animation) {
+                int value = (int) animation.getAnimatedValue();
+                graphs[index].paint.setAlpha(value);
+                graphs[index].scrollPaint.setAlpha(value);
+                invalidate();
+
+            }
+        });
+        valueAnimator.start();
+
+        adjustYAxis();
+        scrollChartView.adjustYAxis();
     }
 
     public void adjustYAxis() {
@@ -333,7 +351,7 @@ public final class LineChart extends View {
         prev[0] = fromScale;
 
         ValueAnimator valueAnimator = ValueAnimator.ofFloat(fromScale, toScale);
-        valueAnimator.setDuration(250L);
+        valueAnimator.setDuration(SCALE_ANIMATION_DURATION);
         valueAnimator.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
             @Override
             public void onAnimationUpdate(ValueAnimator animation) {
@@ -349,9 +367,22 @@ public final class LineChart extends View {
         updateYAxis();
     }
 
+    public void setStart(int start) {
+        if (start >= end - 2) return;
+        if (start == this.start) return;
+
+        float toScale = xPoints.length / (end - start * 1f);
+        startScaleAnimation(toScale, true);
+        this.start = start;
+        updateXAxis();
+        invalidate();
+    }
+
     public void setEnd(int end) {
         if (end > xPoints.length) return;
         if (end <= start) return;
+
+        if (end == this.end) return;
 
         float toScale = xPoints.length / (end - start * 1f);
         startScaleAnimation(toScale, false);
@@ -365,6 +396,8 @@ public final class LineChart extends View {
         if (end > xPoints.length) return;
         if (start >= end - 1) return;
 
+        if (start == this.start && end == this.end) return;
+
         final float [] prev = new float[1];
         prev[0] = 0f;
 
@@ -372,7 +405,7 @@ public final class LineChart extends View {
         float toCoordStart = xCoordByIndex(start * stepX);
 
         ValueAnimator valueAnimator = ValueAnimator.ofFloat(0, fromCoordStart - toCoordStart);
-        valueAnimator.setDuration(250L);
+        valueAnimator.setDuration(SCALE_ANIMATION_DURATION);
         valueAnimator.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
             @Override
             public void onAnimationUpdate(ValueAnimator animation) {
@@ -401,7 +434,7 @@ public final class LineChart extends View {
         prev[0] = fromScale;
 
         ValueAnimator valueAnimator = ValueAnimator.ofFloat(fromScale, toScale);
-        valueAnimator.setDuration(250L);
+        valueAnimator.setDuration(SCALE_ANIMATION_DURATION);
         valueAnimator.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
             @Override
             public void onAnimationUpdate(ValueAnimator animation) {

@@ -1,10 +1,16 @@
 package com.molodkin.telegramcharts;
 
+import android.animation.ValueAnimator;
 import android.content.Context;
+import android.graphics.Bitmap;
 import android.graphics.Canvas;
+import android.graphics.Color;
 import android.graphics.Matrix;
 import android.graphics.Paint;
 import android.view.MotionEvent;
+
+import java.util.ArrayList;
+import java.util.Collections;
 
 class ScrollChartView extends ContexHolder {
 
@@ -19,6 +25,7 @@ class ScrollChartView extends ContexHolder {
 
     private int scrollWindowMinWidthInSteps;
 
+    private final Paint dummyPaint = new Paint();
     private final Paint scrollCoverPaint = new Paint();
     private final Paint scrollBorderPaint = new Paint();
 
@@ -27,6 +34,13 @@ class ScrollChartView extends ContexHolder {
     private boolean isScrollWindowGrabbed = false;
 
     private int prevScrollXPoint = 0;
+
+    private int maxYValueTemp;
+
+    private float scaleCoeff;
+
+    private Canvas canvas;
+    private Bitmap bitmap;
 
     ScrollChartView(Context context, LineChart lineChart) {
         super(context);
@@ -52,7 +66,16 @@ class ScrollChartView extends ContexHolder {
 
     void sizeChanged() {
         scrollWindowMinWidthInSteps = Math.round(scrollWindowMinWidth / lineChart.stepX);
-        scrollMatrix.postScale(1, scrollHeight / lineChart.availableChartHeight, 0, 0);
+
+        scaleCoeff = scrollHeight / lineChart.availableChartHeight;
+
+        scrollMatrix.postScale(1, scaleCoeff, 0, 0);
+
+        maxYValueTemp = lineChart.maxYValue;
+
+        bitmap = Bitmap.createBitmap(lineChart.getWidth(), scrollHeight, Bitmap.Config.ARGB_8888);
+        canvas = new Canvas(bitmap);
+        redraw();
     }
 
     void handleScrollTouch(MotionEvent event) {
@@ -117,18 +140,16 @@ class ScrollChartView extends ContexHolder {
             default:
                 lineChart.adjustYAxis();
         }
+        redraw();
         lineChart.invalidate();
     }
 
-    void draw(Canvas canvas) {
-        canvas.save();
-
-        canvas.translate(0, lineChart.availableChartHeight + lineChart.xAxisHeight);
+    private void redraw() {
+        bitmap.eraseColor(Color.TRANSPARENT);
 
         for (ChartGraph graph : lineChart.graphs) {
             graph.drawScroll(canvas, scrollMatrix);
         }
-
 
         float left = lineChart.start * lineChart.stepX;
         float right = (lineChart.end - 1) * lineChart.stepX;
@@ -148,7 +169,57 @@ class ScrollChartView extends ContexHolder {
         //draw top bottom borders
         canvas.drawRect(left + scrollBorderLeftRightWidth, 0, right - scrollBorderLeftRightWidth, scrollBorderTopBottomWidth, scrollBorderPaint);
         canvas.drawRect(left + scrollBorderLeftRightWidth, scrollHeight - scrollBorderTopBottomWidth, right - scrollBorderLeftRightWidth, scrollHeight, scrollBorderPaint);
+    }
+
+    void draw(Canvas canvas) {
+        if (bitmap == null) return;
+
+        canvas.save();
+
+        canvas.translate(0, lineChart.availableChartHeight + lineChart.xAxisHeight);
+
+        canvas.drawBitmap(bitmap, 0, 0, dummyPaint);
 
         canvas.restore();
+    }
+
+    private int getMaxYValue() {
+        ArrayList<Integer> maxValues = new ArrayList<>(lineChart.graphs.length);
+        for (ChartGraph graph : lineChart.graphs) {
+            if (graph.isEnable) maxValues.add(graph.getMax(0, lineChart.xPoints.length));
+        }
+
+        return Collections.max(maxValues);
+    }
+
+    public void adjustYAxis() {
+        int newTempMaxYValue = getMaxYValue();
+
+        float toScale = scaleCoeff * lineChart.maxYValue / newTempMaxYValue;
+
+        float fromScale = scaleCoeff * lineChart.maxYValue / this.maxYValueTemp;
+
+        this.maxYValueTemp = newTempMaxYValue;
+
+        lineChart.log("adjustYAxis_scroll_fromScale: " + fromScale);
+        lineChart.log("adjustYAxis_scroll_toScale: " + toScale);
+
+        final float [] prev = new float[1];
+        prev[0] = fromScale;
+
+        ValueAnimator valueAnimator = ValueAnimator.ofFloat(fromScale, toScale);
+        valueAnimator.setDuration(LineChart.SCALE_ANIMATION_DURATION);
+        valueAnimator.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
+            @Override
+            public void onAnimationUpdate(ValueAnimator animation) {
+                float value = (float) animation.getAnimatedValue();
+                scrollMatrix.postScale(1, value / prev[0], 0f, scrollHeight);
+                prev[0] = value;
+                redraw();
+                lineChart.invalidate();
+
+            }
+        });
+        valueAnimator.start();
     }
 }
