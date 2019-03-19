@@ -5,15 +5,13 @@ import android.graphics.Matrix;
 import android.graphics.Paint;
 import android.graphics.Path;
 
-import java.util.Arrays;
 import java.util.Random;
 
 public class ChartGraph {
 
-    //wrong structure
-    private final Point [] sortedValues;
-
     public final int [] values;
+
+    private final int [][] maxValuesMatrix;
 
     public final Paint paint;
 
@@ -26,26 +24,20 @@ public class ChartGraph {
     public final String name;
 
     public int getMax(int start, int end) {
-        for (int i = sortedValues.length - 1; i >= 0; i--) {
-            int x = sortedValues[i].x;
-            int y = sortedValues[i].y;
-            if (x >= start && x < end) {
-                return y;
-            }
-        }
-        return 0;
+        return maxValuesMatrix[start][end - 1];
     }
 
     public ChartGraph(int[] values, int color, float width) {
         this.values = values;
 
-        sortedValues = new Point[values.length];
+        maxValuesMatrix = new int[values.length][values.length];
 
-        for (int i = 0; i < sortedValues.length; i++) {
-            sortedValues[i] = new Point(i, values[i]);
+        for (int i = 0; i < values.length; i++) {
+            maxValuesMatrix[i][i] = values[i];
+            for (int j = i + 1; j < values.length; j++) {
+                maxValuesMatrix[i][j] = Math.max(maxValuesMatrix[i][j - 1], values[j]);
+            }
         }
-
-        Arrays.sort(sortedValues);
 
         paint = new Paint();
         paint.setStyle(Paint.Style.STROKE);

@@ -651,6 +651,7 @@ public final class LineChart extends View {
         boolean isLeftIn = start < this.start;
         this.start = start;
         updateXAxis(isLeftIn ? UpdateXAxis.LEFT_IN : UpdateXAxis.LEFT_OUT);
+        adjustYAxis();
         invalidate();
     }
 
@@ -667,6 +668,7 @@ public final class LineChart extends View {
 
         this.end = end;
         updateXAxis(isRightIn ? UpdateXAxis.RIGHT_IN : UpdateXAxis.RIGHT_OUT);
+        adjustYAxis();
         invalidate();
     }
 
@@ -701,6 +703,7 @@ public final class LineChart extends View {
         this.start = start;
         this.end = end;
         updateXAxis(isLeftTranslate ? UpdateXAxis.TRANSLATE_LEFT : UpdateXAxis.TRANSLATE_RIGHT);
+        adjustYAxis();
         invalidate();
     }
 
