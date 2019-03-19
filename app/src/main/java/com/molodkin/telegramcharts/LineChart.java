@@ -39,6 +39,8 @@ public final class LineChart extends View {
 
     public final Matrix chartMatrix = new Matrix();
 
+    private final float [] chartMatrixValues = new float[9];
+
     int start = 0;
     int end = xPoints.length;
 
@@ -47,6 +49,9 @@ public final class LineChart extends View {
     int maxYValue;
 
     private int rowNumber = 6;
+    private int [] rowYValues = new int[rowNumber];
+    private int [] rowYValuesToHide = new int[rowNumber];
+    private int rowYValuesAlpha = 255;
     private int columnNumber;
 
     private String[] yAxisTexts = new String[rowNumber];
@@ -135,10 +140,16 @@ public final class LineChart extends View {
         super.onSizeChanged(w, h, oldw, oldh);
 
         availableChartHeight = (float) getHeight() - scrollChartView.scrollHeight - xAxisHeight;
-        rowHeight = availableChartHeight / rowNumber;
+
+        float rowHeight = availableChartHeight / rowNumber;
+
 
         maxYValue = getMaxYValue();
         maxYValueTemp = maxYValue;
+
+        for (int i = 0; i < rowNumber; i++) {
+            rowYValues[i] = (int) (i * maxYValue * 1f / rowNumber);
+        }
 
         updateYAxis();
 
@@ -453,6 +464,11 @@ public final class LineChart extends View {
         return tempPoint[0];
     }
 
+    private float getYViewCoord(int y) {
+        chartMatrix.getValues(chartMatrixValues);
+        return y * stepY * chartMatrixValues[4];
+    }
+
     private int getMaxYValue() {
         ArrayList<Integer> maxValues = new ArrayList<>(graphs.length);
         for (ChartGraph graph : graphs) {
@@ -483,19 +499,43 @@ public final class LineChart extends View {
 
         canvas.translate(0f, availableChartHeight);
 
-        for (int i = 0; i < rowNumber; i++) {
+        for (int y : rowYValues) {
+            canvas.save();
+            canvas.translate(0, -getYViewCoord(y));
+            axisPaint.setAlpha(rowYValuesAlpha);
             canvas.drawLine(0f, 0f, getWidth(), 0f, axisPaint);
 
             canvas.save();
 
             canvas.translate(0f, -xTextMargin);
 
-            axisTextPaint.setAlpha(255);
-            canvas.drawText(yAxisTexts[i], 0, 0, axisTextPaint);
+            axisTextPaint.setAlpha(rowYValuesAlpha);
+            canvas.drawText(String.valueOf(y), 0, 0, axisTextPaint);
 
             canvas.restore();
 
-            canvas.translate(0f, -rowHeight);
+            canvas.restore();
+        }
+
+        if (rowYValuesAlpha < 255) {
+            for (int y : rowYValuesToHide) {
+                canvas.save();
+
+                canvas.translate(0, -getYViewCoord(y));
+                axisPaint.setAlpha(255 - rowYValuesAlpha);
+                canvas.drawLine(0f, 0f, getWidth(), 0f, axisPaint);
+
+                canvas.save();
+
+                canvas.translate(0f, -xTextMargin);
+
+                axisTextPaint.setAlpha(255 - rowYValuesAlpha);
+                canvas.drawText(String.valueOf(y), 0, 0, axisTextPaint);
+
+                canvas.restore();
+
+                canvas.restore();
+            }
         }
 
         canvas.restore();
@@ -552,6 +592,15 @@ public final class LineChart extends View {
     public void adjustYAxis() {
         int newTempMaxYValue = getMaxYValue();
 
+        if (newTempMaxYValue == this.maxYValueTemp) return;
+
+        System.arraycopy(rowYValues, 0, rowYValuesToHide, 0, rowNumber);
+
+        rowYValuesAlpha = 0;
+        for (int i = 0; i < rowNumber; i++) {
+            rowYValues[i] = (int) (i * newTempMaxYValue * 1f / rowNumber);
+        }
+
         float toScale = this.maxYValue * 1f / newTempMaxYValue;
 
         float fromScale = this.maxYValue * 1f / this.maxYValueTemp;
@@ -577,6 +626,18 @@ public final class LineChart extends View {
             }
         });
         valueAnimator.start();
+
+        ValueAnimator valueAnimator2 = ValueAnimator.ofInt(0, 255);
+        valueAnimator2.setDuration(SCALE_ANIMATION_DURATION);
+        valueAnimator2.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
+            @Override
+            public void onAnimationUpdate(ValueAnimator animation) {
+                rowYValuesAlpha = (int) animation.getAnimatedValue();
+                invalidate();
+
+            }
+        });
+        valueAnimator2.start();
 
         updateYAxis();
     }
