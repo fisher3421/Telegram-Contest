@@ -1,7 +1,5 @@
 package com.molodkin.telegramcharts;
 
-import android.animation.Animator;
-import android.animation.AnimatorListenerAdapter;
 import android.animation.ValueAnimator;
 import android.annotation.SuppressLint;
 import android.content.Context;
@@ -31,14 +29,11 @@ public final class LineChart extends View {
     static final long SCALE_ANIMATION_DURATION = 250L;
     static final long FADE_ANIMATION_DURATION = 125L;
 
-    private enum UpdateXAxis {INIT, LEFT_IN, LEFT_OUT, RIGHT_IN, RIGHT_OUT, TRANSLATE_LEFT, TRANSLATE_RIGHT}
-
     ChartGraph[] graphs;
 
     long[] xPoints = ChartData.X;
 
     public final Matrix chartMatrix = new Matrix();
-    public final Matrix xAxisMatrix = new Matrix();
 
     private final float [] chartMatrixValues = new float[9];
 
@@ -236,9 +231,9 @@ public final class LineChart extends View {
         XAxisPoint second = xAxisPoints.get(1);
         int currentStepX = second.x - first.x;
 
-        float currentDistance = getXViewCoordForXTexts(second.x) - getXViewCoordForXTexts(first.x);
+        float currentDistance = getXViewCoord(second.x) - getXViewCoord(first.x);
 
-        if (currentDistance > xAxisTextWidthWithMargins * 2) {
+        if (currentDistance > xAxisTextWidthWithMargins * 1.5) {
             int numberToAdd = (int) (currentDistance / xAxisTextWidthWithMargins) - 1;
             currentStepX = currentStepX / (numberToAdd + 1);
             for (int i = 0; i < xAxisPoints.size() - numberToAdd; i+= numberToAdd + 1) {
@@ -354,24 +349,18 @@ public final class LineChart extends View {
     }
 
     private boolean isXTextVisible(XAxisPoint point) {
-        float xCoord = getXViewCoordForXTexts(point.x);
+        float xCoord = getXViewCoord(point.x);
         return xCoord + point.width / 2 > 0 && xCoord - point.width / 2 < getWidth();
     }
 
     private boolean isXTextVisible(int x) {
-        float xCoord = getXViewCoordForXTexts(x);
+        float xCoord = getXViewCoord(x);
         return xCoord + xAxisHalfOfTextWidth > 0 && xCoord - xAxisHalfOfTextWidth < getWidth();
     }
 
     private float getXViewCoord(int x) {
         tempPoint[0] = x * stepX;
         chartMatrix.mapPoints(tempPoint);
-        return tempPoint[0];
-    }
-
-    private float getXViewCoordForXTexts(int x) {
-        tempPoint[0] = x * stepX;
-        xAxisMatrix.mapPoints(tempPoint);
         return tempPoint[0];
     }
 
@@ -577,7 +566,6 @@ public final class LineChart extends View {
         startScaleAnimation(toScale, true);
         this.start = start;
 
-        adjustXAxis();
         adjustYAxis();
     }
 
@@ -592,9 +580,7 @@ public final class LineChart extends View {
 
         this.end = end;
 
-        adjustXAxis();
         adjustYAxis();
-        invalidate();
     }
 
     public void setStartEnd(int start, int end) {
@@ -609,8 +595,6 @@ public final class LineChart extends View {
         float fromCoordStart = xCoordByIndex(this.start * stepX);
         float toCoordStart = xCoordByIndex(start * stepX);
 
-        xAxisMatrix.postTranslate(fromCoordStart - toCoordStart, 0);
-
         ValueAnimator valueAnimator = ValueAnimator.ofFloat(0, fromCoordStart - toCoordStart);
         valueAnimator.setDuration(SCALE_ANIMATION_DURATION);
         valueAnimator.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
@@ -618,6 +602,7 @@ public final class LineChart extends View {
             public void onAnimationUpdate(ValueAnimator animation) {
                 float value = (float) animation.getAnimatedValue();
                 chartMatrix.postTranslate(value - prev[0], 0);
+                adjustXAxis();
                 prev[0] = value;
                 invalidate();
 
@@ -628,7 +613,6 @@ public final class LineChart extends View {
         this.start = start;
         this.end = end;
 
-        adjustXAxis();
         adjustYAxis();
     }
 
@@ -641,8 +625,6 @@ public final class LineChart extends View {
         final float[] prev = new float[1];
         prev[0] = fromScale;
 
-        xAxisMatrix.postScale(toScale / fromScale, 1, isStart ? getWidth() : 0, 0f);
-
         ValueAnimator valueAnimator = ValueAnimator.ofFloat(fromScale, toScale);
         valueAnimator.setDuration(SCALE_ANIMATION_DURATION);
         valueAnimator.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
@@ -651,6 +633,7 @@ public final class LineChart extends View {
                 float value = (float) animation.getAnimatedValue();
                 chartMatrix.postScale(value / prev[0], 1, isStart ? getWidth() : 0, 0f);
                 prev[0] = value;
+                adjustXAxis();
                 invalidate();
 
             }
