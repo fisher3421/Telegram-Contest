@@ -51,10 +51,11 @@ public final class LineChart extends View {
     private int rowNumber = 6;
     private int [] rowYValues = new int[rowNumber];
     private int [] rowYValuesToHide = new int[rowNumber];
+    private String [] rowYTextsValues = new String[rowNumber];
+    private String [] rowYTextsValuesToHide = new String[rowNumber];
     private int rowYValuesAlpha = 255;
     private int columnNumber;
 
-    private String[] yAxisTexts = new String[rowNumber];
 
     private final ArrayList<XAxisPoint> xAxisPoints = new ArrayList<>();
 
@@ -149,9 +150,8 @@ public final class LineChart extends View {
 
         for (int i = 0; i < rowNumber; i++) {
             rowYValues[i] = (int) (i * maxYValue * 1f / rowNumber);
+            rowYTextsValues[i] = String.valueOf(rowYValues[i]);
         }
-
-        updateYAxis();
 
         stepY = availableChartHeight / maxYValue;
         stepX = ((float) getWidth()) / (xPoints.length - 1);
@@ -222,14 +222,6 @@ public final class LineChart extends View {
         chartMatrix.mapPoints(tempPoint);
 
         return tempPoint[0];
-    }
-
-    private void updateYAxis() {
-        int rowStep = (int) (Math.ceil(maxYValueTemp * 1f / rowNumber));
-
-        for (int i = 0; i < rowNumber; i++) {
-            yAxisTexts[i] = String.valueOf(rowStep * i);
-        }
     }
 
     private void updateXAxis(UpdateXAxis update) {
@@ -499,7 +491,8 @@ public final class LineChart extends View {
 
         canvas.translate(0f, availableChartHeight);
 
-        for (int y : rowYValues) {
+        for (int i = 0; i < rowYValues.length; i++) {
+            int y = rowYValues[i];
             canvas.save();
             canvas.translate(0, -getYViewCoord(y));
             axisPaint.setAlpha(rowYValuesAlpha);
@@ -510,7 +503,7 @@ public final class LineChart extends View {
             canvas.translate(0f, -xTextMargin);
 
             axisTextPaint.setAlpha(rowYValuesAlpha);
-            canvas.drawText(String.valueOf(y), 0, 0, axisTextPaint);
+            canvas.drawText(rowYTextsValues[i], 0, 0, axisTextPaint);
 
             canvas.restore();
 
@@ -518,7 +511,8 @@ public final class LineChart extends View {
         }
 
         if (rowYValuesAlpha < 255) {
-            for (int y : rowYValuesToHide) {
+            for (int i = 0; i < rowYValuesToHide.length; i++) {
+                int y = rowYValuesToHide[i];
                 canvas.save();
 
                 canvas.translate(0, -getYViewCoord(y));
@@ -530,7 +524,7 @@ public final class LineChart extends View {
                 canvas.translate(0f, -xTextMargin);
 
                 axisTextPaint.setAlpha(255 - rowYValuesAlpha);
-                canvas.drawText(String.valueOf(y), 0, 0, axisTextPaint);
+                canvas.drawText(rowYTextsValuesToHide[i], 0, 0, axisTextPaint);
 
                 canvas.restore();
 
@@ -595,10 +589,12 @@ public final class LineChart extends View {
         if (newTempMaxYValue == this.maxYValueTemp) return;
 
         System.arraycopy(rowYValues, 0, rowYValuesToHide, 0, rowNumber);
+        System.arraycopy(rowYTextsValues, 0, rowYTextsValuesToHide, 0, rowNumber);
 
         rowYValuesAlpha = 0;
         for (int i = 0; i < rowNumber; i++) {
             rowYValues[i] = (int) (i * newTempMaxYValue * 1f / rowNumber);
+            rowYTextsValues[i] = String.valueOf(rowYValues[i]);
         }
 
         float toScale = this.maxYValue * 1f / newTempMaxYValue;
@@ -638,8 +634,6 @@ public final class LineChart extends View {
             }
         });
         valueAnimator2.start();
-
-        updateYAxis();
     }
 
     public void setStart(int start) {
@@ -652,7 +646,6 @@ public final class LineChart extends View {
         this.start = start;
         updateXAxis(isLeftIn ? UpdateXAxis.LEFT_IN : UpdateXAxis.LEFT_OUT);
         adjustYAxis();
-        invalidate();
     }
 
     public void setEnd(int end) {
@@ -704,7 +697,6 @@ public final class LineChart extends View {
         this.end = end;
         updateXAxis(isLeftTranslate ? UpdateXAxis.TRANSLATE_LEFT : UpdateXAxis.TRANSLATE_RIGHT);
         adjustYAxis();
-        invalidate();
     }
 
     private void startScaleAnimation(float toScale, final boolean isStart) {
