@@ -5,8 +5,6 @@ import android.graphics.Matrix;
 import android.graphics.Paint;
 import android.graphics.Path;
 
-import java.util.Random;
-
 public class ChartGraph {
 
     public final int [] values;
@@ -27,10 +25,11 @@ public class ChartGraph {
         return maxValuesMatrix[start][end - 1];
     }
 
-    public ChartGraph(int[] values, int color, float width) {
+    public ChartGraph(int[] values, int color, float width, String name) {
         this.values = values;
 
         maxValuesMatrix = new int[values.length][values.length];
+        this.name = name;
 
         for (int i = 0; i < values.length; i++) {
             maxValuesMatrix[i][i] = values[i];
@@ -47,8 +46,6 @@ public class ChartGraph {
 
         scrollPaint = new Paint(paint);
         scrollPaint.setStrokeWidth(width / 2);
-
-        name = String.valueOf(new Random().nextInt());
     }
 
     public void draw(Canvas canvas, Matrix matrix) {

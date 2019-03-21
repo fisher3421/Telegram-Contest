@@ -1,51 +1,60 @@
 package com.molodkin.telegramcharts;
 
 
+import android.app.ActionBar;
 import android.app.Activity;
 import android.os.Bundle;
-import android.widget.CheckBox;
-import android.widget.CompoundButton;
+import android.view.View;
+import android.view.ViewGroup;
+import android.widget.LinearLayout;
+
+import java.io.IOException;
+import java.util.List;
 
 public class MainActivity extends Activity {
+
+    private boolean isDayMode = false;
+//    private LineChartView lineChartView;
+    private ViewGroup chartLayout;
+    private LinearLayout actionBarLayout;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        ActionBar actionBar = getActionBar();
+        if (actionBar != null) {
+            actionBar.hide();
+        }
+        List<ChartData> data = null;
+        try {
+            data = DataProvider.getData(this);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
         setContentView(R.layout.activity_main);
 
-        final LineChart lineChart = findViewById(R.id.chart);
+        actionBarLayout = findViewById(R.id.actionBarLayout);
+//        lineChartView = findViewById(R.id.chart);
+        LineChartLayout chartLayout = findViewById(R.id.chart1);
+        chartLayout.setData(data.get(0));
 
-        CheckBox checkBox1 = findViewById(R.id.checkBox1);
-        CheckBox checkBox2 = findViewById(R.id.checkBox2);
-        CheckBox checkBox3 = findViewById(R.id.checkBox3);
-        CheckBox checkBox4 = findViewById(R.id.checkBox4);
-
-        checkBox1.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+        findViewById(R.id.switchDayNightMode).setOnClickListener(new View.OnClickListener() {
             @Override
-            public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
-                lineChart.enableGraph(0, isChecked);
+            public void onClick(View v) {
+                isDayMode = !isDayMode;
+                updateMode();
             }
         });
 
-        checkBox2.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
-            @Override
-            public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
-                lineChart.enableGraph(1, isChecked);
-            }
-        });
+        updateMode();
+    }
 
-        checkBox3.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
-            @Override
-            public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
-                lineChart.enableGraph(2, isChecked);
-            }
-        });
-
-        checkBox4.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
-            @Override
-            public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
-                lineChart.enableGraph(3, isChecked);
-            }
-        });
+    private void updateMode() {
+        getWindow().setStatusBarColor(Utils.getColor(MainActivity.this, isDayMode ? R.color.colorPrimaryDark : R.color.colorPrimaryDark_dark));
+        getWindow().getDecorView().setBackgroundColor(Utils.getColor(MainActivity.this, isDayMode ? R.color.window_background_day : R.color.window_background_night));
+        actionBarLayout.setBackgroundColor(Utils.getColor(MainActivity.this, isDayMode ? R.color.colorPrimary : R.color.colorPrimary_dark));
+//        chartLayout.setBackgroundColor(Utils.getColor(MainActivity.this, isDayMode ? R.color.chart_background_day : R.color.chart_background_night));
+//        lineChartView.setDayMode(isDayMode);
     }
 }

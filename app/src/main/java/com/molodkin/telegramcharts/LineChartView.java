@@ -4,6 +4,7 @@ import android.animation.ValueAnimator;
 import android.annotation.SuppressLint;
 import android.content.Context;
 import android.graphics.Canvas;
+import android.graphics.Color;
 import android.graphics.Matrix;
 import android.graphics.Paint;
 import android.text.TextPaint;
@@ -21,7 +22,7 @@ import java.util.Iterator;
 import java.util.ListIterator;
 
 //TODO: rtl support
-public final class LineChart extends View {
+public final class LineChartView extends View {
 
     private static final boolean LOG_IS_ENABLED = true;
     private static final String LOG_TAG = "LineChart";
@@ -29,18 +30,20 @@ public final class LineChart extends View {
     static final long SCALE_ANIMATION_DURATION = 250L;
     static final long FADE_ANIMATION_DURATION = 125L;
 
+    private boolean canBeDrawn = false;
+
     ChartGraph[] graphs;
 
-    long[] xPoints = ChartData.X;
+    long[] xPoints;
 
     public final Matrix chartMatrix = new Matrix();
 
     private final float [] chartMatrixValues = new float[9];
 
     int start = 0;
-    int end = xPoints.length;
+    int end = 0;
 
-    private ArrayList<XAxisPoint> poitToHide = new ArrayList<>();
+    private ArrayList<XAxisPoint> pointToHide = new ArrayList<>();
 
     private int maxYValueTemp;
     int maxYValue;
@@ -76,32 +79,43 @@ public final class LineChart extends View {
     private Paint axisPaint = new Paint();
     private TextPaint axisTextPaint = new TextPaint();
 
-    private float rowHeight;
     float stepX;
 
     private Date tempDate = new Date();
     private DateFormat xAxisDateFormat;
 
-    private float xTextsStep;
     private float[] tempPoint = new float[2];
 
     private final InfoView infoView = new InfoView(getContext());
     private final ScrollChartView scrollChartView = new ScrollChartView(getContext(), this);
     private float stepY;
 
-    public LineChart(Context context) {
+    private ChartData data;
+
+    public LineChartView(Context context) {
         super(context);
         init();
     }
 
-    public LineChart(Context context, AttributeSet attrs) {
+    public LineChartView(Context context, AttributeSet attrs) {
         super(context, attrs);
         init();
     }
 
-    public LineChart(Context context, AttributeSet attrs, int defStyleAttr) {
+    public LineChartView(Context context, AttributeSet attrs, int defStyleAttr) {
         super(context, attrs, defStyleAttr);
         init();
+    }
+
+    public void setData(ChartData data) {
+        this.data = data;
+        if (getWidth() > 0 && getHeight() > 0) {
+            initGraphs();
+        }
+    }
+
+    public void setFake() {
+        this.data = ChartData.buidFake();
     }
 
     private void init() {
@@ -112,32 +126,27 @@ public final class LineChart extends View {
     }
 
     private void initPaints() {
-        axisPaint.setColor(Utils.getColor(getContext(), R.color.gray));
+        axisPaint.setColor(Utils.getColor(getContext(), R.color.axis_day));
         axisPaint.setStyle(Paint.Style.STROKE);
         axisPaint.setStrokeWidth(xAxisWidth);
 
-        axisTextPaint.setColor(Utils.getColor(getContext(), R.color.gray_text));
+        axisTextPaint.setColor(Utils.getColor(getContext(), R.color.text_day));
         axisTextPaint.setTextSize(axesTextSize);
+        axisTextPaint.setAntiAlias(true);
         xAxisTextHeight = Utils.getFontHeight(axisTextPaint);
     }
 
     private void initGraphs() {
-        graphs = new ChartGraph[4];
+        if (getWidth() == 0 || getHeight() == 0 || data == null) return;
 
-        ChartGraph chartGraph0 = new ChartGraph(ChartData.Y0, Utils.getColor(getContext(), R.color.graph1), graphLineWidth);
-        ChartGraph chartGraph1 = new ChartGraph(ChartData.Y1, Utils.getColor(getContext(), R.color.graph2), graphLineWidth);
-        ChartGraph chartGraph2 = new ChartGraph(ChartData.Y2, Utils.getColor(getContext(), R.color.graph3), graphLineWidth);
-        ChartGraph chartGraph3 = new ChartGraph(ChartData.Y3, Utils.getColor(getContext(), R.color.graph4), graphLineWidth);
+        xPoints = data.x;
+        end = data.x.length;
 
-        graphs[0] = chartGraph0;
-        graphs[1] = chartGraph1;
-        graphs[2] = chartGraph2;
-        graphs[3] = chartGraph3;
-    }
+        graphs = new ChartGraph[data.values.size()];
 
-    @Override
-    protected void onSizeChanged(int w, int h, int oldw, int oldh) {
-        super.onSizeChanged(w, h, oldw, oldh);
+        for (int i = 0; i < graphs.length; i++) {
+            graphs[i] = new ChartGraph(data.values.get(i), Color.parseColor(data.colors.get(i)), graphLineWidth, data.names.get(i));
+        }
 
         availableChartHeight = (float) getHeight() - scrollChartView.scrollHeight - xAxisHeight;
 
@@ -172,6 +181,29 @@ public final class LineChart extends View {
         }
 
         scrollChartView.sizeChanged();
+
+
+    }
+
+    @Override
+    protected void onSizeChanged(int w, int h, int oldw, int oldh) {
+        super.onSizeChanged(w, h, oldw, oldh);
+
+        initGraphs();
+
+
+    }
+
+    public void setDayMode(boolean dayMode) {
+        if (dayMode) {
+            axisPaint.setColor(Utils.getColor(getContext(), R.color.axis_day));
+            axisTextPaint.setColor(Utils.getColor(getContext(), R.color.text_day));
+        } else {
+            axisPaint.setColor(Utils.getColor(getContext(), R.color.axis_night));
+            axisTextPaint.setColor(Utils.getColor(getContext(), R.color.text_night));
+        }
+        infoView.setDayMode(dayMode);
+        invalidate();
     }
 
     @SuppressLint("ClickableViewAccessibility")
@@ -225,7 +257,7 @@ public final class LineChart extends View {
     }
 
     private void adjustXAxis() {
-        poitToHide = new ArrayList<>();
+        pointToHide = new ArrayList<>();
         final ArrayList<XAxisPoint> poitToShow = new ArrayList<>();
         XAxisPoint first = xAxisPoints.get(0);
         XAxisPoint second = xAxisPoints.get(1);
@@ -252,7 +284,7 @@ public final class LineChart extends View {
             while (iterator.hasNext()) {
                 for (int i = 0; i < numberToRemove; i++) {
                     if (iterator.hasNext()){
-                        poitToHide.add(iterator.next());
+                        pointToHide.add(iterator.next());
                         iterator.remove();
                     } else break;
                 }
@@ -316,13 +348,13 @@ public final class LineChart extends View {
             valueAnimator.start();
         }
 
-        if (poitToHide.size() > 0) {
+        if (pointToHide.size() > 0) {
             ValueAnimator valueAnimator = ValueAnimator.ofInt(255, 0);
             valueAnimator.setDuration(FADE_ANIMATION_DURATION);
             valueAnimator.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
                 @Override
                 public void onAnimationUpdate(ValueAnimator animation) {
-                    for (XAxisPoint point : poitToHide) {
+                    for (XAxisPoint point : pointToHide) {
                         point.alpha = (int) animation.getAnimatedValue();
                     }
                     invalidate();
@@ -452,23 +484,21 @@ public final class LineChart extends View {
 
         for (XAxisPoint point : xAxisPoints) {
             float xCoord = getXViewCoord(point.x);
-            canvas.drawLine(xCoord, -xAxisHeight, xCoord, 0, axisPaint);
             axisTextPaint.setAlpha(point.alpha);
-            canvas.drawText(point.date, tempPoint[0] - point.width / 2f, 0, axisTextPaint);
+            canvas.drawText(point.date, xCoord - point.width / 2f, 0, axisTextPaint);
         }
 
-        Iterator<XAxisPoint> iterator = poitToHide.iterator();
+        Iterator<XAxisPoint> iterator = pointToHide.iterator();
 
         while (iterator.hasNext()) {
             XAxisPoint next = iterator.next();
             if (next.alpha == 0) iterator.remove();
         }
 
-        for (XAxisPoint point : poitToHide) {
+        for (XAxisPoint point : pointToHide) {
             float xCoord = getXViewCoord(point.x);
-            canvas.drawLine(xCoord, -xAxisHeight, xCoord, 0, axisPaint);
             axisTextPaint.setAlpha(point.alpha);
-            canvas.drawText(point.date, tempPoint[0] - point.width / 2f, 0, axisTextPaint);
+            canvas.drawText(point.date, xCoord - point.width / 2f, 0, axisTextPaint);
         }
 
         canvas.restore();

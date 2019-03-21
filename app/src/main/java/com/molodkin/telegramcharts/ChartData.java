@@ -1,6 +1,29 @@
 package com.molodkin.telegramcharts;
 
+import java.util.ArrayList;
+
 public class ChartData {
+
+    final long x[];
+    final ArrayList<int []> values;
+    final ArrayList<String> names;
+    final ArrayList<String> colors;
+
+    public ChartData(long[] x, ArrayList<int[]> values, ArrayList<String> names, ArrayList<String> colors) {
+        this.x = x;
+        this.values = values;
+        this.names = names;
+        this.colors = colors;
+    }
+
+    public static ChartData buidFake() {
+
+        ArrayList<int []> values = new ArrayList<int []>(){{ add(Y0);add(Y1);add(Y2);add(Y3); }};
+        ArrayList<String> names = new ArrayList<String>(){{ add("#1");add("#2");add("#3");add("#4"); }};
+        ArrayList<String> colors = new ArrayList<String>(){{ add("#cb513a");add("#73c03a");add("#65b9ac");add("#4682b4");}};
+
+        return new ChartData(X, values, names, colors);
+    }
     
     public static long[] X = new long[] {
             1520035200000L,
@@ -1876,5 +1899,4 @@ public class ChartData {
             706650,
             439140
     };
-    
 }

@@ -84,7 +84,7 @@ class InfoView extends ContexHolder {
         background = (NinePatchDrawable) context.getResources().getDrawable(R.drawable.bg_info, context.getTheme());
         background.getPadding(backgroundPadding);
 
-        verticalLinePaint.setColor(Utils.getColor(context, R.color.gray));
+        verticalLinePaint.setColor(Utils.getColor(context, R.color.axis_day));
         verticalLinePaint.setStyle(Paint.Style.STROKE);
         verticalLinePaint.setStrokeWidth(verticalLineWidth);
 
@@ -223,4 +223,11 @@ class InfoView extends ContexHolder {
         canvas.restore();
     }
 
+    void setDayMode(boolean dayMode) {
+        if (dayMode) {
+            circleFillPaint.setColor(Utils.getColor(context, R.color.chart_background_day));
+        } else {
+            circleFillPaint.setColor(Utils.getColor(context, R.color.chart_background_night));
+        }
+    }
 }

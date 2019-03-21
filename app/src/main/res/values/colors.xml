@@ -1,18 +1,33 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <color name="colorPrimary">#567CA2</color>
-    <color name="colorPrimaryDark">#00574B</color>
+    <color name="colorPrimary_dark">#222D3B</color>
+    <color name="colorPrimaryDark">#456282</color>
+    <color name="colorPrimaryDark_dark">#1B242E</color>
     <color name="colorAccent">#D81B60</color>
+
+    <color name="window_background_day">#F0F0F0</color>
+    <color name="window_background_night">#161E27</color>
+    <color name="chart_background_day">@color/white</color>
+    <color name="chart_background_night">#1E2733</color>
+
     <color name="white">#ffffffff</color>
-    <color name="gray">#ffe3e4e5</color>
-    <color name="gray_text">#ff8D99A2</color>
+    <color name="black">#ff000000</color>
+    <color name="background">@color/white</color>
+    <color name="axis_day">#fff4f4f4</color>
+    <color name="axis_night">#ff1A232F</color>
+    <color name="text_day">#ff8D99A2</color>
+    <color name="text_night">#ff4D5E6C</color>
+    <color name="text_info_day">@color/black</color>
+    <color name="text_info_night">@color/white</color>
 
     <color name="graph1">#60A355</color>
     <color name="graph2">#0040FF</color>
     <color name="graph3">#F10E3D</color>
     <color name="graph4">#FCBF03</color>
 
-    <color name="scroll_cover">#10567CA2</color>
-    <color name="scroll_border">#23567CA2</color>
+    <color name="scroll_cover_day">#BBE2E3F0</color>
+    <color name="scroll_cover_night">#BBE2E3F0</color>
+    <color name="scroll_border">#33447EB4</color>
 
 </resources>
