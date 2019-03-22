@@ -11,15 +11,25 @@ public class ChartGraph {
 
     private final int [][] maxValuesMatrix;
 
-    public final Paint paint;
+    public final Paint linePaint;
+    public final Paint pointPaint;
 
-    public final Paint scrollPaint;
+    public final Path path = new Path();
+
+    public final Paint scrollLinePaint;
+    public final Paint scrollPointPaint;
 
     public boolean isEnable = true;
 
-    public Path path = new Path();
+    public float[] linePoints;
+    public float[] points;
 
     public final String name;
+
+    private final float[] tempStart = new float[2];
+    private final float[] tempEnd = new float[2];
+    private float[] tempLinePoints;
+    private float[] tempPoints;
 
     public int getMax(int start, int end) {
         return maxValuesMatrix[start][end - 1];
@@ -38,44 +48,50 @@ public class ChartGraph {
             }
         }
 
-        paint = new Paint();
-        paint.setStyle(Paint.Style.STROKE);
-        paint.setAntiAlias(true);
-        paint.setStrokeWidth(width);
-        paint.setColor(color);
+        linePaint = new Paint();
+        linePaint.setStyle(Paint.Style.STROKE);
+        linePaint.setAntiAlias(true);
+        linePaint.setStrokeWidth(width);
+        linePaint.setColor(color);
 
-        scrollPaint = new Paint(paint);
-        scrollPaint.setStrokeWidth(width / 2);
+        pointPaint = new Paint();
+        pointPaint.setAntiAlias(true);
+        pointPaint.setColor(color);
+        pointPaint.setStrokeWidth(width);
+        pointPaint.setStrokeCap(Paint.Cap.ROUND);
+
+        scrollLinePaint = new Paint(linePaint);
+        scrollLinePaint.setStrokeWidth(width / 2);
+
+        scrollPointPaint = new Paint(pointPaint);
+        scrollPointPaint.setStrokeWidth(width / 2);
+
+        linePoints = new float[values.length * 4 - 4];
+        tempLinePoints = new float[values.length * 4 - 4];
+        points = new float[values.length * 2];
+        tempPoints = new float[values.length * 2];
     }
 
     public void draw(Canvas canvas, Matrix matrix) {
-        Path transform = new Path(path);
-
-        transform.transform(matrix);
-
-        canvas.drawPath(transform, paint);
+        draw(canvas, matrix, linePaint, pointPaint);
     }
 
     public void drawScroll(Canvas canvas, Matrix matrix) {
-        Path transform = new Path(path);
-
-        transform.transform(matrix);
-
-        canvas.drawPath(transform, scrollPaint);
+//        Path pathNew = new Path(path);
+//        pathNew.transform(matrix);
+//
+//        canvas.drawPath(pathNew, scrollLinePaint);
+        draw(canvas, matrix, scrollLinePaint, scrollPointPaint);
     }
 
-    private static class Point implements Comparable<Point> {
-        private final int x;
-        private final int y;
+    private void draw(Canvas canvas, Matrix matrix, Paint linePaint, Paint pointPaint) {
+        System.arraycopy(linePoints, 0, tempLinePoints, 0, linePoints.length);
+        System.arraycopy(points, 0, tempPoints, 0, points.length);
 
-        private Point(int x, int y) {
-            this.x = x;
-            this.y = y;
-        }
+        matrix.mapPoints(tempLinePoints);
+        matrix.mapPoints(tempPoints);
 
-        @Override
-        public int compareTo(Point o) {
-            return y - o.y;
-        }
+        canvas.drawLines(tempLinePoints, linePaint);
+        canvas.drawPoints(tempPoints, pointPaint);
     }
 }

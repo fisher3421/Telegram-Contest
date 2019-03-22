@@ -14,8 +14,10 @@
     <color name="white">#ffffffff</color>
     <color name="black">#ff000000</color>
     <color name="background">@color/white</color>
-    <color name="axis_day">#fff4f4f4</color>
+
+    <color name="axis_day">#F1F1F2</color>
     <color name="axis_night">#ff1A232F</color>
+
     <color name="text_day">#ff8D99A2</color>
     <color name="text_night">#ff4D5E6C</color>
     <color name="text_info_day">@color/black</color>

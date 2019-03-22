@@ -39,8 +39,8 @@ class ScrollChartView extends ContexHolder {
 
     private float scaleCoeff;
 
-    private Canvas canvas;
-    private Bitmap bitmap;
+//    private Canvas canvas;
+//    private Bitmap bitmap;
 
     ScrollChartView(Context context, LineChartView lineChartView) {
         super(context);
@@ -73,9 +73,9 @@ class ScrollChartView extends ContexHolder {
 
         maxYValueTemp = lineChartView.maxYValue;
 
-        bitmap = Bitmap.createBitmap(lineChartView.getWidth(), scrollHeight, Bitmap.Config.ARGB_8888);
-        canvas = new Canvas(bitmap);
-        redraw();
+//        bitmap = Bitmap.createBitmap(lineChartView.getWidth(), scrollHeight, Bitmap.Config.ARGB_8888);
+//        canvas = new Canvas(bitmap);
+//        redraw();
     }
 
     void handleScrollTouch(MotionEvent event) {
@@ -140,15 +140,46 @@ class ScrollChartView extends ContexHolder {
             default:
                 lineChartView.adjustYAxis();
         }
-        redraw();
+//        redraw();
         lineChartView.invalidate();
     }
 
-    private void redraw() {
-        bitmap.eraseColor(Color.TRANSPARENT);
+//    private void redraw() {
+//        bitmap.eraseColor(Color.TRANSPARENT);
+//
+//        for (ChartGraph graph : lineChartView.graphs) {
+//            graph.drawScroll(canvas, scrollMatrix);
+//        }
+//
+//        float left = lineChartView.start * lineChartView.stepX;
+//        float right = (lineChartView.end - 1) * lineChartView.stepX;
+//
+//        if (lineChartView.start != 0) {
+//            canvas.drawRect(0, 0, left, scrollHeight, scrollCoverPaint);
+//        }
+//
+//        if (lineChartView.end != lineChartView.xPoints.length) {
+//            canvas.drawRect(right, 0, lineChartView.getWidth(), scrollHeight, scrollCoverPaint);
+//        }
+//
+//        //draw left right borders
+//        canvas.drawRect(left, 0, left + scrollBorderLeftRightWidth, scrollHeight, scrollBorderPaint);
+//        canvas.drawRect(right - scrollBorderLeftRightWidth, 0, right, scrollHeight, scrollBorderPaint);
+//
+//        //draw top bottom borders
+//        canvas.drawRect(left + scrollBorderLeftRightWidth, 0, right - scrollBorderLeftRightWidth, scrollBorderTopBottomWidth, scrollBorderPaint);
+//        canvas.drawRect(left + scrollBorderLeftRightWidth, scrollHeight - scrollBorderTopBottomWidth, right - scrollBorderLeftRightWidth, scrollHeight, scrollBorderPaint);
+//    }
+
+    void draw(Canvas canvas) {
+//        if (bitmap == null) return;
+
+        canvas.save();
+
+        canvas.translate(0, lineChartView.availableChartHeight + lineChartView.xAxisHeight);
 
         for (ChartGraph graph : lineChartView.graphs) {
-            graph.drawScroll(canvas, scrollMatrix);
+            if (graph.linePaint.getAlpha() > 0) graph.drawScroll(canvas, scrollMatrix);
         }
 
         float left = lineChartView.start * lineChartView.stepX;
@@ -169,16 +200,6 @@ class ScrollChartView extends ContexHolder {
         //draw top bottom borders
         canvas.drawRect(left + scrollBorderLeftRightWidth, 0, right - scrollBorderLeftRightWidth, scrollBorderTopBottomWidth, scrollBorderPaint);
         canvas.drawRect(left + scrollBorderLeftRightWidth, scrollHeight - scrollBorderTopBottomWidth, right - scrollBorderLeftRightWidth, scrollHeight, scrollBorderPaint);
-    }
-
-    void draw(Canvas canvas) {
-        if (bitmap == null) return;
-
-        canvas.save();
-
-        canvas.translate(0, lineChartView.availableChartHeight + lineChartView.xAxisHeight);
-
-        canvas.drawBitmap(bitmap, 0, 0, dummyPaint);
 
         canvas.restore();
     }
@@ -215,7 +236,7 @@ class ScrollChartView extends ContexHolder {
                 float value = (float) animation.getAnimatedValue();
                 scrollMatrix.postScale(1, value / prev[0], 0f, scrollHeight);
                 prev[0] = value;
-                redraw();
+//                redraw();
                 lineChartView.invalidate();
 
             }

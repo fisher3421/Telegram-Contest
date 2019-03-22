@@ -149,7 +149,7 @@ class InfoView extends ContexHolder {
                 graphValues[i] = graph.values[x];
                 String valueText = String.valueOf(graph.values[x]);
                 textValues[i] = valueText;
-                textColors[i] = graph.paint.getColor();
+                textColors[i] = graph.linePaint.getColor();
                 float valueWidth = nameTextPaint.measureText(valueText);
                 leftValues[i] = valuesWidth;
                 valuesWidth += Math.max(nameWidth, valueWidth);

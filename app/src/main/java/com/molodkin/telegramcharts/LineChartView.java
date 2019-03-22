@@ -114,10 +114,6 @@ public final class LineChartView extends View {
         }
     }
 
-    public void setFake() {
-        this.data = ChartData.buidFake();
-    }
-
     private void init() {
         xAxisDateFormat = new SimpleDateFormat("MMM d", Utils.getLocale(getContext()));
 
@@ -169,14 +165,35 @@ public final class LineChartView extends View {
             endX-= stepXAxis;
         }
 
-        for (ChartGraph graph : graphs) {
-            graph.path.reset();
-            graph.path.moveTo(0, availableChartHeight - graph.values[0] * stepY);
-        }
 
-        for (int i = 1; i < end; i++) {
+
+//        for (ChartGraph graph : graphs) {
+//            graph.path.reset();
+//            graph.linePoints[0] = 0;
+//            graph.linePoints[1] = availableChartHeight - graph.values[0] * stepY;
+//            graph.path.moveTo(0, availableChartHeight - graph.values[0] * stepY);
+//        }
+
+        for (int i = 0; i < end - 1; i++) {
             for (ChartGraph graph : graphs) {
-                graph.path.lineTo(i * stepX, availableChartHeight - graph.values[i] * stepY);
+                int j = i * 4;
+                int k = i * 2;
+                float x1 = i * stepX;
+                float y1 = availableChartHeight - graph.values[i] * stepY;
+
+                graph.points[k] = x1;
+                graph.points[k + 1] = y1;
+
+                graph.linePoints[j] = x1;
+                graph.linePoints[j + 1] = y1;
+                graph.linePoints[j + 2] = (i + 1) * stepX;
+                graph.linePoints[j + 3] = availableChartHeight - graph.values[i + 1] * stepY;
+
+                if (i == 0) {
+                    graph.path.moveTo(0, availableChartHeight - graph.values[0] * stepY);
+                } else {
+                    graph.path.lineTo(i * stepX, availableChartHeight - graph.values[i] * stepY);
+                }
             }
         }
 
@@ -316,7 +333,7 @@ public final class LineChartView extends View {
             rightPointX += currentStepX;
         }
 
-        //remove left points
+        //remove left linePoints
         Iterator<XAxisPoint> iterator = xAxisPoints.iterator();
         while (iterator.hasNext()) {
             XAxisPoint point = iterator.next();
@@ -324,7 +341,7 @@ public final class LineChartView extends View {
             else break;
         }
 
-        //remove right points
+        //remove right linePoints
         ListIterator<XAxisPoint> reverse = xAxisPoints.listIterator(xAxisPoints.size());
         while (reverse.hasPrevious()) {
             XAxisPoint point = reverse.previous();
@@ -507,7 +524,7 @@ public final class LineChartView extends View {
 
     private void drawPoints(Canvas canvas) {
         for (ChartGraph graph : graphs) {
-            if (graph.paint.getAlpha() > 0) graph.draw(canvas, chartMatrix);
+            if (graph.linePaint.getAlpha() > 0) graph.draw(canvas, chartMatrix);
         }
     }
 
@@ -523,8 +540,10 @@ public final class LineChartView extends View {
             @Override
             public void onAnimationUpdate(ValueAnimator animation) {
                 int value = (int) animation.getAnimatedValue();
-                graphs[index].paint.setAlpha(value);
-                graphs[index].scrollPaint.setAlpha(value);
+                graphs[index].linePaint.setAlpha(value);
+                graphs[index].pointPaint.setAlpha(value);
+                graphs[index].scrollLinePaint.setAlpha(value);
+                graphs[index].scrollPointPaint.setAlpha(value);
                 invalidate();
 
             }
