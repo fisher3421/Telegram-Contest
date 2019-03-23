@@ -29,7 +29,7 @@
     <color name="graph4">#FCBF03</color>
 
     <color name="scroll_cover_day">#BBE2E3F0</color>
-    <color name="scroll_cover_night">#BBE2E3F0</color>
+    <color name="scroll_cover_night">#333A3A3A</color>
     <color name="scroll_border">#33447EB4</color>
 
 </resources>

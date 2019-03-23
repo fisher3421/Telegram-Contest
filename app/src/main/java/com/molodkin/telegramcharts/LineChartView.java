@@ -1,7 +1,6 @@
 package com.molodkin.telegramcharts;
 
 import android.animation.ValueAnimator;
-import android.annotation.SuppressLint;
 import android.content.Context;
 import android.graphics.Canvas;
 import android.graphics.Color;
@@ -10,7 +9,6 @@ import android.graphics.Paint;
 import android.text.TextPaint;
 import android.util.AttributeSet;
 import android.util.Log;
-import android.view.MotionEvent;
 import android.view.View;
 
 import java.text.DateFormat;
@@ -21,7 +19,6 @@ import java.util.Date;
 import java.util.Iterator;
 import java.util.ListIterator;
 
-//TODO: rtl support
 public final class LineChartView extends View {
 
     private static final boolean LOG_IS_ENABLED = false;
@@ -59,16 +56,16 @@ public final class LineChartView extends View {
 
     private final ArrayList<XAxisPoint> xAxisPoints = new ArrayList<>();
 
+    int sideMargin = Utils.dpToPx(this, 16);
     int xAxisHeight = Utils.dpToPx(this, 33);
     private int xAxisWidth = Utils.dpToPx(this, 1);
 
     private float xAxisTextHeight;
 
-    private int xAxisSideMargin = Utils.dpToPx(this, 20);
-
     private int graphLineWidth = Utils.dpToPx(this, 2);
 
     float availableChartHeight;
+    float availableChartWidth;
 
     private int axesTextSize = Utils.spToPx(this, 14);
     private int xTextMargin = Utils.dpToPx(this, 4);
@@ -88,7 +85,7 @@ public final class LineChartView extends View {
 
     private float[] tempPoint = new float[2];
 
-    private float stepY;
+    float stepY;
 
     private ChartData data;
 
@@ -122,14 +119,18 @@ public final class LineChartView extends View {
     }
 
     private void initPaints() {
-        axisPaint.setColor(Utils.getColor(getContext(), R.color.axis_day));
         axisPaint.setStyle(Paint.Style.STROKE);
         axisPaint.setStrokeWidth(xAxisWidth);
 
-        axisTextPaint.setColor(Utils.getColor(getContext(), R.color.text_day));
         axisTextPaint.setTextSize(axesTextSize);
         axisTextPaint.setAntiAlias(true);
         xAxisTextHeight = Utils.getFontHeight(axisTextPaint);
+        initTheme();
+    }
+
+    private void initTheme() {
+        axisPaint.setColor(Utils.getColor(getContext(), Utils.AXIS_COLOR));
+        axisTextPaint.setColor(Utils.getColor(getContext(), Utils.AXIS_TEXT_COLOR));
     }
 
     private void initGraphs() {
@@ -150,6 +151,7 @@ public final class LineChartView extends View {
         }
 
         availableChartHeight = (float) getHeight() - xAxisHeight;
+        availableChartWidth = (float) getWidth() - sideMargin * 2;
 
         maxYValue = getMaxYValue();
         maxYValueTemp = maxYValue;
@@ -160,9 +162,9 @@ public final class LineChartView extends View {
         }
 
         stepY = availableChartHeight / maxYValue;
-        stepX = ((float) getWidth()) / (xPoints.length - 1);
+        stepX = availableChartWidth / (xPoints.length - 1);
 
-        int endX = (int) ((getWidth() - xAxisHalfOfTextWidth) / stepX);
+        int endX = (int) ((availableChartWidth - xAxisHalfOfTextWidth) / stepX);
         int stepXAxis = Math.round(xAxisTextWidthWithMargins / stepX);
 
         while (endX > 0) {
@@ -199,35 +201,28 @@ public final class LineChartView extends View {
         super.onSizeChanged(w, h, oldw, oldh);
 
         initGraphs();
-
-
     }
 
-    public void setDayMode(boolean dayMode) {
-        if (dayMode) {
-            axisPaint.setColor(Utils.getColor(getContext(), R.color.axis_day));
-            axisTextPaint.setColor(Utils.getColor(getContext(), R.color.text_day));
-        } else {
-            axisPaint.setColor(Utils.getColor(getContext(), R.color.axis_night));
-            axisTextPaint.setColor(Utils.getColor(getContext(), R.color.text_night));
-        }
+    public void updateTheme() {
+        initTheme();
         invalidate();
     }
 
     int xIndexByCoord(float x) {
-        tempPoint[0] = x;
+        tempPoint[0] = x - sideMargin;
 
         chartMatrix.invert(chartInverMatrix);
         chartInverMatrix.mapPoints(tempPoint);
 
-        return Math.round(tempPoint[0] / stepX);
+        int value = Math.round(tempPoint[0] / stepX);
+        return Math.max(Math.min(value, xPoints.length - 1), 0);
     }
 
     float xCoordByIndex(int x) {
         tempPoint[0] = x * stepX;
         chartMatrix.mapPoints(tempPoint);
 
-        return tempPoint[0];
+        return sideMargin + tempPoint[0];
     }
 
     float yCoordByIndex(int y) {
@@ -395,6 +390,8 @@ public final class LineChartView extends View {
         super.onDraw(canvas);
         if (getWidth() == 0 || getHeight() == 0) return;
 
+        canvas.translate(sideMargin, 0);
+
         drawXAxes(canvas);
 
         drawXTexts(canvas);
@@ -412,7 +409,7 @@ public final class LineChartView extends View {
             canvas.save();
             canvas.translate(0, -getYViewCoord(y));
             axisPaint.setAlpha(rowYValuesAlpha);
-            canvas.drawLine(0f, 0f, getWidth(), 0f, axisPaint);
+            canvas.drawLine(0f, 0f, availableChartWidth, 0f, axisPaint);
 
             canvas.save();
 
@@ -433,7 +430,7 @@ public final class LineChartView extends View {
 
                 canvas.translate(0, -getYViewCoord(y));
                 axisPaint.setAlpha(255 - rowYValuesAlpha);
-                canvas.drawLine(0f, 0f, getWidth(), 0f, axisPaint);
+                canvas.drawLine(0f, 0f, availableChartWidth, 0f, axisPaint);
 
                 canvas.save();
 
@@ -649,10 +646,10 @@ public final class LineChartView extends View {
             @Override
             public void onAnimationUpdate(ValueAnimator animation) {
                 float value = (float) animation.getAnimatedValue();
-                chartMatrix.postScale(value / prev[0], 1, isStart ? getWidth() : 0, 0f);
+                chartMatrix.postScale(value / prev[0], 1, isStart ? availableChartWidth : 0f, 0f);
                 prev[0] = value;
-                drawStart = xIndexByCoord(0);
-                drawEnd = xIndexByCoord(getWidth()) + 1;
+                drawStart = xIndexByCoord(-sideMargin);
+                drawEnd = xIndexByCoord(getWidth() + sideMargin) + 1;
                 adjustXAxis();
                 invalidate();
 

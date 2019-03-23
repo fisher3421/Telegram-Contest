@@ -30,21 +30,20 @@ class ScrollBorderView extends View {
         this.lineChartView = lineChartView;
 
         scrollCoverPaint.setStyle(Paint.Style.FILL);
-        scrollCoverPaint.setColor(Utils.getColor(context, R.color.scroll_cover_day));
 
         scrollBorderPaint.setStyle(Paint.Style.FILL);
         scrollBorderPaint.setColor(Utils.getColor(context, R.color.scroll_border));
+        initTheme();
+    }
+
+    private void initTheme() {
+        scrollCoverPaint.setColor(Utils.getColor(getContext(), Utils.SCROLL_COVER_COLOR));
     }
 
     void cancelMoving() {
         isScrollLeftBorderGrabbed = false;
         isScrollRightBorderGrabbed = false;
         isScrollWindowGrabbed = false;
-    }
-
-    boolean isMoving(MotionEvent event) {
-        return event.getAction() == MotionEvent.ACTION_MOVE &&
-                (isScrollLeftBorderGrabbed || isScrollRightBorderGrabbed || isScrollWindowGrabbed);
     }
 
     @Override
@@ -152,5 +151,10 @@ class ScrollBorderView extends View {
         //draw top bottom borders
         canvas.drawRect(left + scrollBorderLeftRightWidth, 0, right - scrollBorderLeftRightWidth, scrollBorderTopBottomWidth, scrollBorderPaint);
         canvas.drawRect(left + scrollBorderLeftRightWidth, getHeight() - scrollBorderTopBottomWidth, right - scrollBorderLeftRightWidth, getHeight(), scrollBorderPaint);
+    }
+
+    public void updateTheme() {
+        initTheme();
+        invalidate();
     }
 }

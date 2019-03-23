@@ -7,14 +7,11 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.LinearLayout;
 
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
 public class MainActivity extends Activity {
 
-    private boolean isDayMode = true;
-//    private LineChartView lineChartView;
     ArrayList<LineChartLayout> charts = new ArrayList<>();
     private LinearLayout actionBarLayout;
 
@@ -23,12 +20,16 @@ public class MainActivity extends Activity {
         super.onCreate(savedInstanceState);
 
         List<ChartData> data = null;
-        try {
-            data = DataProvider.getData(this);
-        } catch (IOException e) {
-            e.printStackTrace();
-            return;
-        }
+
+        data = new ArrayList<>();
+        data.add(ChartData.buidFake());
+
+//        try {
+//            data = DataProvider.getData(this);
+//        } catch (IOException e) {
+//            e.printStackTrace();
+//            return;
+//        }
 
         setContentView(R.layout.activity_main);
 
@@ -38,23 +39,18 @@ public class MainActivity extends Activity {
 
         for (ChartData chartData : data) {
             LineChartLayout chartLayout = new LineChartLayout(this);
+            chartLayout.setPadding(0, Utils.dpToPx(this, 16), 0, 0);
             charts.add(chartLayout);
             chartLayout.setData(chartData);
             LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
             root.addView(chartLayout, lp);
 
         }
-//        lineChartView = findViewById(R.id.chart);
-//        chartLayout = findViewById(R.id.chart1);
-//        chartLayout.setData(data.get(0));
-//        chartLayout.setData(ChartData.buidFake());
 
         findViewById(R.id.switchDayNightMode).setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-//                chartLayout.chartView.setEnd(chartLayout.chartView.end++);
-//                chartLayout.chartView.invalidate();
-                isDayMode = !isDayMode;
+                Utils.isDayMode = !Utils.isDayMode;
                 updateMode();
             }
         });
@@ -63,12 +59,12 @@ public class MainActivity extends Activity {
     }
 
     private void updateMode() {
-        getWindow().setStatusBarColor(Utils.getColor(MainActivity.this, isDayMode ? R.color.colorPrimaryDark : R.color.colorPrimaryDark_dark));
-        getWindow().getDecorView().setBackgroundColor(Utils.getColor(MainActivity.this, isDayMode ? R.color.window_background_day : R.color.window_background_night));
-        actionBarLayout.setBackgroundColor(Utils.getColor(MainActivity.this, isDayMode ? R.color.colorPrimary : R.color.colorPrimary_dark));
+        getWindow().setStatusBarColor(Utils.getColor(MainActivity.this, Utils.PRIMARY_DARK_COLOR));
+        getWindow().getDecorView().setBackgroundColor(Utils.getColor(MainActivity.this, Utils.WINDOW_BACKGROUND_COLOR));
+        actionBarLayout.setBackgroundColor(Utils.getColor(MainActivity.this, Utils.PRIMARY_COLOR));
         for (LineChartLayout chart : charts) {
-            chart.setBackgroundColor(Utils.getColor(MainActivity.this, isDayMode ? R.color.chart_background_day : R.color.chart_background_night));
-            chart.setDayMode(isDayMode);
+            chart.setBackgroundColor(Utils.getColor(MainActivity.this, Utils.CHART_BACKGROUND_COLOR));
+            chart.updateTheme();
         }
 
     }

@@ -10,6 +10,8 @@ import android.widget.CheckBox;
 import android.widget.CompoundButton;
 import android.widget.FrameLayout;
 
+import java.util.ArrayList;
+
 public class LineChartLayout extends FrameLayout {
 
     public LineChartView chartView;
@@ -18,8 +20,12 @@ public class LineChartLayout extends FrameLayout {
 
     final int scrollHeight = Utils.dpToPx(this, 40);
     int chartHeight = Utils.dpToPx(this, 300);
-    int checkboxHeight = Utils.dpToPx(this, 40);
+    int checkboxHeight = Utils.dpToPx(this, 36);
+    int checkboxTopMargin = Utils.dpToPx(this, 16);
+    int sideMargin = Utils.dpToPx(this, 16);
     private ScrollBorderView scrollBorderView;
+
+    private ArrayList<CheckBox> checkBoxes = new ArrayList<>();
 
     public LineChartLayout(Context context) {
         super(context);
@@ -48,6 +54,8 @@ public class LineChartLayout extends FrameLayout {
 
         LayoutParams scrollLP = new LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, scrollHeight);
         scrollLP.topMargin = chartHeight;
+        scrollLP.leftMargin = sideMargin;
+        scrollLP.rightMargin = sideMargin;
         scrollChartView.setLayoutParams(scrollLP);
 
         scrollBorderView.setLayoutParams(scrollLP);
@@ -58,19 +66,15 @@ public class LineChartLayout extends FrameLayout {
         addView(scrollBorderView);
     }
 
-    @Override
-    protected void onSizeChanged(int w, int h, int oldw, int oldh) {
-        super.onSizeChanged(w, h, oldw, oldh);
-    }
-
     public void setData(ChartData data) {
-        int height = chartHeight + scrollHeight;
+        int height = chartHeight + scrollHeight + checkboxTopMargin;
         chartView.setData(data);
         for (int i = 0; i < data.names.size(); i++) {
             String name = data.names.get(i);
             String color = data.colors.get(i);
             CheckBox checkBox = (CheckBox) LayoutInflater.from(getContext()).inflate(R.layout.check_view, this, false);
             checkBox.setButtonTintList(ColorStateList.valueOf(Color.parseColor(color)));
+            checkBox.setTextColor(Utils.getColor(getContext(), Utils.PRIMARY_TEXT_COLOR));
             checkBox.setText(name);
             checkBox.setChecked(true);
             final int finalI = i;
@@ -81,17 +85,20 @@ public class LineChartLayout extends FrameLayout {
                     scrollChartView.adjustYAxis();
                 }
             });
-            LayoutParams lP = new LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, checkboxHeight);
-            lP.topMargin = height;
-            addView(checkBox, lP);
+            ((MarginLayoutParams) checkBox.getLayoutParams()).topMargin = height;
+            checkBoxes.add(checkBox);
+            addView(checkBox);
             height += checkboxHeight;
         }
     }
 
-    public void setDayMode(boolean dayMode) {
-        chartView.setDayMode(dayMode);
-//        scrollBorderView.setDa(dayMode);
-        infoView.setDayMode(dayMode);
+    public void updateTheme() {
+        chartView.updateTheme();
+        scrollBorderView.updateTheme();
+        infoView.updateTheme();
+        for (CheckBox checkBox : checkBoxes) {
+            checkBox.setTextColor(Utils.getColor(getContext(), Utils.PRIMARY_TEXT_COLOR));
+        }
     }
 
 }

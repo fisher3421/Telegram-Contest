@@ -2,7 +2,6 @@ package com.molodkin.telegramcharts;
 
 import android.content.Context;
 import android.graphics.Canvas;
-import android.graphics.Matrix;
 import android.graphics.Paint;
 import android.graphics.Rect;
 import android.graphics.drawable.NinePatchDrawable;
@@ -82,17 +81,13 @@ class InfoView extends View {
         super(c);
         dateFormat = new SimpleDateFormat("EEE, MMM d", Utils.getLocale(c));
 
-        background = (NinePatchDrawable) c.getResources().getDrawable(R.drawable.bg_info, c.getTheme());
         this.chartView = chartView;
-        background.getPadding(backgroundPadding);
 
-        verticalLinePaint.setColor(Utils.getColor(c, R.color.axis_day));
         verticalLinePaint.setStyle(Paint.Style.STROKE);
         verticalLinePaint.setStrokeWidth(verticalLineWidth);
 
         circleFillPaint.setStyle(Paint.Style.FILL);
         circleFillPaint.setAntiAlias(true);
-        circleFillPaint.setColor(Utils.getColor(c, R.color.white));
 
         circleStrokePaint.setStyle(Paint.Style.STROKE);
         circleStrokePaint.setAntiAlias(true);
@@ -115,6 +110,17 @@ class InfoView extends View {
         dateNameY = dateValueY + valueNameMargin + nameTextHeight;
 
         height = dateNameY + topBottomPadding + backgroundPadding.bottom;
+
+        initTheme();
+
+        background.getPadding(backgroundPadding);
+    }
+
+    private void initTheme() {
+        circleFillPaint.setColor(Utils.getColor(getContext(), Utils.INFO_VIEW_CIRCLE_COLOR));
+        verticalLinePaint.setColor(Utils.getColor(getContext(), Utils.AXIS_COLOR));
+        background = (NinePatchDrawable) getContext().getResources().getDrawable(Utils.getResId(Utils.INFO_VIEW_BACKGROUND), getContext().getTheme());
+        dateTextPaint.setColor(Utils.getColor(getContext(), Utils.PRIMARY_TEXT_COLOR));
     }
 
     @Override
@@ -234,13 +240,8 @@ class InfoView extends View {
 
     }
 
-    void setDayMode(boolean dayMode) {
-        if (dayMode) {
-            circleFillPaint.setColor(Utils.getColor(getContext(), R.color.chart_background_day));
-            background = (NinePatchDrawable) getContext().getResources().getDrawable(R.drawable.bg_info, getContext().getTheme());
-        } else {
-            circleFillPaint.setColor(Utils.getColor(getContext(), R.color.chart_background_night));
-            background = (NinePatchDrawable) getContext().getResources().getDrawable(R.drawable.bg_info_dark, getContext().getTheme());
-        }
+    void updateTheme() {
+        initTheme();
+        invalidate();
     }
 }

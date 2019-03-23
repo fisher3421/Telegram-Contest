@@ -13,39 +13,42 @@ public class ScrollChartView extends View {
 
     private final Matrix scrollMatrix = new Matrix();
 
-    private final LineChartView lineChartView;
+    private final LineChartView chartView;
 
     private int maxYValueTemp;
 
     private float scaleCoeff;
 
+    private float chartsTopMargin = Utils.dpToPx(this, 4);
+
     ScrollChartView(Context context, LineChartView lineChartView) {
         super(context);
-        this.lineChartView = lineChartView;
+        this.chartView = lineChartView;
     }
 
     @Override
     protected void onSizeChanged(int w, int h, int oldw, int oldh) {
         super.onSizeChanged(w, h, oldw, oldh);
 
-        scaleCoeff = getHeight() / lineChartView.availableChartHeight;
+        scaleCoeff = (getHeight() - chartsTopMargin) / chartView.availableChartHeight;
 
         scrollMatrix.postScale(1, scaleCoeff, 0, 0);
 
-        maxYValueTemp = lineChartView.maxYValue;
+        maxYValueTemp = chartView.maxYValue;
     }
 
     @Override
     protected void onDraw(Canvas canvas) {
-        for (ChartGraph graph : lineChartView.graphs) {
+        canvas.translate(0, chartsTopMargin);
+        for (ChartGraph graph : chartView.graphs) {
             if (graph.linePaint.getAlpha() > 0) graph.drawScroll(canvas, scrollMatrix);
         }
     }
 
     private int getMaxYValue() {
-        ArrayList<Integer> maxValues = new ArrayList<>(lineChartView.graphs.length);
-        for (ChartGraph graph : lineChartView.graphs) {
-            if (graph.isEnable) maxValues.add(graph.getMax(0, lineChartView.xPoints.length));
+        ArrayList<Integer> maxValues = new ArrayList<>(chartView.graphs.length);
+        for (ChartGraph graph : chartView.graphs) {
+            if (graph.isEnable) maxValues.add(graph.getMax(0, chartView.xPoints.length));
         }
 
         return Collections.max(maxValues);
@@ -54,14 +57,14 @@ public class ScrollChartView extends View {
     void adjustYAxis() {
         int newTempMaxYValue = getMaxYValue();
 
-        float toScale = scaleCoeff * lineChartView.maxYValue / newTempMaxYValue;
+        float toScale = scaleCoeff * chartView.maxYValue / newTempMaxYValue;
 
-        float fromScale = scaleCoeff * lineChartView.maxYValue / this.maxYValueTemp;
+        float fromScale = scaleCoeff * chartView.maxYValue / this.maxYValueTemp;
 
         this.maxYValueTemp = newTempMaxYValue;
 
-        lineChartView.log("adjustYAxis_scroll_fromScale: " + fromScale);
-        lineChartView.log("adjustYAxis_scroll_toScale: " + toScale);
+        chartView.log("adjustYAxis_scroll_fromScale: " + fromScale);
+        chartView.log("adjustYAxis_scroll_toScale: " + toScale);
 
         final float [] prev = new float[1];
         prev[0] = fromScale;
@@ -72,7 +75,7 @@ public class ScrollChartView extends View {
             @Override
             public void onAnimationUpdate(ValueAnimator animation) {
                 float value = (float) animation.getAnimatedValue();
-                scrollMatrix.postScale(1, value / prev[0], 0f, getHeight());
+                scrollMatrix.postScale(1, value / prev[0], 0f, getHeight() - chartsTopMargin);
                 prev[0] = value;
                 invalidate();
 

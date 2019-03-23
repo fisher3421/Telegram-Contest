@@ -47,10 +47,4 @@
         </LinearLayout>
     </ScrollView>
 
-    <!--<com.molodkin.telegramcharts.LineChartLayout-->
-        <!--android:id="@+id/chart1"-->
-        <!--android:padding="16dp"-->
-        <!--android:layout_width="match_parent"-->
-        <!--android:layout_height="wrap_content"/>-->
-
 </LinearLayout>
