@@ -24,7 +24,7 @@ import java.util.ListIterator;
 //TODO: rtl support
 public final class LineChartView extends View {
 
-    private static final boolean LOG_IS_ENABLED = true;
+    private static final boolean LOG_IS_ENABLED = false;
     private static final String LOG_TAG = "LineChart";
 
     static final long SCALE_ANIMATION_DURATION = 250L;
@@ -88,7 +88,6 @@ public final class LineChartView extends View {
 
     private float[] tempPoint = new float[2];
 
-    private final InfoView infoView = new InfoView(getContext());
     private float stepY;
 
     private ChartData data;
@@ -212,40 +211,10 @@ public final class LineChartView extends View {
             axisPaint.setColor(Utils.getColor(getContext(), R.color.axis_night));
             axisTextPaint.setColor(Utils.getColor(getContext(), R.color.text_night));
         }
-        infoView.setDayMode(dayMode);
         invalidate();
     }
 
-    @SuppressLint("ClickableViewAccessibility")
-    @Override
-    public boolean onTouchEvent(MotionEvent event) {
-
-        log("onTouchEvent ------------------------------------");
-
-        float y = event.getY();
-
-        if (y < availableChartHeight) {
-            handleChartTouch(event);
-        }
-
-        if (event.getAction() == MotionEvent.ACTION_CANCEL || event.getAction() == MotionEvent.ACTION_UP) {
-            infoView.cancelMoving();
-        }
-
-        return event.getAction() == MotionEvent.ACTION_DOWN || event.getAction() == MotionEvent.ACTION_MOVE;
-    }
-
-
-    private void handleChartTouch(MotionEvent event) {
-        infoView.handleTouch(event);
-
-        float x = event.getX();
-        int chartLineXPoint = xIndexByCoord(x);
-        infoView.measure(xPoints[chartLineXPoint], chartLineXPoint, graphs);
-        invalidate();
-    }
-
-    private int xIndexByCoord(float x) {
+    int xIndexByCoord(float x) {
         tempPoint[0] = x;
 
         chartMatrix.invert(chartInverMatrix);
@@ -254,11 +223,17 @@ public final class LineChartView extends View {
         return Math.round(tempPoint[0] / stepX);
     }
 
-    private float xCoordByIndex(float x) {
-        tempPoint[0] = x;
+    float xCoordByIndex(int x) {
+        tempPoint[0] = x * stepX;
         chartMatrix.mapPoints(tempPoint);
 
         return tempPoint[0];
+    }
+
+    float yCoordByIndex(int y) {
+        tempPoint[1] = availableChartHeight - y * stepY;
+        chartMatrix.mapPoints(tempPoint);
+        return tempPoint[1];
     }
 
     private void adjustXAxis() {
@@ -425,8 +400,6 @@ public final class LineChartView extends View {
         drawXTexts(canvas);
 
         drawPoints(canvas);
-
-        infoView.draw(canvas, availableChartHeight, chartMatrix, stepX, stepY);
     }
 
     private void drawXAxes(Canvas canvas) {
@@ -607,7 +580,6 @@ public final class LineChartView extends View {
 
         float toScale = xPoints.length / (end - start * 1f);
         startScaleAnimation(toScale, true);
-//        this.drawStart = this.start;
         this.start = start;
 
         adjustYAxis();
@@ -622,7 +594,6 @@ public final class LineChartView extends View {
         float toScale = xPoints.length / (end - start * 1f);
         startScaleAnimation(toScale, false);
 
-//        this.drawEnd = this.end;
         this.end = end;
 
         adjustYAxis();
@@ -637,8 +608,8 @@ public final class LineChartView extends View {
         final float[] prev = new float[1];
         prev[0] = 0f;
 
-        float fromCoordStart = xCoordByIndex(this.start * stepX);
-        float toCoordStart = xCoordByIndex(start * stepX);
+        float fromCoordStart = xCoordByIndex(this.start);
+        float toCoordStart = xCoordByIndex(start);
 
         ValueAnimator valueAnimator = ValueAnimator.ofFloat(0, fromCoordStart - toCoordStart);
         valueAnimator.setDuration(SCALE_ANIMATION_DURATION);

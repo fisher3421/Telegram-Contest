@@ -29,6 +29,10 @@ public class ChartGraph {
     private float[] tempLinePoints;
     private float[] tempPoints;
 
+    private final float width;
+
+    private final float [] chartMatrixValues = new float[9];
+
     public int getMax(int start, int end) {
         return maxValuesMatrix[start][end - 1];
     }
@@ -45,6 +49,8 @@ public class ChartGraph {
                 maxValuesMatrix[i][j] = Math.max(maxValuesMatrix[i][j - 1], values[j]);
             }
         }
+
+        this.width = width;
 
         linePaint = new Paint();
         linePaint.setStyle(Paint.Style.STROKE);
@@ -72,18 +78,28 @@ public class ChartGraph {
 
     public void draw(Canvas canvas, Matrix matrix, int start, int end) {
         draw(canvas, matrix, linePaint, pointPaint, start, end);
+//        drawPath(canvas, matrix);
     }
 
     public void drawScroll(Canvas canvas, Matrix matrix) {
         draw(canvas, matrix, scrollLinePaint, scrollPointPaint, 0, values.length);
     }
 
-    private void draw(Canvas canvas, Matrix matrix, Paint linePaint, Paint pointPaint, int start, int end) {
-        System.arraycopy(linePoints, 0, tempLinePoints, 0, linePoints.length);
-        System.arraycopy(points, 0, tempPoints, 0, points.length);
+    private void drawPath(Canvas canvas, Matrix matrix) {
+        matrix.getValues(chartMatrixValues);
+        linePaint.setStrokeWidth(width / chartMatrixValues[0]);
+        canvas.drawPath(path, linePaint);
+    }
 
-        matrix.mapPoints(tempLinePoints);
-        matrix.mapPoints(tempPoints);
+    private void draw(Canvas canvas, Matrix matrix, Paint linePaint, Paint pointPaint, int start, int end) {
+        int startLineIndex = start * 4;
+        int countLineIndex = (end - start - 1) * 2;
+
+        int startPointIndex = start * 2;
+        int countPointIndex = (end - start);
+
+        matrix.mapPoints(tempLinePoints, startLineIndex, linePoints, startLineIndex, countLineIndex);
+        matrix.mapPoints(tempPoints, startPointIndex, points, startPointIndex, countPointIndex);
 
         canvas.drawLines(tempLinePoints, start * 4, (end - start - 1) * 4, linePaint);
         canvas.drawPoints(tempPoints, start * 2, (end - start) * 2, pointPaint);

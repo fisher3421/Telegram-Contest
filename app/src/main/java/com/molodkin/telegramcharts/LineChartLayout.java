@@ -14,10 +14,12 @@ public class LineChartLayout extends FrameLayout {
 
     public LineChartView chartView;
     private ScrollChartView scrollChartView;
+    private InfoView infoView;
 
     final int scrollHeight = Utils.dpToPx(this, 40);
     int chartHeight = Utils.dpToPx(this, 300);
     int checkboxHeight = Utils.dpToPx(this, 40);
+    private ScrollBorderView scrollBorderView;
 
     public LineChartLayout(Context context) {
         super(context);
@@ -38,8 +40,11 @@ public class LineChartLayout extends FrameLayout {
         chartView = new LineChartView(getContext());
         chartView.setLayoutParams(new FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, chartHeight));
 
+        infoView = new InfoView(getContext(), chartView);
+        infoView.setLayoutParams(new FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, chartHeight - chartView.xAxisHeight));
+
         scrollChartView = new ScrollChartView(getContext(), chartView);
-        ScrollBorderView scrollBorderView = new ScrollBorderView(getContext(), chartView);
+        scrollBorderView = new ScrollBorderView(getContext(), chartView);
 
         LayoutParams scrollLP = new LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, scrollHeight);
         scrollLP.topMargin = chartHeight;
@@ -48,6 +53,7 @@ public class LineChartLayout extends FrameLayout {
         scrollBorderView.setLayoutParams(scrollLP);
 
         addView(chartView);
+        addView(infoView);
         addView(scrollChartView);
         addView(scrollBorderView);
     }
@@ -80,6 +86,12 @@ public class LineChartLayout extends FrameLayout {
             addView(checkBox, lP);
             height += checkboxHeight;
         }
+    }
+
+    public void setDayMode(boolean dayMode) {
+        chartView.setDayMode(dayMode);
+//        scrollBorderView.setDa(dayMode);
+        infoView.setDayMode(dayMode);
     }
 
 }
