@@ -2,7 +2,6 @@ package com.molodkin.telegramcharts;
 
 import android.content.Context;
 import android.content.res.Configuration;
-import android.graphics.Matrix;
 import android.graphics.Paint;
 import android.text.TextPaint;
 import android.view.View;
@@ -28,12 +27,6 @@ class Utils {
 
     static int spToPx(Context c, int sp) {
         return (int) (c.getResources().getDisplayMetrics().scaledDensity * sp);
-    }
-
-    static Matrix invertMatrix(Matrix matrix) {
-        Matrix invertMatrix = new Matrix();
-        matrix.invert(invertMatrix);
-        return invertMatrix;
     }
 
     static int getColor(Context context, int id) {

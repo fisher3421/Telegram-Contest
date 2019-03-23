@@ -30,18 +30,20 @@ public final class LineChartView extends View {
     static final long SCALE_ANIMATION_DURATION = 250L;
     static final long FADE_ANIMATION_DURATION = 125L;
 
-    private boolean canBeDrawn = false;
-
     ChartGraph[] graphs;
 
     long[] xPoints;
 
     public final Matrix chartMatrix = new Matrix();
+    public final Matrix chartInverMatrix = new Matrix();
 
     private final float [] chartMatrixValues = new float[9];
 
     int start = 0;
     int end = 0;
+
+    int drawStart = 0;
+    int drawEnd = 0;
 
     private ArrayList<XAxisPoint> pointToHide = new ArrayList<>();
 
@@ -87,7 +89,6 @@ public final class LineChartView extends View {
     private float[] tempPoint = new float[2];
 
     private final InfoView infoView = new InfoView(getContext());
-    private final ScrollChartView scrollChartView = new ScrollChartView(getContext(), this);
     private float stepY;
 
     private ChartData data;
@@ -136,7 +137,12 @@ public final class LineChartView extends View {
         if (getWidth() == 0 || getHeight() == 0 || data == null) return;
 
         xPoints = data.x;
+
+        start = 0;
         end = data.x.length;
+
+        drawStart = 0;
+        drawEnd = data.x.length;
 
         graphs = new ChartGraph[data.values.size()];
 
@@ -144,7 +150,7 @@ public final class LineChartView extends View {
             graphs[i] = new ChartGraph(data.values.get(i), Color.parseColor(data.colors.get(i)), graphLineWidth, data.names.get(i));
         }
 
-        availableChartHeight = (float) getHeight() - scrollChartView.scrollHeight - xAxisHeight;
+        availableChartHeight = (float) getHeight() - xAxisHeight;
 
         maxYValue = getMaxYValue();
         maxYValueTemp = maxYValue;
@@ -164,15 +170,6 @@ public final class LineChartView extends View {
             xAxisPoints.add(0, buildXPoint(endX));
             endX-= stepXAxis;
         }
-
-
-
-//        for (ChartGraph graph : graphs) {
-//            graph.path.reset();
-//            graph.linePoints[0] = 0;
-//            graph.linePoints[1] = availableChartHeight - graph.values[0] * stepY;
-//            graph.path.moveTo(0, availableChartHeight - graph.values[0] * stepY);
-//        }
 
         for (int i = 0; i < end - 1; i++) {
             for (ChartGraph graph : graphs) {
@@ -196,10 +193,6 @@ public final class LineChartView extends View {
                 }
             }
         }
-
-        scrollChartView.sizeChanged();
-
-
     }
 
     @Override
@@ -235,12 +228,7 @@ public final class LineChartView extends View {
             handleChartTouch(event);
         }
 
-        if (y > availableChartHeight + xAxisHeight || scrollChartView.isMoving(event)) {
-            scrollChartView.handleScrollTouch(event);
-        }
-
         if (event.getAction() == MotionEvent.ACTION_CANCEL || event.getAction() == MotionEvent.ACTION_UP) {
-            scrollChartView.cancelMoving();
             infoView.cancelMoving();
         }
 
@@ -259,9 +247,9 @@ public final class LineChartView extends View {
 
     private int xIndexByCoord(float x) {
         tempPoint[0] = x;
-        Matrix invert = Utils.invertMatrix(chartMatrix);
 
-        invert.mapPoints(tempPoint);
+        chartMatrix.invert(chartInverMatrix);
+        chartInverMatrix.mapPoints(tempPoint);
 
         return Math.round(tempPoint[0] / stepX);
     }
@@ -438,8 +426,6 @@ public final class LineChartView extends View {
 
         drawPoints(canvas);
 
-        scrollChartView.draw(canvas);
-
         infoView.draw(canvas, availableChartHeight, chartMatrix, stepX, stepY);
     }
 
@@ -523,8 +509,16 @@ public final class LineChartView extends View {
     }
 
     private void drawPoints(Canvas canvas) {
+//        int drawStart = Math.max(Math.min(start, this.drawStart), 0);
+//        int drawEnd = Math.min(Math.max(end, this.drawEnd), xPoints.length);
+        log("drawPoints drawStart: " + this.drawStart + " drawEnd: " + drawEnd);
+//        log("drawPoints start: " + start + " end: " + end);
+//        log("drawPoints drawStart: " + drawStart + " drawEnd: " + drawEnd);
+//        log("drawPoints ------------------------------------");
         for (ChartGraph graph : graphs) {
-            if (graph.linePaint.getAlpha() > 0) graph.draw(canvas, chartMatrix);
+            if (graph.linePaint.getAlpha() > 0) {
+                graph.draw(canvas, chartMatrix, Math.max(drawStart, 0), Math.min(drawEnd, xPoints.length));
+            }
         }
     }
 
@@ -551,7 +545,6 @@ public final class LineChartView extends View {
         valueAnimator.start();
 
         adjustYAxis();
-        scrollChartView.adjustYAxis();
     }
 
     public void adjustYAxis() {
@@ -578,6 +571,7 @@ public final class LineChartView extends View {
         log("adjustYAxis_toScale: " + toScale);
 
         final float[] prev = new float[1];
+        prev[0] = fromScale;
         prev[0] = fromScale;
 
         ValueAnimator valueAnimator = ValueAnimator.ofFloat(fromScale, toScale);
@@ -613,6 +607,7 @@ public final class LineChartView extends View {
 
         float toScale = xPoints.length / (end - start * 1f);
         startScaleAnimation(toScale, true);
+//        this.drawStart = this.start;
         this.start = start;
 
         adjustYAxis();
@@ -627,6 +622,7 @@ public final class LineChartView extends View {
         float toScale = xPoints.length / (end - start * 1f);
         startScaleAnimation(toScale, false);
 
+//        this.drawEnd = this.end;
         this.end = end;
 
         adjustYAxis();
@@ -651,8 +647,10 @@ public final class LineChartView extends View {
             public void onAnimationUpdate(ValueAnimator animation) {
                 float value = (float) animation.getAnimatedValue();
                 chartMatrix.postTranslate(value - prev[0], 0);
-                adjustXAxis();
+                drawStart = xIndexByCoord(0);
+                drawEnd = xIndexByCoord(getWidth()) + 1;
                 prev[0] = value;
+                adjustXAxis();
                 invalidate();
 
             }
@@ -682,6 +680,8 @@ public final class LineChartView extends View {
                 float value = (float) animation.getAnimatedValue();
                 chartMatrix.postScale(value / prev[0], 1, isStart ? getWidth() : 0, 0f);
                 prev[0] = value;
+                drawStart = xIndexByCoord(0);
+                drawEnd = xIndexByCoord(getWidth()) + 1;
                 adjustXAxis();
                 invalidate();
 

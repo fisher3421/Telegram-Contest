@@ -5,14 +5,19 @@ import android.content.res.ColorStateList;
 import android.graphics.Color;
 import android.util.AttributeSet;
 import android.view.LayoutInflater;
-import android.view.View;
+import android.view.ViewGroup;
 import android.widget.CheckBox;
 import android.widget.CompoundButton;
-import android.widget.LinearLayout;
+import android.widget.FrameLayout;
 
-public class LineChartLayout extends LinearLayout {
+public class LineChartLayout extends FrameLayout {
 
-    private LineChartView chartView;
+    public LineChartView chartView;
+    private ScrollChartView scrollChartView;
+
+    final int scrollHeight = Utils.dpToPx(this, 40);
+    int chartHeight = Utils.dpToPx(this, 300);
+    int checkboxHeight = Utils.dpToPx(this, 40);
 
     public LineChartLayout(Context context) {
         super(context);
@@ -30,13 +35,30 @@ public class LineChartLayout extends LinearLayout {
     }
 
     private void init() {
-        setOrientation(VERTICAL);
-        LayoutInflater.from(getContext()).inflate(R.layout.chart_layout, this);
-        chartView = (LineChartView) getChildAt(0);
+        chartView = new LineChartView(getContext());
+        chartView.setLayoutParams(new FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, chartHeight));
 
+        scrollChartView = new ScrollChartView(getContext(), chartView);
+        ScrollBorderView scrollBorderView = new ScrollBorderView(getContext(), chartView);
+
+        LayoutParams scrollLP = new LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, scrollHeight);
+        scrollLP.topMargin = chartHeight;
+        scrollChartView.setLayoutParams(scrollLP);
+
+        scrollBorderView.setLayoutParams(scrollLP);
+
+        addView(chartView);
+        addView(scrollChartView);
+        addView(scrollBorderView);
+    }
+
+    @Override
+    protected void onSizeChanged(int w, int h, int oldw, int oldh) {
+        super.onSizeChanged(w, h, oldw, oldh);
     }
 
     public void setData(ChartData data) {
+        int height = chartHeight + scrollHeight;
         chartView.setData(data);
         for (int i = 0; i < data.names.size(); i++) {
             String name = data.names.get(i);
@@ -50,9 +72,13 @@ public class LineChartLayout extends LinearLayout {
                 @Override
                 public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
                     chartView.enableGraph(finalI, isChecked);
+                    scrollChartView.adjustYAxis();
                 }
             });
-            addView(checkBox);
+            LayoutParams lP = new LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, checkboxHeight);
+            lP.topMargin = height;
+            addView(checkBox, lP);
+            height += checkboxHeight;
         }
     }
 

@@ -26,8 +26,6 @@ public class ChartGraph {
 
     public final String name;
 
-    private final float[] tempStart = new float[2];
-    private final float[] tempEnd = new float[2];
     private float[] tempLinePoints;
     private float[] tempPoints;
 
@@ -72,26 +70,22 @@ public class ChartGraph {
         tempPoints = new float[values.length * 2];
     }
 
-    public void draw(Canvas canvas, Matrix matrix) {
-        draw(canvas, matrix, linePaint, pointPaint);
+    public void draw(Canvas canvas, Matrix matrix, int start, int end) {
+        draw(canvas, matrix, linePaint, pointPaint, start, end);
     }
 
     public void drawScroll(Canvas canvas, Matrix matrix) {
-//        Path pathNew = new Path(path);
-//        pathNew.transform(matrix);
-//
-//        canvas.drawPath(pathNew, scrollLinePaint);
-        draw(canvas, matrix, scrollLinePaint, scrollPointPaint);
+        draw(canvas, matrix, scrollLinePaint, scrollPointPaint, 0, values.length);
     }
 
-    private void draw(Canvas canvas, Matrix matrix, Paint linePaint, Paint pointPaint) {
+    private void draw(Canvas canvas, Matrix matrix, Paint linePaint, Paint pointPaint, int start, int end) {
         System.arraycopy(linePoints, 0, tempLinePoints, 0, linePoints.length);
         System.arraycopy(points, 0, tempPoints, 0, points.length);
 
         matrix.mapPoints(tempLinePoints);
         matrix.mapPoints(tempPoints);
 
-        canvas.drawLines(tempLinePoints, linePaint);
-        canvas.drawPoints(tempPoints, pointPaint);
+        canvas.drawLines(tempLinePoints, start * 4, (end - start - 1) * 4, linePaint);
+        canvas.drawPoints(tempPoints, start * 2, (end - start) * 2, pointPaint);
     }
 }
