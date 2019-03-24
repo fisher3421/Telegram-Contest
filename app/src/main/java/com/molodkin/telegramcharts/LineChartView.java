@@ -25,7 +25,7 @@ public final class LineChartView extends View {
     private static final String LOG_TAG = "LineChart";
 
     static final long SCALE_ANIMATION_DURATION = 250L;
-    static final long FADE_ANIMATION_DURATION = 125L;
+    static final long FADE_ANIMATION_DURATION = 200L;
 
     ChartGraph[] graphs;
 
@@ -42,6 +42,8 @@ public final class LineChartView extends View {
     int drawStart = 0;
     int drawEnd = 0;
 
+    private int [] availableYSteps = {5, 10, 25, 50, 100, 500, 1_000, 1_500, 2_000, 2_500, 3_000, 4_000, 5000, 10_000, 20_000, 30_000, 40_000, 50_000, 100_000, 200_000, 300_000, 400_000, 500_000, 1000_000};
+
     private ArrayList<XAxisPoint> pointToHide = new ArrayList<>();
 
     private int maxYValueTemp;
@@ -56,7 +58,7 @@ public final class LineChartView extends View {
 
     private final ArrayList<XAxisPoint> xAxisPoints = new ArrayList<>();
 
-    int sideMargin = Utils.dpToPx(this, 16);
+    int sideMargin = Utils.dpToPx(this, 20);
     int xAxisHeight = Utils.dpToPx(this, 33);
     private int xAxisWidth = Utils.dpToPx(this, 1);
 
@@ -153,7 +155,7 @@ public final class LineChartView extends View {
         availableChartHeight = (float) getHeight() - xAxisHeight;
         availableChartWidth = (float) getWidth() - sideMargin * 2;
 
-        maxYValue = getMaxYValue();
+        maxYValue = getAdjustedMaxYValue();
         maxYValueTemp = maxYValue;
 
         for (int i = 0; i < rowNumber; i++) {
@@ -164,7 +166,7 @@ public final class LineChartView extends View {
         stepY = availableChartHeight / maxYValue;
         stepX = availableChartWidth / (xPoints.length - 1);
 
-        int endX = (int) ((availableChartWidth - xAxisHalfOfTextWidth) / stepX);
+        int endX = (int) ((availableChartWidth) / stepX);
         int stepXAxis = Math.round(xAxisTextWidthWithMargins / stepX);
 
         while (endX > 0) {
@@ -248,7 +250,7 @@ public final class LineChartView extends View {
     }
 
     private void adjustXAxis() {
-        pointToHide = new ArrayList<>();
+        pointToHide.clear();
         final ArrayList<XAxisPoint> poitToShow = new ArrayList<>();
         XAxisPoint first = xAxisPoints.get(0);
         XAxisPoint second = xAxisPoints.get(1);
@@ -256,7 +258,7 @@ public final class LineChartView extends View {
 
         float currentDistance = getXViewCoord(second.x) - getXViewCoord(first.x);
 
-        if (currentDistance > xAxisTextWidthWithMargins * 1.5) {
+        if (currentDistance > xAxisTextWidthWithMargins) {
             int numberToAdd = (int) (currentDistance / xAxisTextWidthWithMargins) - 1;
             currentStepX = currentStepX / (numberToAdd + 1);
             for (int i = 0; i < xAxisPoints.size() - numberToAdd; i+= numberToAdd + 1) {
@@ -268,18 +270,18 @@ public final class LineChartView extends View {
                     poitToShow.add(point);
                 }
             }
-        } else if (currentDistance < xAxisTextWidthWithMargins) {
-            int numberToRemove = (int) (xAxisTextWidthWithMargins / currentDistance);
-            Iterator<XAxisPoint> iterator = xAxisPoints.iterator();
-            iterator.next();
-            while (iterator.hasNext()) {
+        } else if (currentDistance < xAxisTextWidth ) {
+            int numberToRemove = (int) (xAxisTextWidth / currentDistance);
+            ListIterator<XAxisPoint> iterator = xAxisPoints.listIterator(xAxisPoints.size());
+            iterator.previous();
+            while (iterator.hasPrevious()) {
                 for (int i = 0; i < numberToRemove; i++) {
-                    if (iterator.hasNext()){
-                        pointToHide.add(iterator.next());
+                    if (iterator.hasPrevious()){
+                        pointToHide.add(iterator.previous());
                         iterator.remove();
                     } else break;
                 }
-                if (iterator.hasNext()) iterator.next();
+                if (iterator.hasPrevious()) iterator.previous();
                 else break;
             }
         }
@@ -372,12 +374,12 @@ public final class LineChartView extends View {
     }
 
     private boolean isXTextVisible(XAxisPoint point) {
-        float xCoord = getXViewCoord(point.x);
+        float xCoord = getXViewCoord(point.x) + sideMargin;
         return xCoord + point.width / 2 > 0 && xCoord - point.width / 2 < getWidth();
     }
 
     private boolean isXTextVisible(int x) {
-        float xCoord = getXViewCoord(x);
+        float xCoord = getXViewCoord(x) + sideMargin;
         return xCoord + xAxisHalfOfTextWidth > 0 && xCoord - xAxisHalfOfTextWidth < getWidth();
     }
 
@@ -403,6 +405,20 @@ public final class LineChartView extends View {
         } else {
             return Collections.max(maxValues);
         }
+    }
+
+    private int getAdjustedMaxYValue() {
+        int value = getMaxYValue();
+        int tempStep = (int) Math.ceil(value * 1f / rowNumber);
+
+        for (int i = 0; i < availableYSteps.length - 1; i++) {
+            if (availableYSteps[i] < tempStep && tempStep <= availableYSteps[i + 1]) {
+                value = rowNumber * availableYSteps[i + 1];
+                break;
+            }
+        }
+
+        return value;
     }
 
     @Override
@@ -538,7 +554,7 @@ public final class LineChartView extends View {
     }
 
     public void adjustYAxis() {
-        int newTempMaxYValue = getMaxYValue();
+        int newTempMaxYValue = getAdjustedMaxYValue();
 
         if (newTempMaxYValue == this.maxYValueTemp) return;
 

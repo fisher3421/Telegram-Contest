@@ -22,7 +22,7 @@ public class LineChartLayout extends FrameLayout {
     int chartHeight = Utils.dpToPx(this, 300);
     int checkboxHeight = Utils.dpToPx(this, 36);
     int checkboxTopMargin = Utils.dpToPx(this, 16);
-    int sideMargin = Utils.dpToPx(this, 16);
+    int sideMargin = Utils.dpToPx(this, 20);
     private ScrollBorderView scrollBorderView;
 
     private ArrayList<CheckBox> checkBoxes = new ArrayList<>();

@@ -7,6 +7,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.LinearLayout;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -22,14 +23,13 @@ public class MainActivity extends Activity {
         List<ChartData> data = null;
 
         data = new ArrayList<>();
-        data.add(ChartData.buidFake());
 
-//        try {
-//            data = DataProvider.getData(this);
-//        } catch (IOException e) {
-//            e.printStackTrace();
-//            return;
-//        }
+        try {
+            data = DataProvider.getData(this);
+        } catch (IOException e) {
+            e.printStackTrace();
+            return;
+        }
 
         setContentView(R.layout.activity_main);
 
@@ -37,14 +37,14 @@ public class MainActivity extends Activity {
 
         LinearLayout root = findViewById(R.id.root);
 
-        for (ChartData chartData : data) {
+        for (int i = 0; i < data.size(); i++) {
             LineChartLayout chartLayout = new LineChartLayout(this);
             chartLayout.setPadding(0, Utils.dpToPx(this, 16), 0, 0);
             charts.add(chartLayout);
-            chartLayout.setData(chartData);
+            chartLayout.setData(data.get(i));
             LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+            if (i != 0) lp.topMargin = Utils.dpToPx(this, 32);
             root.addView(chartLayout, lp);
-
         }
 
         findViewById(R.id.switchDayNightMode).setOnClickListener(new View.OnClickListener() {
