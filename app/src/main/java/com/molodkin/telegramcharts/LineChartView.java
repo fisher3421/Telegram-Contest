@@ -25,7 +25,7 @@ public final class LineChartView extends View {
     private static final String LOG_TAG = "LineChart";
 
     static final long SCALE_ANIMATION_DURATION = 250L;
-    static final long FADE_ANIMATION_DURATION = 200L;
+    static final long FADE_ANIMATION_DURATION = 150L;
 
     ChartGraph[] graphs;
 
@@ -44,7 +44,7 @@ public final class LineChartView extends View {
 
     private int [] availableYSteps = {5, 10, 25, 50, 100, 500, 1_000, 1_500, 2_000, 2_500, 3_000, 4_000, 5000, 10_000, 20_000, 30_000, 40_000, 50_000, 100_000, 200_000, 300_000, 400_000, 500_000, 1000_000};
 
-    private ArrayList<XAxisPoint> pointToHide = new ArrayList<>();
+    private ArrayList<XAxisPoint> pointToHideAnimated = new ArrayList<>();
 
     private int maxYValueTemp;
     int maxYValue;
@@ -250,8 +250,8 @@ public final class LineChartView extends View {
     }
 
     private void adjustXAxis() {
-        pointToHide.clear();
-        final ArrayList<XAxisPoint> poitToShow = new ArrayList<>();
+        final ArrayList<XAxisPoint> pointsToShow = new ArrayList<>();
+        final ArrayList<XAxisPoint> pointsToHide = new ArrayList<>();
         XAxisPoint first = xAxisPoints.get(0);
         XAxisPoint second = xAxisPoints.get(1);
         int currentStepX = second.x - first.x;
@@ -267,7 +267,7 @@ public final class LineChartView extends View {
                     if (newX >= xPoints.length) break;
                     XAxisPoint point = buildXPointTransparent(newX);
                     xAxisPoints.add(i + j, point);
-                    poitToShow.add(point);
+                    pointsToShow.add(point);
                 }
             }
         } else if (currentDistance < xAxisTextWidth ) {
@@ -277,7 +277,7 @@ public final class LineChartView extends View {
             while (iterator.hasPrevious()) {
                 for (int i = 0; i < numberToRemove; i++) {
                     if (iterator.hasPrevious()){
-                        pointToHide.add(iterator.previous());
+                        pointsToHide.add(iterator.previous());
                         iterator.remove();
                     } else break;
                 }
@@ -325,13 +325,13 @@ public final class LineChartView extends View {
             else break;
         }
 
-        if (poitToShow.size() > 0) {
+        if (pointsToShow.size() > 0) {
             ValueAnimator valueAnimator = ValueAnimator.ofInt(0, 255);
             valueAnimator.setDuration(FADE_ANIMATION_DURATION);
             valueAnimator.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
                 @Override
                 public void onAnimationUpdate(ValueAnimator animation) {
-                    for (XAxisPoint point : poitToShow) {
+                    for (XAxisPoint point : pointsToShow) {
                         point.alpha = (int) animation.getAnimatedValue();
                     }
                     invalidate();
@@ -341,13 +341,14 @@ public final class LineChartView extends View {
             valueAnimator.start();
         }
 
-        if (pointToHide.size() > 0) {
+        if (pointsToHide.size() > 0) {
+            pointToHideAnimated = new ArrayList<>(pointsToHide);
             ValueAnimator valueAnimator = ValueAnimator.ofInt(255, 0);
             valueAnimator.setDuration(FADE_ANIMATION_DURATION);
             valueAnimator.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
                 @Override
                 public void onAnimationUpdate(ValueAnimator animation) {
-                    for (XAxisPoint point : pointToHide) {
+                    for (XAxisPoint point : pointToHideAnimated) {
                         point.alpha = (int) animation.getAnimatedValue();
                     }
                     invalidate();
@@ -497,14 +498,14 @@ public final class LineChartView extends View {
             canvas.drawText(point.date, xCoord - point.width / 2f, 0, axisTextPaint);
         }
 
-        Iterator<XAxisPoint> iterator = pointToHide.iterator();
+        Iterator<XAxisPoint> iterator = pointToHideAnimated.iterator();
 
         while (iterator.hasNext()) {
             XAxisPoint next = iterator.next();
             if (next.alpha == 0) iterator.remove();
         }
 
-        for (XAxisPoint point : pointToHide) {
+        for (XAxisPoint point : pointToHideAnimated) {
             float xCoord = getXViewCoord(point.x);
             axisTextPaint.setAlpha(point.alpha);
             canvas.drawText(point.date, xCoord - point.width / 2f, 0, axisTextPaint);

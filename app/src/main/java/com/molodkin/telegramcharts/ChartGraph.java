@@ -82,13 +82,13 @@ class ChartGraph {
         int startLineIndex = start * 4;
         int countLineIndex = (end - start - 1) * 2;
 
-        int startPointIndex = start * 2;
-        int countPointIndex = (end - start);
+        int startPointIndex = (start + 1) * 2;
+        int countPointIndex = (end - start - 2);
 
         matrix.mapPoints(tempLinePoints, startLineIndex, linePoints, startLineIndex, countLineIndex);
         matrix.mapPoints(tempPoints, startPointIndex, points, startPointIndex, countPointIndex);
 
         canvas.drawLines(tempLinePoints, start * 4, (end - start - 1) * 4, linePaint);
-        canvas.drawPoints(tempPoints, start * 2, (end - start) * 2, pointPaint);
+        canvas.drawPoints(tempPoints, (start + 1) * 2, (end - start - 2) * 2, pointPaint);
     }
 }
