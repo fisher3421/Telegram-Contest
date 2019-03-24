@@ -162,7 +162,12 @@ class InfoView extends View {
         }
 
         invalidate();
-        return event.getAction() == MotionEvent.ACTION_DOWN || event.getAction() == MotionEvent.ACTION_MOVE;
+        if (event.getAction() == MotionEvent.ACTION_DOWN || event.getAction() == MotionEvent.ACTION_MOVE) {
+            getParent().requestDisallowInterceptTouchEvent(true);
+            return true;
+        } else {
+            return false;
+        }
     }
 
     void measure() {

@@ -60,8 +60,12 @@ class ScrollBorderView extends View {
             cancelMoving();
         }
 
-        return event.getAction() == MotionEvent.ACTION_DOWN || event.getAction() == MotionEvent.ACTION_MOVE;
-
+        if (event.getAction() == MotionEvent.ACTION_DOWN || event.getAction() == MotionEvent.ACTION_MOVE) {
+            getParent().requestDisallowInterceptTouchEvent(true);
+            return true;
+        } else {
+            return false;
+        }
     }
 
     void handleScrollTouch(MotionEvent event) {
