@@ -51,7 +51,11 @@ public class ScrollChartView extends View {
             if (graph.isEnable) maxValues.add(graph.getMax(0, chartView.xPoints.length));
         }
 
-        return Collections.max(maxValues);
+        if (maxValues.size() == 0) {
+            return maxYValueTemp;
+        } else {
+            return Collections.max(maxValues);
+        }
     }
 
     void adjustYAxis() {

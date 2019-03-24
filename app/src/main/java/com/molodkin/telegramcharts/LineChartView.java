@@ -398,7 +398,11 @@ public final class LineChartView extends View {
             if (graph.isEnable) maxValues.add(graph.getMax(start, end));
         }
 
-        return Collections.max(maxValues);
+        if (maxValues.size() == 0) {
+            return maxYValueTemp;
+        } else {
+            return Collections.max(maxValues);
+        }
     }
 
     @Override
