@@ -210,6 +210,12 @@ public final class LineChartView extends View {
         invalidate();
     }
 
+    private float getXViewCoord(int x) {
+        tempPoint[0] = x * stepX;
+        chartMatrix.mapPoints(tempPoint);
+        return tempPoint[0];
+    }
+
     int xIndexByCoord(float x) {
         tempPoint[0] = x - sideMargin;
 
@@ -228,13 +234,6 @@ public final class LineChartView extends View {
 
         float value = tempPoint[0] / stepX;
         return Math.max(Math.min(value, xPoints.length - 1), 0);
-    }
-
-    float xCoordByIndex(int x) {
-        tempPoint[0] = x * stepX;
-        chartMatrix.mapPoints(tempPoint);
-
-        return sideMargin + tempPoint[0];
     }
 
     float yCoordByIndex(int y) {
@@ -382,12 +381,6 @@ public final class LineChartView extends View {
     private boolean isXTextVisible(int x) {
         float xCoord = getXViewCoord(x) + sideMargin;
         return xCoord + xAxisHalfOfTextWidth > 0 && xCoord - xAxisHalfOfTextWidth < getWidth();
-    }
-
-    private float getXViewCoord(int x) {
-        tempPoint[0] = x * stepX;
-        chartMatrix.mapPoints(tempPoint);
-        return tempPoint[0];
     }
 
     private float getYViewCoord(int y) {
@@ -642,8 +635,8 @@ public final class LineChartView extends View {
         final float[] prev = new float[1];
         prev[0] = 0f;
 
-        float fromCoordStart = xCoordByIndex(this.start);
-        float toCoordStart = xCoordByIndex(start);
+        float fromCoordStart = getXViewCoord(this.start);
+        float toCoordStart = getXViewCoord(start);
 
         ValueAnimator valueAnimator = ValueAnimator.ofFloat(0, fromCoordStart - toCoordStart);
         valueAnimator.setDuration(SCALE_ANIMATION_DURATION);
