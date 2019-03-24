@@ -218,6 +218,16 @@ public final class LineChartView extends View {
         return Math.max(Math.min(value, xPoints.length - 1), 0);
     }
 
+    float xValueByCoord(float x) {
+        tempPoint[0] = x - sideMargin;
+
+        chartMatrix.invert(chartInverMatrix);
+        chartInverMatrix.mapPoints(tempPoint);
+
+        float value = tempPoint[0] / stepX;
+        return Math.max(Math.min(value, xPoints.length - 1), 0);
+    }
+
     float xCoordByIndex(int x) {
         tempPoint[0] = x * stepX;
         chartMatrix.mapPoints(tempPoint);
@@ -226,6 +236,12 @@ public final class LineChartView extends View {
     }
 
     float yCoordByIndex(int y) {
+        tempPoint[1] = availableChartHeight - y * stepY;
+        chartMatrix.mapPoints(tempPoint);
+        return tempPoint[1];
+    }
+
+    float yCoordByValue(float y) {
         tempPoint[1] = availableChartHeight - y * stepY;
         chartMatrix.mapPoints(tempPoint);
         return tempPoint[1];

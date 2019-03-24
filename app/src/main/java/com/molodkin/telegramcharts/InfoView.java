@@ -16,7 +16,7 @@ import java.util.Date;
 class InfoView extends View {
 
     private final int dateTextSize = Utils.spToPx(getContext(), 12);
-    private final int valueTextSize = Utils.spToPx(getContext(), 16);
+    private final int valueTextSize = Utils.spToPx(getContext(), 14);
     private final int nameTextSize = Utils.spToPx(getContext(), 10);
 
     private float dateTextHeight;
@@ -25,7 +25,7 @@ class InfoView extends View {
 
     private final int topBottomPadding = Utils.dpToPx(getContext(), 8);
     private final int leftRightPadding = Utils.dpToPx(getContext(), 16);
-    private final int leftRightDataMargin = Utils.dpToPx(getContext(), 24);
+    private final int leftRightDataMargin = Utils.dpToPx(getContext(), 16);
     private final int dateValueMargin = Utils.dpToPx(getContext(), 16);
     private final int valueNameMargin = Utils.dpToPx(getContext(), 8);
 
@@ -67,7 +67,7 @@ class InfoView extends View {
 
     private final float[] leftValues = new float[20];
     private final String[] textValues = new String[20];
-    private final int[] graphValues = new int[20];
+    private final float [] graphValues = new float[20];
     private final String[] textNames = new String[20];
     private final int[] textColors = new int[20];
     private int x;
@@ -76,6 +76,11 @@ class InfoView extends View {
     private boolean isMoving;
 
     private final LineChartView chartView;
+
+    private float xCoord = 0f;
+
+    private float minX = 0;
+    private float maxX = 0;
 
     InfoView(Context c, LineChartView chartView) {
         super(c);
@@ -124,6 +129,13 @@ class InfoView extends View {
     }
 
     @Override
+    protected void onSizeChanged(int w, int h, int oldw, int oldh) {
+        super.onSizeChanged(w, h, oldw, oldh);
+        minX = chartView.sideMargin;
+        maxX = getWidth() - chartView.sideMargin;
+    }
+
+    @Override
     public boolean onTouchEvent(MotionEvent event) {
         switch (event.getAction()) {
             case MotionEvent.ACTION_DOWN:
@@ -135,17 +147,28 @@ class InfoView extends View {
                 break;
         }
 
+        xCoord = event.getX();
+
+        if (xCoord > maxX) {
+            xCoord = maxX;
+        }
+
+        if (xCoord < minX) {
+            xCoord = minX;
+        }
+
         if (isMoving) {
-            float x = event.getX();
-            int chartLineXPoint = chartView.xIndexByCoord(x);
-            measure(chartView.xPoints[chartLineXPoint], chartLineXPoint, chartView.graphs);
+            measure();
         }
 
         invalidate();
         return event.getAction() == MotionEvent.ACTION_DOWN || event.getAction() == MotionEvent.ACTION_MOVE;
     }
 
-    void measure(long date, int x, ChartGraph[] graphs) {
+    void measure() {
+        float xValue  = chartView.xValueByCoord(xCoord);
+        x = Math.round(xValue);
+        long date = chartView.xPoints[x];
         tempDate.setTime(date);
 
         dateText = dateFormat.format(tempDate);
@@ -154,23 +177,30 @@ class InfoView extends View {
 
         float valuesWidth = 0;
 
-        this.x = x;
+        graphCount = chartView.graphs.length;
 
-        graphCount = graphs.length;
-
-        for (int i = 0; i < graphs.length; i++) {
-            ChartGraph graph = graphs[i];
+        for (int i = 0; i < chartView.graphs.length; i++) {
+            ChartGraph graph = chartView.graphs[i];
             if (graph.isEnable) {
                 textNames[i] = graph.name;
                 float nameWidth = nameTextPaint.measureText(graph.name);
-                graphValues[i] = graph.values[x];
+
+                int xBefore = (int) xValue;
+                int y1 = graph.values[xBefore];
+                int y2 = graph.values[(int) Math.ceil(xValue)];
+                float fraction = xValue - xBefore;
+                float y = y2 * fraction + y1 * (1 - fraction);
+
+
+                graphValues[i] = y;
+
                 String valueText = String.valueOf(graph.values[x]);
                 textValues[i] = valueText;
                 textColors[i] = graph.linePaint.getColor();
                 float valueWidth = valueTextPaint.measureText(valueText);
                 leftValues[i] = valuesWidth;
                 valuesWidth += Math.max(nameWidth, valueWidth);
-                if (i + 1 < graphs.length && graphs[i + 1].isEnable)
+                if (i + 1 < chartView.graphs.length && chartView.graphs[i + 1].isEnable)
                     valuesWidth += leftRightDataMargin;
             } else {
                 textValues[i] = "";
@@ -191,14 +221,13 @@ class InfoView extends View {
     protected void onDraw(Canvas canvas) {
         super.onDraw(canvas);
         if (!isMoving) return;
-        float xCoord = chartView.xCoordByIndex(x);
 
         canvas.drawLine(xCoord, verticalLineTopMargin, xCoord, getHeight(), verticalLinePaint);
 
         for (int i = 0; i < graphCount; i++) {
             String textValue = textValues[i];
             if (textValue.length() > 0) {
-                float yCoord = chartView.yCoordByIndex(graphValues[i]);
+                float yCoord = chartView.yCoordByValue(graphValues[i]);
 
                 int color = textColors[i];
                 circleStrokePaint.setColor(color);
