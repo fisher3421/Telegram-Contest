@@ -26,7 +26,7 @@ class InfoView extends View {
     private final int topBottomPadding = Utils.dpToPx(getContext(), 8);
     private final int leftRightPadding = Utils.dpToPx(getContext(), 16);
     private final int leftRightDataMargin = Utils.dpToPx(getContext(), 16);
-    private final int dateValueMargin = Utils.dpToPx(getContext(), 16);
+    private final int dateValueMargin = Utils.dpToPx(getContext(), 8);
     private final int valueNameMargin = Utils.dpToPx(getContext(), 8);
 
     private final int verticalLineWindowLeftMargin = Utils.dpToPx(getContext(), 24);
@@ -99,12 +99,15 @@ class InfoView extends View {
         circleStrokePaint.setStrokeWidth(circleStrokeWidth);
 
         dateTextPaint.setTextSize(dateTextSize);
+        dateTextPaint.setAntiAlias(true);
         dateTextHeight = Utils.getFontHeight(dateTextPaint);
 
         valueTextPaint.setTextSize(valueTextSize);
+        valueTextPaint.setAntiAlias(true);
         valueTextHeight = Utils.getFontHeight(valueTextPaint);
 
         nameTextPaint.setTextSize(nameTextSize);
+        nameTextPaint.setAntiAlias(true);
         nameTextHeight = Utils.getFontHeight(nameTextPaint);
 
         left = backgroundPadding.left + leftRightPadding;
