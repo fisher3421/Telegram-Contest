@@ -397,7 +397,7 @@ public final class LineChartView extends View {
     private int getMaxYValue() {
         ArrayList<Integer> maxValues = new ArrayList<>(graphs.length);
         for (ChartGraph graph : graphs) {
-            if (graph.isEnable) maxValues.add(graph.getMax(yAdjustStart, yAdjustEnd));
+            if (graph.isEnable) maxValues.add(graph.getMax(start, end));
         }
 
         if (maxValues.size() == 0) {
