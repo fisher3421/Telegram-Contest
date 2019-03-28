@@ -42,7 +42,10 @@ public final class LineChartView extends View {
     int drawStart = 0;
     int drawEnd = 0;
 
-    private int [] availableYSteps = {5, 10, 25, 50, 100, 500, 1_000, 1_500, 2_000, 2_500, 3_000, 4_000, 5000, 10_000, 20_000, 30_000, 40_000, 50_000, 100_000, 200_000, 300_000, 400_000, 500_000, 1000_000};
+    int yAdjustStart = 0;
+    int yAdjustEnd = 0;
+
+    private int [] availableYSteps = {5, 10, 20, 25, 40, 50, 100, 500, 1_000, 1_500, 2_000, 2_500, 3_000, 4_000, 5000, 10_000, 20_000, 30_000, 40_000, 50_000, 100_000, 200_000, 300_000, 400_000, 500_000, 1000_000};
 
     private ArrayList<XAxisPoint> pointToHideAnimated = new ArrayList<>();
 
@@ -145,6 +148,9 @@ public final class LineChartView extends View {
 
         drawStart = 0;
         drawEnd = data.x.length;
+
+        yAdjustStart = 0;
+        yAdjustEnd = data.x.length;
 
         graphs = new ChartGraph[data.values.size()];
 
@@ -391,7 +397,7 @@ public final class LineChartView extends View {
     private int getMaxYValue() {
         ArrayList<Integer> maxValues = new ArrayList<>(graphs.length);
         for (ChartGraph graph : graphs) {
-            if (graph.isEnable) maxValues.add(graph.getMax(start, end));
+            if (graph.isEnable) maxValues.add(graph.getMax(yAdjustStart, yAdjustEnd));
         }
 
         if (maxValues.size() == 0) {
@@ -605,9 +611,12 @@ public final class LineChartView extends View {
         if (start >= end - 2) return;
         if (start == this.start) return;
 
-        float toScale = xPoints.length / (end - start * 1f);
+        float toScale = availableChartWidth / (getXViewCoord(end - 1) - getXViewCoord(start));
         startScaleAnimation(toScale, true);
         this.start = start;
+
+        this.yAdjustStart = xIndexByCoord(0);
+        this.yAdjustEnd = xIndexByCoord(getWidth()) + 1;
 
         adjustYAxis();
     }
@@ -618,10 +627,13 @@ public final class LineChartView extends View {
 
         if (end == this.end) return;
 
-        float toScale = xPoints.length / (end - start * 1f);
+        float toScale = availableChartWidth / (getXViewCoord(end - 1) - getXViewCoord(start));
         startScaleAnimation(toScale, false);
 
         this.end = end;
+
+        this.yAdjustStart = xIndexByCoord(0);
+        this.yAdjustEnd = xIndexByCoord(getWidth()) + 1;
 
         adjustYAxis();
     }
@@ -658,11 +670,14 @@ public final class LineChartView extends View {
         this.start = start;
         this.end = end;
 
+        this.yAdjustStart = xIndexByCoord(0);
+        this.yAdjustEnd = xIndexByCoord(getWidth()) + 1;
+
         adjustYAxis();
     }
 
     private void startScaleAnimation(float toScale, final boolean isStart) {
-        float fromScale = xPoints.length / (end - start * 1f);
+        float fromScale = availableChartWidth / (getXViewCoord(end - 1) - getXViewCoord(start));
 
         log("fromScale: " + fromScale);
         log("toScale: " + toScale);
@@ -677,9 +692,9 @@ public final class LineChartView extends View {
             public void onAnimationUpdate(ValueAnimator animation) {
                 float value = (float) animation.getAnimatedValue();
                 chartMatrix.postScale(value / prev[0], 1, isStart ? availableChartWidth : 0f, 0f);
+                drawStart = xIndexByCoord(0);
+                drawEnd = xIndexByCoord(getWidth()) + 1;
                 prev[0] = value;
-                drawStart = xIndexByCoord(-sideMargin);
-                drawEnd = xIndexByCoord(getWidth() + sideMargin) + 1;
                 adjustXAxis();
                 invalidate();
 
