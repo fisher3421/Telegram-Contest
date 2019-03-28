@@ -32,7 +32,7 @@ public final class LineChartView extends View {
     long[] xPoints;
 
     public final Matrix chartMatrix = new Matrix();
-    public final Matrix chartInverMatrix = new Matrix();
+    public final Matrix chartInvertMatrix = new Matrix();
 
     private final float [] chartMatrixValues = new float[9];
 
@@ -219,8 +219,8 @@ public final class LineChartView extends View {
     int xIndexByCoord(float x) {
         tempPoint[0] = x - sideMargin;
 
-        chartMatrix.invert(chartInverMatrix);
-        chartInverMatrix.mapPoints(tempPoint);
+        chartMatrix.invert(chartInvertMatrix);
+        chartInvertMatrix.mapPoints(tempPoint);
 
         int value = Math.round(tempPoint[0] / stepX);
         return Math.max(Math.min(value, xPoints.length - 1), 0);
@@ -229,8 +229,8 @@ public final class LineChartView extends View {
     float xValueByCoord(float x) {
         tempPoint[0] = x - sideMargin;
 
-        chartMatrix.invert(chartInverMatrix);
-        chartInverMatrix.mapPoints(tempPoint);
+        chartMatrix.invert(chartInvertMatrix);
+        chartInvertMatrix.mapPoints(tempPoint);
 
         float value = tempPoint[0] / stepX;
         return Math.max(Math.min(value, xPoints.length - 1), 0);
