@@ -1,5 +1,6 @@
 package com.molodkin.telegramcharts;
 
+import android.annotation.SuppressLint;
 import android.content.Context;
 import android.graphics.Canvas;
 import android.graphics.Paint;
@@ -11,6 +12,7 @@ import android.view.View;
 
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Date;
 
 class InfoView extends View {
@@ -56,7 +58,6 @@ class InfoView extends View {
     private final Date tempDate = new Date();
 
     private final float left;
-    private final float top;
     private final float height;
     private float width;
 
@@ -65,13 +66,14 @@ class InfoView extends View {
     private final float dateNameY;
     private String dateText;
 
-    private final float[] leftValues = new float[20];
-    private final String[] textValues = new String[20];
-    private final float [] graphValues = new float[20];
-    private final String[] textNames = new String[20];
-    private final int[] textColors = new int[20];
-    private int x;
-    private int graphCount;
+    private final ArrayList<Float> leftValues = new ArrayList<>();
+    private final ArrayList<String> textValues = new ArrayList<>();
+    private final ArrayList<String> textNames = new ArrayList<>();
+    private final ArrayList<Integer> textColors = new ArrayList<>();
+    private final ArrayList<Float> yCoords = new ArrayList<>();
+    private final ArrayList<Float> yCoordsSored = new ArrayList<>();
+
+    private float windowTopMargin = 0f;
 
     private boolean isMoving;
 
@@ -111,7 +113,7 @@ class InfoView extends View {
         nameTextHeight = Utils.getFontHeight(nameTextPaint);
 
         left = backgroundPadding.left + leftRightPadding;
-        top = backgroundPadding.top + topBottomPadding;
+        float top = backgroundPadding.top + topBottomPadding;
 
         dateTextY = top + dateTextHeight;
         dateValueY = dateTextY + dateValueMargin + valueTextHeight;
@@ -140,6 +142,7 @@ class InfoView extends View {
 
     float downX = 0;
 
+    @SuppressLint("ClickableViewAccessibility")
     @Override
     public boolean onTouchEvent(MotionEvent event) {
         switch (event.getAction()) {
@@ -178,7 +181,7 @@ class InfoView extends View {
 
     void measure() {
         float xValue  = chartView.xValueByCoord(xCoord);
-        x = Math.round(xValue);
+        int x = Math.round(xValue);
         long date = chartView.xPoints[x];
         tempDate.setTime(date);
 
@@ -188,12 +191,18 @@ class InfoView extends View {
 
         float valuesWidth = 0;
 
-        graphCount = chartView.graphs.length;
+        textNames.clear();
+        textValues.clear();
+        textColors.clear();
+        leftValues.clear();
+        yCoords.clear();
+        yCoordsSored.clear();
+        windowTopMargin = 0;
 
         for (int i = 0; i < chartView.graphs.length; i++) {
             ChartGraph graph = chartView.graphs[i];
             if (graph.isEnable) {
-                textNames[i] = graph.name;
+                textNames.add(graph.name);
                 float nameWidth = nameTextPaint.measureText(graph.name);
 
                 int xBefore = (int) xValue;
@@ -202,19 +211,26 @@ class InfoView extends View {
                 float fraction = xValue - xBefore;
                 float y = y2 * fraction + y1 * (1 - fraction);
 
-
-                graphValues[i] = y;
+                float yCoord = chartView.yCoordByValue(y);
+                yCoords.add(yCoord);
+                if (yCoordsSored.size() > 0) {
+                    if (yCoordsSored.get(0) > yCoord) {
+                        yCoordsSored.add(0, yCoord);
+                    } else {
+                        yCoordsSored.add(yCoord);
+                    }
+                } else {
+                    yCoordsSored.add(yCoord);
+                }
 
                 String valueText = String.valueOf(graph.values[x]);
-                textValues[i] = valueText;
-                textColors[i] = graph.linePaint.getColor();
+                textValues.add(valueText);
+                textColors.add(graph.linePaint.getColor());
                 float valueWidth = valueTextPaint.measureText(valueText);
-                leftValues[i] = valuesWidth;
+                leftValues.add(valuesWidth);
                 valuesWidth += Math.max(nameWidth, valueWidth);
                 if (i + 1 < chartView.graphs.length && chartView.graphs[i + 1].isEnable)
                     valuesWidth += leftRightDataMargin;
-            } else {
-                textValues[i] = "";
             }
         }
 
@@ -226,25 +242,48 @@ class InfoView extends View {
         backgroundSize.bottom = (int) height;
 
         background.setBounds(backgroundSize);
+
+        windowTopMargin = 0;
+
+        int circleDiameter = circleRadius * 2;
+
+        for (int i = 0; i < yCoordsSored.size(); i++) {
+            float y = yCoordsSored.get(i);
+            if (i == 0) {
+                if (y > height + circleDiameter) break;
+            } else {
+                float yPre = yCoordsSored.get(i - 1);
+                if (Math.abs(y - yPre) > height + circleDiameter * 2) {
+                    windowTopMargin = yPre + circleDiameter;
+                    break;
+                } else if (i == yCoordsSored.size() - 1) {
+                    if (y + circleDiameter + height < getHeight()) {
+                        windowTopMargin = y + circleDiameter;
+                        break;
+                    }
+                }
+            }
+        }
     }
 
     @Override
     protected void onDraw(Canvas canvas) {
         super.onDraw(canvas);
-        if (!isMoving) return;
 
-        canvas.drawLine(xCoord, verticalLineTopMargin, xCoord, getHeight(), verticalLinePaint);
+        if (!isMoving || textValues.isEmpty()) return;
 
-        for (int i = 0; i < graphCount; i++) {
-            String textValue = textValues[i];
-            if (textValue.length() > 0) {
-                float yCoord = chartView.yCoordByValue(graphValues[i]);
 
-                int color = textColors[i];
-                circleStrokePaint.setColor(color);
-                canvas.drawCircle(xCoord, yCoord, circleRadius, circleFillPaint);
-                canvas.drawCircle(xCoord, yCoord, circleRadius, circleStrokePaint);
-            }
+        float startYVerticalLIne = Math.min(windowTopMargin + verticalLineTopMargin, yCoordsSored.get(0));
+
+        canvas.drawLine(xCoord, startYVerticalLIne, xCoord, getHeight(), verticalLinePaint);
+
+        for (int i = 0; i < textValues.size(); i++) {
+            float yCoord = yCoords.get(i);
+
+            int color = textColors.get(i);
+            circleStrokePaint.setColor(color);
+            canvas.drawCircle(xCoord, yCoord, circleRadius, circleFillPaint);
+            canvas.drawCircle(xCoord, yCoord, circleRadius, circleStrokePaint);
         }
 
         canvas.save();
@@ -257,6 +296,8 @@ class InfoView extends View {
             windowLeftMargin = getWidth() - width;
         }
 
+        canvas.translate(0 , windowTopMargin);
+
         canvas.translate(windowLeftMargin, 0);
 
         background.draw(canvas);
@@ -265,19 +306,16 @@ class InfoView extends View {
 
         canvas.drawText(dateText, 0, dateTextY, dateTextPaint);
 
-        for (int i = 0; i < graphCount; i++) {
-            String textValue = textValues[i];
-            if (textValue.length() > 0) {
-                int color = textColors[i];
-                valueTextPaint.setColor(color);
-                nameTextPaint.setColor(color);
-                canvas.drawText(textValue, leftValues[i], dateValueY, valueTextPaint);
-                canvas.drawText(textNames[i], leftValues[i], dateNameY, nameTextPaint);
-            }
+        for (int i = 0; i < textValues.size(); i++) {
+            String textValue = textValues.get(i);
+            int color = textColors.get(i);
+            valueTextPaint.setColor(color);
+            nameTextPaint.setColor(color);
+            canvas.drawText(textValue, leftValues.get(i), dateValueY, valueTextPaint);
+            canvas.drawText(textNames.get(i), leftValues.get(i), dateNameY, nameTextPaint);
         }
 
         canvas.restore();
-
     }
 
     void updateTheme() {
