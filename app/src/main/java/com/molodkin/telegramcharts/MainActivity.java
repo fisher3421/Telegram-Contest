@@ -46,7 +46,7 @@ public class MainActivity extends Activity {
             chartLayout.setChartName(String.format("Chart %s", String.valueOf(i + 1)));
             chartLayout.setData(data.get(i));
             LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
-            if (i != 0) lp.topMargin = Utils.dpToPx(this, 32);
+            lp.bottomMargin = Utils.dpToPx(this, 32);
             root.addView(chartLayout, lp);
         }
 

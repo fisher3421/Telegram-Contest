@@ -152,6 +152,7 @@ class InfoView extends View {
                 break;
             case MotionEvent.ACTION_UP:
             case MotionEvent.ACTION_CANCEL:
+                windowTopMargin = 0;
                 isMoving = false;
                 break;
         }
@@ -197,7 +198,6 @@ class InfoView extends View {
         leftValues.clear();
         yCoords.clear();
         yCoordsSored.clear();
-        windowTopMargin = 0;
 
         for (int i = 0; i < chartView.graphs.length; i++) {
             ChartGraph graph = chartView.graphs[i];
@@ -243,23 +243,37 @@ class InfoView extends View {
 
         background.setBounds(backgroundSize);
 
-        windowTopMargin = 0;
+        boolean isTopMarginValid = true;
 
         int circleDiameter = circleRadius * 2;
 
         for (int i = 0; i < yCoordsSored.size(); i++) {
             float y = yCoordsSored.get(i);
-            if (i == 0) {
-                if (y > height + circleDiameter) break;
-            } else {
-                float yPre = yCoordsSored.get(i - 1);
-                if (Math.abs(y - yPre) > height + circleDiameter * 2) {
-                    windowTopMargin = yPre + circleDiameter;
-                    break;
-                } else if (i == yCoordsSored.size() - 1) {
-                    if (y + circleDiameter + height < getHeight()) {
-                        windowTopMargin = y + circleDiameter;
+
+            if (y + circleDiameter > windowTopMargin && y - circleDiameter < windowTopMargin + height) {
+                isTopMarginValid = false;
+                break;
+            }
+        }
+
+        if (!isTopMarginValid) {
+            for (int i = 0; i < yCoordsSored.size(); i++) {
+                float y = yCoordsSored.get(i);
+                if (i == 0) {
+                    if (y > height + circleDiameter) {
+                        windowTopMargin = 0;
                         break;
+                    }
+                } else {
+                    float yPre = yCoordsSored.get(i - 1);
+                    if (Math.abs(y - yPre) > height + circleDiameter * 2) {
+                        windowTopMargin = yPre + circleDiameter;
+                        break;
+                    } else if (i == yCoordsSored.size() - 1) {
+                        if (y + circleDiameter + height < getHeight()) {
+                            windowTopMargin = y + circleDiameter;
+                            break;
+                        }
                     }
                 }
             }
