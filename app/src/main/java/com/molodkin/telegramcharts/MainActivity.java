@@ -37,10 +37,13 @@ public class MainActivity extends Activity {
 
         LinearLayout root = findViewById(R.id.root);
 
+        int layoutTopMargin = Utils.getDim(this, R.dimen.margin20);
+
         for (int i = 0; i < data.size(); i++) {
             LineChartLayout chartLayout = new LineChartLayout(this);
-            chartLayout.setPadding(0, Utils.dpToPx(this, 16), 0, 0);
+            chartLayout.setPadding(0, layoutTopMargin, 0, 0);
             charts.add(chartLayout);
+            chartLayout.setChartName(String.format("Chart %s", String.valueOf(i + 1)));
             chartLayout.setData(data.get(i));
             LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
             if (i != 0) lp.topMargin = Utils.dpToPx(this, 32);

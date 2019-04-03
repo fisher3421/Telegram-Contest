@@ -69,6 +69,14 @@ class Utils {
         return dpToPx(v.getContext(), dp);
     }
 
+    static int getDim(View v, int resId) {
+        return getDim(v.getContext(), resId);
+    }
+
+    static int getDim(Context c, int resId) {
+        return c.getResources().getDimensionPixelSize(resId);
+    }
+
     static int spToPx(View v, int sp) {
         return spToPx(v.getContext(), sp);
     }

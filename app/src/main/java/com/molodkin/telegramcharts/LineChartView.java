@@ -61,9 +61,9 @@ public final class LineChartView extends View {
 
     private final ArrayList<XAxisPoint> xAxisPoints = new ArrayList<>();
 
-    int sideMargin = Utils.dpToPx(this, 20);
-    int xAxisHeight = Utils.dpToPx(this, 33);
-    private int xAxisWidth = Utils.dpToPx(this, 1);
+    int sideMargin = Utils.getDim(this, R.dimen.margin20);
+    int xAxisHeight = Utils.getDim(this, R.dimen.xAxisHeight);
+    private int xAxisWidth = Utils.getDim(this, R.dimen.xAxisWidth);
 
     private float xAxisTextHeight;
 
@@ -72,7 +72,7 @@ public final class LineChartView extends View {
     float availableChartHeight;
     float availableChartWidth;
 
-    private int axesTextSize = Utils.spToPx(this, 14);
+    private int axesTextSize = Utils.spToPx(this, 12);
     private int xTextMargin = Utils.dpToPx(this, 4);
     private int xAxisHalfOfTextWidth = Utils.dpToPx(this, 27);
 

@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <dimen name="margin20">20dp</dimen>
+    <dimen name="margin16">16dp</dimen>
+    <dimen name="xAxisWidth">1dp</dimen>
+    <dimen name="scrollHeight">40dp</dimen>
+    <dimen name="chartHeight">340dp</dimen>
+    <dimen name="xAxisHeight">33dp</dimen>
+    <dimen name="checkboxHeight">48dp</dimen>
+    <dimen name="checkboxDividerLeftMargin">60dp</dimen>
+
+    <dimen name="chartNameTextSize">14sp</dimen>
+</resources>

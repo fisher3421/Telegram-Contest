@@ -27,7 +27,7 @@ class InfoView extends View {
     private final int leftRightPadding = Utils.dpToPx(getContext(), 16);
     private final int leftRightDataMargin = Utils.dpToPx(getContext(), 16);
     private final int dateValueMargin = Utils.dpToPx(getContext(), 8);
-    private final int valueNameMargin = Utils.dpToPx(getContext(), 8);
+    private final int valueNameMargin = Utils.dpToPx(getContext(), 2);
 
     private final int verticalLineWindowLeftMargin = Utils.dpToPx(getContext(), 24);
 
@@ -138,11 +138,14 @@ class InfoView extends View {
         maxX = getWidth() - chartView.sideMargin;
     }
 
+    float downX = 0;
+
     @Override
     public boolean onTouchEvent(MotionEvent event) {
         switch (event.getAction()) {
             case MotionEvent.ACTION_DOWN:
                 isMoving = true;
+                downX = event.getX();
                 break;
             case MotionEvent.ACTION_UP:
             case MotionEvent.ACTION_CANCEL:
@@ -165,12 +168,12 @@ class InfoView extends View {
         }
 
         invalidate();
-        if (event.getAction() == MotionEvent.ACTION_DOWN || event.getAction() == MotionEvent.ACTION_MOVE) {
+
+        if (Math.abs(downX - event.getX()) > 50) {
             getParent().requestDisallowInterceptTouchEvent(true);
-            return true;
-        } else {
-            return false;
         }
+
+        return isMoving;
     }
 
     void measure() {
