@@ -541,9 +541,7 @@ public final class LineChartView extends View {
             public void onAnimationUpdate(ValueAnimator animation) {
                 int value = (int) animation.getAnimatedValue();
                 graphs[index].linePaint.setAlpha(value);
-                graphs[index].pointPaint.setAlpha(value);
                 graphs[index].scrollLinePaint.setAlpha(value);
-                graphs[index].scrollPointPaint.setAlpha(value);
                 invalidate();
 
             }

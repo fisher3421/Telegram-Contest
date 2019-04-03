@@ -12,12 +12,10 @@ class ChartGraph {
     private final int [][] maxValuesMatrix;
 
     final Paint linePaint;
-    final Paint pointPaint;
 
     final Path path = new Path();
 
     final Paint scrollLinePaint;
-    final Paint scrollPointPaint;
 
     boolean isEnable = true;
 
@@ -27,7 +25,6 @@ class ChartGraph {
     final String name;
 
     private float[] tempLinePoints;
-    private float[] tempPoints;
 
     int getMax(int start, int end) {
         return maxValuesMatrix[start][end - 1];
@@ -51,44 +48,30 @@ class ChartGraph {
         linePaint.setAntiAlias(true);
         linePaint.setStrokeWidth(width);
         linePaint.setColor(color);
-
-        pointPaint = new Paint();
-        pointPaint.setAntiAlias(true);
-        pointPaint.setColor(color);
-        pointPaint.setStrokeWidth(width);
-        pointPaint.setStrokeCap(Paint.Cap.ROUND);
+        linePaint.setStrokeCap(Paint.Cap.SQUARE);
 
         scrollLinePaint = new Paint(linePaint);
         scrollLinePaint.setStrokeWidth(width / 2);
 
-        scrollPointPaint = new Paint(pointPaint);
-        scrollPointPaint.setStrokeWidth(width / 2);
-
         linePoints = new float[values.length * 4 - 4];
         tempLinePoints = new float[values.length * 4 - 4];
         points = new float[values.length * 2];
-        tempPoints = new float[values.length * 2];
     }
 
     void draw(Canvas canvas, Matrix matrix, int start, int end) {
-        draw(canvas, matrix, linePaint, pointPaint, start, end);
+        draw(canvas, matrix, linePaint, start, end);
     }
 
     void drawScroll(Canvas canvas, Matrix matrix) {
-        draw(canvas, matrix, scrollLinePaint, scrollPointPaint, 0, values.length);
+        draw(canvas, matrix, scrollLinePaint, 0, values.length);
     }
 
-    private void draw(Canvas canvas, Matrix matrix, Paint linePaint, Paint pointPaint, int start, int end) {
+    private void draw(Canvas canvas, Matrix matrix, Paint linePaint, int start, int end) {
         int startLineIndex = start * 4;
         int countLineIndex = (end - start - 1) * 2;
 
-        int startPointIndex = (start + 1) * 2;
-        int countPointIndex = (end - start - 2);
-
         matrix.mapPoints(tempLinePoints, startLineIndex, linePoints, startLineIndex, countLineIndex);
-        matrix.mapPoints(tempPoints, startPointIndex, points, startPointIndex, countPointIndex);
 
         canvas.drawLines(tempLinePoints, start * 4, (end - start - 1) * 4, linePaint);
-        canvas.drawPoints(tempPoints, (start + 1) * 2, (end - start - 2) * 2, pointPaint);
     }
 }
