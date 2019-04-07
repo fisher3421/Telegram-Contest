@@ -1,21 +1,31 @@
 package com.molodkin.telegramcharts;
 
+import android.animation.ValueAnimator;
 import android.annotation.SuppressLint;
 import android.content.Context;
 import android.graphics.Canvas;
 import android.graphics.Paint;
 import android.graphics.Rect;
 import android.graphics.drawable.NinePatchDrawable;
+import android.os.Handler;
+import android.os.Looper;
+import android.os.Message;
 import android.text.TextPaint;
 import android.view.MotionEvent;
 import android.view.View;
 
+import java.sql.Time;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.Timer;
+import java.util.TimerTask;
 
 class InfoView extends View {
+
+    private final static long MOVE_DELAY = 100L;
+    private final static long MOVE_ANIMATION = 100L;
 
     private final int dateTextSize = Utils.spToPx(getContext(), 12);
     private final int valueTextSize = Utils.spToPx(getContext(), 14);
@@ -84,6 +94,32 @@ class InfoView extends View {
     private float minX = 0;
     private float maxX = 0;
 
+    private final Timer finisMovementTimer = new Timer();;
+    private TimerTask timerTask;
+
+    private ValueAnimator finisMovementAnimator;
+    private ValueAnimator.AnimatorUpdateListener finisMovementAnimatorUpdate = new ValueAnimator.AnimatorUpdateListener() {
+        @Override
+        public void onAnimationUpdate(ValueAnimator animation) {
+            float newX = ((float) animation.getAnimatedValue());
+            xCoord = newX;
+            measure();
+            invalidate();
+        }
+    };
+
+    private Handler handler = new Handler(new Handler.Callback() {
+        @Override
+        public boolean handleMessage(Message msg) {
+            int x = chartView.xIndexByCoord(xCoord);
+            float toXcoord = chartView.getXViewCoord(x);
+            finisMovementAnimator = ValueAnimator.ofFloat(xCoord, toXcoord);
+            finisMovementAnimator.addUpdateListener(finisMovementAnimatorUpdate);
+            finisMovementAnimator.start();
+            return false;
+        }
+    });
+
     InfoView(Context c, LineChartView chartView) {
         super(c);
         dateFormat = new SimpleDateFormat("EEE, MMM d", Utils.getLocale(c));
@@ -149,9 +185,14 @@ class InfoView extends View {
             case MotionEvent.ACTION_DOWN:
                 isMoving = true;
                 downX = event.getX();
+                scheduleMovement();
+                break;
+            case MotionEvent.ACTION_MOVE:
+                scheduleMovement();
                 break;
             case MotionEvent.ACTION_UP:
             case MotionEvent.ACTION_CANCEL:
+                cancelMovement();
                 windowTopMargin = 0;
                 isMoving = false;
                 break;
@@ -178,6 +219,23 @@ class InfoView extends View {
         }
 
         return isMoving;
+    }
+
+    private void cancelMovement() {
+        if (finisMovementAnimator != null) finisMovementAnimator.cancel();
+        if (timerTask != null )timerTask.cancel();
+    }
+
+    private void scheduleMovement() {
+        cancelMovement();
+        timerTask = new TimerTask() {
+            @Override
+            public void run() {
+                handler.sendEmptyMessage(0);
+            }
+        };
+
+        finisMovementTimer.schedule(timerTask, MOVE_DELAY);
     }
 
     void measure() {

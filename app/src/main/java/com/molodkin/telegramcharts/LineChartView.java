@@ -216,10 +216,10 @@ public final class LineChartView extends View {
         invalidate();
     }
 
-    private float getXViewCoord(int x) {
+    float getXViewCoord(int x) {
         tempPoint[0] = x * stepX;
         chartMatrix.mapPoints(tempPoint);
-        return tempPoint[0];
+        return sideMargin + tempPoint[0];
     }
 
     int xIndexByCoord(float x) {
