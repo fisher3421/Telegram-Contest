@@ -9,19 +9,19 @@ import android.view.View;
 import java.util.ArrayList;
 import java.util.Collections;
 
-public class ScrollChartView extends View {
+public class RangeChartView extends View {
 
     private final Matrix scrollMatrix = new Matrix();
 
-    private final LineChartView chartView;
+    private final BaseChart chartView;
 
     private int maxYValueTemp;
 
-    private float scaleCoeff;
+    private float scaleY;
 
     private float chartsTopMargin = Utils.dpToPx(this, 4);
 
-    ScrollChartView(Context context, LineChartView lineChartView) {
+    RangeChartView(Context context, BaseChart lineChartView) {
         super(context);
         this.chartView = lineChartView;
     }
@@ -30,9 +30,12 @@ public class ScrollChartView extends View {
     protected void onSizeChanged(int w, int h, int oldw, int oldh) {
         super.onSizeChanged(w, h, oldw, oldh);
 
-        scaleCoeff = (getHeight() - chartsTopMargin) / chartView.availableChartHeight;
+        float availableHeight = getHeight() - chartsTopMargin;
+        scaleY = availableHeight / chartView.maxYValue;
 
-        scrollMatrix.postScale(1, scaleCoeff, 0, 0);
+        float scaleX = getWidth() * 1f / (chartView.xPoints.length - 1);
+
+        scrollMatrix.setScale(scaleX, scaleY, 0, 0);
 
         maxYValueTemp = chartView.maxYValue;
     }
@@ -46,8 +49,9 @@ public class ScrollChartView extends View {
     }
 
     private int getMaxYValue() {
-        ArrayList<Integer> maxValues = new ArrayList<>(chartView.graphs.length);
-        for (ChartGraph graph : chartView.graphs) {
+        ChartGraph[] graphs = chartView.graphs;
+        ArrayList<Integer> maxValues = new ArrayList<>(graphs.length);
+        for (ChartGraph graph : graphs) {
             if (graph.isEnable) maxValues.add(graph.getMax(0, chartView.xPoints.length));
         }
 
@@ -61,14 +65,14 @@ public class ScrollChartView extends View {
     void adjustYAxis() {
         int newTempMaxYValue = getMaxYValue();
 
-        float toScale = scaleCoeff * chartView.maxYValue / newTempMaxYValue;
+        float toScale = scaleY * chartView.maxYValue / newTempMaxYValue;
 
-        float fromScale = scaleCoeff * chartView.maxYValue / this.maxYValueTemp;
+        float fromScale = scaleY * chartView.maxYValue / this.maxYValueTemp;
 
         this.maxYValueTemp = newTempMaxYValue;
 
-        chartView.log("adjustYAxis_scroll_fromScale: " + fromScale);
-        chartView.log("adjustYAxis_scroll_toScale: " + toScale);
+        Utils.log("adjustYAxis_scroll_fromScale: " + fromScale);
+        Utils.log("adjustYAxis_scroll_toScale: " + toScale);
 
         final float [] prev = new float[1];
         prev[0] = fromScale;

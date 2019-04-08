@@ -6,13 +6,13 @@ import android.graphics.Paint;
 import android.view.MotionEvent;
 import android.view.View;
 
-class ScrollBorderView extends View {
+class RangeBorderView extends View {
 
     private final int scrollWindowMinWidth = Utils.dpToPx(this, 40);
     private final int scrollTouchBorderPadding = Utils.dpToPx(this, 10);
     private final int scrollBorderTopBottomWidth = Utils.dpToPx(this, 2);
     private final int scrollBorderLeftRightWidth = Utils.dpToPx(this, 5);
-    private final LineChartView lineChartView;
+    private final BaseChart chartView;
 
     private int scrollWindowMinWidthInSteps;
 
@@ -25,9 +25,11 @@ class ScrollBorderView extends View {
 
     private int prevScrollXPoint = 0;
 
-    ScrollBorderView(Context context, LineChartView lineChartView) {
+    private float scaleX;
+
+    RangeBorderView(Context context, BaseChart chartView) {
         super(context);
-        this.lineChartView = lineChartView;
+        this.chartView = chartView;
 
         scrollCoverPaint.setStyle(Paint.Style.FILL);
 
@@ -49,7 +51,8 @@ class ScrollBorderView extends View {
     @Override
     protected void onSizeChanged(int w, int h, int oldw, int oldh) {
         super.onSizeChanged(w, h, oldw, oldh);
-        scrollWindowMinWidthInSteps = Math.round(scrollWindowMinWidth / lineChartView.stepX);
+        scaleX = getWidth() * 1f / (chartView.xPoints.length - 1);
+        scrollWindowMinWidthInSteps = Math.round(scrollWindowMinWidth / scaleX);
     }
 
     @Override
@@ -71,12 +74,11 @@ class ScrollBorderView extends View {
     void handleScrollTouch(MotionEvent event) {
         float x = event.getX();
 
-        int start = lineChartView.start;
-        int end = lineChartView.end;
-        float stepX = lineChartView.stepX;
+        int start = chartView.start;
+        int end = chartView.end;
 
-        float left = start * stepX;
-        float right = (end - 1) * stepX;
+        float left = start * scaleX;
+        float right = (end - 1) * scaleX;
 
         switch (event.getAction()) {
             case MotionEvent.ACTION_DOWN: {
@@ -86,13 +88,13 @@ class ScrollBorderView extends View {
                     isScrollRightBorderGrabbed = true;
                 } else if (x > left && x < right) {
                     isScrollWindowGrabbed = true;
-                    prevScrollXPoint = Math.round(x / stepX);
+                    prevScrollXPoint = Math.round(x / scaleX);
                 }
                 break;
             }
 
             case MotionEvent.ACTION_MOVE: {
-                int newPoint = Math.round(x / stepX);
+                int newPoint = Math.round(x / scaleX);
 
                 int scrollDistanceInSteps = newPoint - prevScrollXPoint;
 
@@ -100,52 +102,52 @@ class ScrollBorderView extends View {
 
                 if (isScrollLeftBorderGrabbed) {
                     if (x < scrollBorderLeftRightWidth) {
-                        lineChartView.setStart(0);
+                        chartView.setStart(0);
                     } else if (newPoint > end - scrollWindowMinWidthInSteps - 1) {
-                        lineChartView.setStart(end - scrollWindowMinWidthInSteps - 1);
+                        chartView.setStart(end - scrollWindowMinWidthInSteps - 1);
                     } else {
-                        lineChartView.setStart(newPoint);
+                        chartView.setStart(newPoint);
                     }
                 } else if (isScrollRightBorderGrabbed) {
-                    if (x + scrollBorderLeftRightWidth > lineChartView.getWidth()) {
-                        lineChartView.setEnd(lineChartView.xPoints.length);
+                    if (x + scrollBorderLeftRightWidth > chartView.getWidth()) {
+                        chartView.setEnd(chartView.xPoints.length);
                     } else if (newPoint < start + scrollWindowMinWidthInSteps) {
-                        lineChartView.setEnd(start + scrollWindowMinWidthInSteps);
+                        chartView.setEnd(start + scrollWindowMinWidthInSteps);
                     } else {
-                        lineChartView.setEnd(newPoint);
+                        chartView.setEnd(newPoint);
                     }
                 } else if (isScrollWindowGrabbed) {
                     int range = end - start;
                     if (start + scrollDistanceInSteps <= 0) {
-                        lineChartView.setStartEnd(0, range);
-                    } else if (end + scrollDistanceInSteps >= lineChartView.xPoints.length) {
-                        lineChartView.setStartEnd(lineChartView.xPoints.length - range, lineChartView.xPoints.length);
+                        chartView.setStartEnd(0, range);
+                    } else if (end + scrollDistanceInSteps >= chartView.xPoints.length) {
+                        chartView.setStartEnd(chartView.xPoints.length - range, chartView.xPoints.length);
                     } else {
-                        lineChartView.setStartEnd(lineChartView.start + scrollDistanceInSteps, lineChartView.end + scrollDistanceInSteps);
+                        chartView.setStartEnd(start + scrollDistanceInSteps, end + scrollDistanceInSteps);
                     }
                 }
 
                 break;
             }
             default:
-                lineChartView.adjustYAxis();
+                chartView.adjustYAxis();
         }
-        lineChartView.invalidate();
+        chartView.invalidate();
         invalidate();
     }
 
 
     @Override
     protected void onDraw(Canvas canvas) {
-        float left = lineChartView.start * lineChartView.stepX;
-        float right = (lineChartView.end - 1) * lineChartView.stepX;
+        float left = chartView.start * scaleX;
+        float right = (chartView.end - 1) * scaleX;
 
-        if (lineChartView.start != 0) {
+        if (chartView.start != 0) {
             canvas.drawRect(0, 0, left, getHeight(), scrollCoverPaint);
         }
 
-        if (lineChartView.end != lineChartView.xPoints.length) {
-            canvas.drawRect(right, 0, lineChartView.getWidth(), getHeight(), scrollCoverPaint);
+        if (chartView.end != chartView.xPoints.length) {
+            canvas.drawRect(right, 0, chartView.getWidth(), getHeight(), scrollCoverPaint);
         }
 
         //draw left right borders

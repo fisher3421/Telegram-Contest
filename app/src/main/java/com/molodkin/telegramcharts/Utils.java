@@ -4,6 +4,7 @@ import android.content.Context;
 import android.content.res.Configuration;
 import android.graphics.Paint;
 import android.text.TextPaint;
+import android.util.Log;
 import android.view.View;
 
 import java.util.HashMap;
@@ -117,5 +118,9 @@ class Utils {
     static float getFontHeight(TextPaint textPaint) {
         Paint.FontMetrics fontMetrics = textPaint.getFontMetrics();
         return fontMetrics.descent - fontMetrics.ascent;
+    }
+
+    public static void log(String message) {
+        Log.d("telegramcharts", message);
     }
 }

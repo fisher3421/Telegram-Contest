@@ -3,7 +3,6 @@ package com.molodkin.telegramcharts;
 import android.graphics.Canvas;
 import android.graphics.Matrix;
 import android.graphics.Paint;
-import android.graphics.Path;
 
 class ChartGraph {
 
@@ -13,14 +12,11 @@ class ChartGraph {
 
     final Paint linePaint;
 
-    final Path path = new Path();
-
     final Paint scrollLinePaint;
 
     boolean isEnable = true;
 
     float[] linePoints;
-    float[] points;
 
     final String name;
 
@@ -55,7 +51,6 @@ class ChartGraph {
 
         linePoints = new float[values.length * 4 - 4];
         tempLinePoints = new float[values.length * 4 - 4];
-        points = new float[values.length * 2];
     }
 
     void draw(Canvas canvas, Matrix matrix, int start, int end) {

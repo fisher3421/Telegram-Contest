@@ -4,12 +4,8 @@ import android.animation.ValueAnimator;
 import android.content.Context;
 import android.graphics.Canvas;
 import android.graphics.Color;
-import android.graphics.Matrix;
 import android.graphics.Paint;
 import android.text.TextPaint;
-import android.util.AttributeSet;
-import android.util.Log;
-import android.view.View;
 
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
@@ -19,38 +15,13 @@ import java.util.Date;
 import java.util.Iterator;
 import java.util.ListIterator;
 
-public final class LineChartView extends View {
+import static com.molodkin.telegramcharts.Utils.log;
 
-    private static final boolean LOG_IS_ENABLED = false;
-    private static final String LOG_TAG = "LineChart";
-
-    static final long SCALE_ANIMATION_DURATION = 250L;
-    static final long FADE_ANIMATION_DURATION = 150L;
-
-    ChartGraph[] graphs;
-
-    long[] xPoints;
-
-    public final Matrix chartMatrix = new Matrix();
-    public final Matrix chartInvertMatrix = new Matrix();
-
-    private final float [] chartMatrixValues = new float[9];
-
-    int start = 0;
-    int end = 0;
-
-    int drawStart = 0;
-    int drawEnd = 0;
-
-    int yAdjustStart = 0;
-    int yAdjustEnd = 0;
+public final class LineChartView extends BaseChart {
 
     private int [] availableYSteps = {5, 10, 20, 25, 40, 50, 100, 500, 1_000, 1_500, 2_000, 2_500, 3_000, 4_000, 5000, 10_000, 20_000, 30_000, 40_000, 50_000, 100_000, 200_000, 300_000, 400_000, 500_000, 1000_000};
 
     private ArrayList<XAxisPoint> pointToHideAnimated = new ArrayList<>();
-
-    private int maxYValueTemp;
-    int maxYValue;
 
     private int rowNumber = 6;
     private int [] rowYValues = new int[rowNumber];
@@ -83,14 +54,10 @@ public final class LineChartView extends View {
     private Paint axisPaint = new Paint();
     private TextPaint axisTextPaint = new TextPaint();
 
-    float stepX;
-
     private Date tempDate = new Date();
     private DateFormat xAxisDateFormat;
 
     private float[] tempPoint = new float[2];
-
-    float stepY;
 
     private ChartData data;
 
@@ -99,15 +66,6 @@ public final class LineChartView extends View {
         init();
     }
 
-    public LineChartView(Context context, AttributeSet attrs) {
-        super(context, attrs);
-        init();
-    }
-
-    public LineChartView(Context context, AttributeSet attrs, int defStyleAttr) {
-        super(context, attrs, defStyleAttr);
-        init();
-    }
 
     public void setData(ChartData data) {
         this.data = data;
@@ -169,11 +127,13 @@ public final class LineChartView extends View {
             rowYTextsValues[i] = String.valueOf(rowYValues[i]);
         }
 
-        stepY = availableChartHeight / maxYValue;
-        stepX = availableChartWidth / (xPoints.length - 1);
+        float scaleX = availableChartWidth / (xPoints.length - 1);
+        float scaleY = availableChartHeight / maxYValue;
 
-        int endX = (int) ((availableChartWidth) / stepX);
-        int stepXAxis = Math.round(xAxisTextWidthWithMargins / stepX);
+        chartMatrix.postScale(scaleX, scaleY, 0, 0);
+
+        int endX = (int) ((availableChartWidth) / scaleX);
+        int stepXAxis = Math.round(xAxisTextWidthWithMargins / scaleX);
 
         while (endX > 0) {
             xAxisPoints.add(0, buildXPoint(endX));
@@ -183,23 +143,13 @@ public final class LineChartView extends View {
         for (int i = 0; i < end - 1; i++) {
             for (ChartGraph graph : graphs) {
                 int j = i * 4;
-                int k = i * 2;
-                float x1 = i * stepX;
-                float y1 = availableChartHeight - graph.values[i] * stepY;
-
-                graph.points[k] = x1;
-                graph.points[k + 1] = y1;
+                float x1 = i;
+                float y1 = maxYValue - graph.values[i];
 
                 graph.linePoints[j] = x1;
                 graph.linePoints[j + 1] = y1;
-                graph.linePoints[j + 2] = (i + 1) * stepX;
-                graph.linePoints[j + 3] = availableChartHeight - graph.values[i + 1] * stepY;
-
-                if (i == 0) {
-                    graph.path.moveTo(0, availableChartHeight - graph.values[0] * stepY);
-                } else {
-                    graph.path.lineTo(i * stepX, availableChartHeight - graph.values[i] * stepY);
-                }
+                graph.linePoints[j + 2] = (i + 1);
+                graph.linePoints[j + 3] = maxYValue - graph.values[i + 1];
             }
         }
     }
@@ -216,20 +166,14 @@ public final class LineChartView extends View {
         invalidate();
     }
 
-    float getXViewCoord(int x) {
-        tempPoint[0] = x * stepX;
+    float xCoordByIndex(int x) {
+        tempPoint[0] = x;
         chartMatrix.mapPoints(tempPoint);
         return sideMargin + tempPoint[0];
     }
 
     int xIndexByCoord(float x) {
-        tempPoint[0] = x - sideMargin;
-
-        chartMatrix.invert(chartInvertMatrix);
-        chartInvertMatrix.mapPoints(tempPoint);
-
-        int value = Math.round(tempPoint[0] / stepX);
-        return Math.max(Math.min(value, xPoints.length - 1), 0);
+        return Math.round(xValueByCoord(x));
     }
 
     float xValueByCoord(float x) {
@@ -238,18 +182,12 @@ public final class LineChartView extends View {
         chartMatrix.invert(chartInvertMatrix);
         chartInvertMatrix.mapPoints(tempPoint);
 
-        float value = tempPoint[0] / stepX;
+        float value = tempPoint[0];
         return Math.max(Math.min(value, xPoints.length - 1), 0);
     }
 
-    float yCoordByIndex(int y) {
-        tempPoint[1] = availableChartHeight - y * stepY;
-        chartMatrix.mapPoints(tempPoint);
-        return tempPoint[1];
-    }
-
     float yCoordByValue(float y) {
-        tempPoint[1] = availableChartHeight - y * stepY;
+        tempPoint[1] = maxYValue - y;
         chartMatrix.mapPoints(tempPoint);
         return tempPoint[1];
     }
@@ -261,7 +199,7 @@ public final class LineChartView extends View {
         XAxisPoint second = xAxisPoints.get(1);
         int currentStepX = second.x - first.x;
 
-        float currentDistance = getXViewCoord(second.x) - getXViewCoord(first.x);
+        float currentDistance = xCoordByIndex(second.x) - xCoordByIndex(first.x);
 
         if (currentDistance > xAxisTextWidthWithMargins) {
             int numberToAdd = (int) (currentDistance / xAxisTextWidthWithMargins) - 1;
@@ -380,21 +318,17 @@ public final class LineChartView extends View {
     }
 
     private boolean isXTextVisible(XAxisPoint point) {
-        float xCoord = getXViewCoord(point.x) + sideMargin;
+        float xCoord = xCoordByIndex(point.x) + sideMargin;
         return xCoord + point.width / 2 > 0 && xCoord - point.width / 2 < getWidth();
     }
 
     private boolean isXTextVisible(int x) {
-        float xCoord = getXViewCoord(x) + sideMargin;
+        float xCoord = xCoordByIndex(x) + sideMargin;
         return xCoord + xAxisHalfOfTextWidth > 0 && xCoord - xAxisHalfOfTextWidth < getWidth();
     }
 
-    private float getYViewCoord(int y) {
-        chartMatrix.getValues(chartMatrixValues);
-        return y * stepY * chartMatrixValues[4];
-    }
-
-    private int getMaxYValue() {
+    @Override
+    int getMaxRangeValue() {
         ArrayList<Integer> maxValues = new ArrayList<>(graphs.length);
         for (ChartGraph graph : graphs) {
             if (graph.isEnable) maxValues.add(graph.getMax(start, end));
@@ -408,7 +342,7 @@ public final class LineChartView extends View {
     }
 
     private int getAdjustedMaxYValue() {
-        int value = getMaxYValue();
+        int value = getMaxRangeValue();
         int tempStep = (int) Math.ceil(value * 1f / rowNumber);
 
         for (int i = 0; i < availableYSteps.length - 1; i++) {
@@ -438,12 +372,10 @@ public final class LineChartView extends View {
     private void drawXAxes(Canvas canvas) {
         canvas.save();
 
-        canvas.translate(0f, availableChartHeight);
-
         for (int i = 0; i < rowYValues.length; i++) {
             int y = rowYValues[i];
             canvas.save();
-            canvas.translate(0, -getYViewCoord(y));
+            canvas.translate(0, yCoordByValue(y));
             axisPaint.setAlpha(rowYValuesAlpha);
             canvas.drawLine(0f, 0f, availableChartWidth, 0f, axisPaint);
 
@@ -464,7 +396,7 @@ public final class LineChartView extends View {
                 int y = rowYValuesToHide[i];
                 canvas.save();
 
-                canvas.translate(0, -getYViewCoord(y));
+                canvas.translate(0, yCoordByValue(y));
                 axisPaint.setAlpha(255 - rowYValuesAlpha);
                 canvas.drawLine(0f, 0f, availableChartWidth, 0f, axisPaint);
 
@@ -492,7 +424,7 @@ public final class LineChartView extends View {
         canvas.translate(0, availableChartHeight + xTextMargin + xAxisTextHeight);
 
         for (XAxisPoint point : xAxisPoints) {
-            float xCoord = getXViewCoord(point.x);
+            float xCoord = xCoordByIndex(point.x);
             axisTextPaint.setAlpha(point.alpha);
             canvas.drawText(point.date, xCoord - point.width / 2f, 0, axisTextPaint);
         }
@@ -505,7 +437,7 @@ public final class LineChartView extends View {
         }
 
         for (XAxisPoint point : pointToHideAnimated) {
-            float xCoord = getXViewCoord(point.x);
+            float xCoord = xCoordByIndex(point.x);
             axisTextPaint.setAlpha(point.alpha);
             canvas.drawText(point.date, xCoord - point.width / 2f, 0, axisTextPaint);
         }
@@ -551,6 +483,7 @@ public final class LineChartView extends View {
         adjustYAxis();
     }
 
+    @Override
     public void adjustYAxis() {
         int newTempMaxYValue = getAdjustedMaxYValue();
 
@@ -605,11 +538,12 @@ public final class LineChartView extends View {
         valueAnimator2.start();
     }
 
+    @Override
     public void setStart(int start) {
         if (start >= end - 2) return;
         if (start == this.start) return;
 
-        float toScale = availableChartWidth / (getXViewCoord(end - 1) - getXViewCoord(start));
+        float toScale = availableChartWidth / (xCoordByIndex(end - 1) - xCoordByIndex(start));
         startScaleAnimation(toScale, true);
         this.start = start;
 
@@ -619,13 +553,14 @@ public final class LineChartView extends View {
         adjustYAxis();
     }
 
+    @Override
     public void setEnd(int end) {
         if (end > xPoints.length) return;
         if (end <= start) return;
 
         if (end == this.end) return;
 
-        float toScale = availableChartWidth / (getXViewCoord(end - 1) - getXViewCoord(start));
+        float toScale = availableChartWidth / (xCoordByIndex(end - 1) - xCoordByIndex(start));
         startScaleAnimation(toScale, false);
 
         this.end = end;
@@ -636,6 +571,7 @@ public final class LineChartView extends View {
         adjustYAxis();
     }
 
+    @Override
     public void setStartEnd(int start, int end) {
         if (end > xPoints.length) return;
         if (start >= end - 1) return;
@@ -645,8 +581,8 @@ public final class LineChartView extends View {
         final float[] prev = new float[1];
         prev[0] = 0f;
 
-        float fromCoordStart = getXViewCoord(this.start);
-        float toCoordStart = getXViewCoord(start);
+        float fromCoordStart = xCoordByIndex(this.start);
+        float toCoordStart = xCoordByIndex(start);
 
         ValueAnimator valueAnimator = ValueAnimator.ofFloat(0, fromCoordStart - toCoordStart);
         valueAnimator.setDuration(SCALE_ANIMATION_DURATION);
@@ -675,7 +611,7 @@ public final class LineChartView extends View {
     }
 
     private void startScaleAnimation(float toScale, final boolean isStart) {
-        float fromScale = availableChartWidth / (getXViewCoord(end - 1) - getXViewCoord(start));
+        float fromScale = availableChartWidth / (xCoordByIndex(end - 1) - xCoordByIndex(start));
 
         log("fromScale: " + fromScale);
         log("toScale: " + toScale);
@@ -701,7 +637,4 @@ public final class LineChartView extends View {
         valueAnimator.start();
     }
 
-    void log(String text) {
-        if (LOG_IS_ENABLED) Log.d(LOG_TAG, text);
-    }
 }

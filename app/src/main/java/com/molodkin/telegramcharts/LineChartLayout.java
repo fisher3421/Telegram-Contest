@@ -19,7 +19,7 @@ import java.util.ArrayList;
 public class LineChartLayout extends FrameLayout {
 
     public LineChartView chartView;
-    private ScrollChartView scrollChartView;
+    private RangeChartView rangeChartView;
     private InfoView infoView;
 
     final int scrollHeight = Utils.getDim(this, R.dimen.scrollHeight);
@@ -28,7 +28,7 @@ public class LineChartLayout extends FrameLayout {
     int dividerHeight = Utils.dpToPx(this, 1);
     int checkboxDividerLeftMargin = Utils.getDim(this, R.dimen.checkboxDividerLeftMargin);
     int sideMargin = Utils.getDim(this, R.dimen.margin20);
-    private ScrollBorderView scrollBorderView;
+    private RangeBorderView rangeBorderView;
 
     private ArrayList<CheckBox> checkBoxes = new ArrayList<>();
     private ArrayList<View> dividers = new ArrayList<>();
@@ -57,16 +57,16 @@ public class LineChartLayout extends FrameLayout {
         infoView = new InfoView(getContext(), chartView);
         infoView.setLayoutParams(new FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, chartHeight - chartView.xAxisHeight));
 
-        scrollChartView = new ScrollChartView(getContext(), chartView);
-        scrollBorderView = new ScrollBorderView(getContext(), chartView);
+        rangeChartView = new RangeChartView(getContext(), chartView);
+        rangeBorderView = new RangeBorderView(getContext(), chartView);
 
         LayoutParams scrollLP = new LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, scrollHeight);
         scrollLP.topMargin = chartHeight;
         scrollLP.leftMargin = sideMargin;
         scrollLP.rightMargin = sideMargin;
-        scrollChartView.setLayoutParams(scrollLP);
+        rangeChartView.setLayoutParams(scrollLP);
 
-        scrollBorderView.setLayoutParams(scrollLP);
+        rangeBorderView.setLayoutParams(scrollLP);
 
         chartNameView = new TextView(getContext());
         chartNameView.setTextSize(TypedValue.COMPLEX_UNIT_PX, Utils.getDim(this, R.dimen.chartNameTextSize));
@@ -80,8 +80,8 @@ public class LineChartLayout extends FrameLayout {
         addView(chartView);
         addView(chartNameView);
         addView(infoView);
-        addView(scrollChartView);
-        addView(scrollBorderView);
+        addView(rangeChartView);
+        addView(rangeBorderView);
     }
 
     public void setChartName(String chartName) {
@@ -105,7 +105,7 @@ public class LineChartLayout extends FrameLayout {
                 @Override
                 public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
                     chartView.enableGraph(finalI, isChecked);
-                    scrollChartView.adjustYAxis();
+                    rangeChartView.adjustYAxis();
                 }
             });
             ((MarginLayoutParams) checkBox.getLayoutParams()).topMargin = height;
@@ -130,7 +130,7 @@ public class LineChartLayout extends FrameLayout {
 
     public void updateTheme() {
         chartView.updateTheme();
-        scrollBorderView.updateTheme();
+        rangeBorderView.updateTheme();
         infoView.updateTheme();
         for (CheckBox checkBox : checkBoxes) {
             checkBox.setTextColor(Utils.getColor(getContext(), Utils.PRIMARY_TEXT_COLOR));

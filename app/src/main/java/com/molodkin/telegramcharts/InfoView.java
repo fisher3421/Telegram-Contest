@@ -8,13 +8,11 @@ import android.graphics.Paint;
 import android.graphics.Rect;
 import android.graphics.drawable.NinePatchDrawable;
 import android.os.Handler;
-import android.os.Looper;
 import android.os.Message;
 import android.text.TextPaint;
 import android.view.MotionEvent;
 import android.view.View;
 
-import java.sql.Time;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -87,7 +85,7 @@ class InfoView extends View {
 
     private boolean isMoving;
 
-    private final LineChartView chartView;
+    private final BaseChart chartView;
 
     private float xCoord = 0f;
 
@@ -112,8 +110,9 @@ class InfoView extends View {
         @Override
         public boolean handleMessage(Message msg) {
             int x = chartView.xIndexByCoord(xCoord);
-            float toXcoord = chartView.getXViewCoord(x);
+            float toXcoord = chartView.xCoordByIndex(x);
             finisMovementAnimator = ValueAnimator.ofFloat(xCoord, toXcoord);
+            finisMovementAnimator.setDuration(MOVE_ANIMATION);
             finisMovementAnimator.addUpdateListener(finisMovementAnimatorUpdate);
             finisMovementAnimator.start();
             return false;
