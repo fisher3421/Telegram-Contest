@@ -17,8 +17,8 @@
     <color name="black">#ff000000</color>
     <color name="background">@color/white</color>
 
-    <color name="axis_day">#F1F1F2</color>
-    <color name="axis_night">#ff1A232F</color>
+    <color name="axis_day">#19182D3B</color>
+    <color name="axis_night">#19FFFFFF</color>
 
     <color name="text_day">#ff8D99A2</color>
     <color name="text_night">#ff4D5E6C</color>
@@ -30,8 +30,9 @@
     <color name="graph3">#F10E3D</color>
     <color name="graph4">#FCBF03</color>
 
-    <color name="scroll_cover_day">#BBE2E3F0</color>
-    <color name="scroll_cover_night">#333A3A3A</color>
-    <color name="scroll_border">#33447EB4</color>
+    <color name="scroll_cover_day">#99E2EEF9</color>
+    <color name="scroll_cover_night">#99304259</color>
+    <color name="scroll_border_day">#7F86A9C4</color>
+    <color name="scroll_border_night">#7F6F899E</color>
 
 </resources>

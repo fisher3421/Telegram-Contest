@@ -34,12 +34,12 @@ class RangeBorderView extends View {
         scrollCoverPaint.setStyle(Paint.Style.FILL);
 
         scrollBorderPaint.setStyle(Paint.Style.FILL);
-        scrollBorderPaint.setColor(Utils.getColor(context, R.color.scroll_border));
         initTheme();
     }
 
     private void initTheme() {
         scrollCoverPaint.setColor(Utils.getColor(getContext(), Utils.SCROLL_COVER_COLOR));
+        scrollBorderPaint.setColor(Utils.getColor(getContext(), Utils.SCROLL_BORDER_COLOR));
     }
 
     void cancelMoving() {

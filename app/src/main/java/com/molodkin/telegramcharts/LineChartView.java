@@ -28,6 +28,9 @@ public final class LineChartView extends BaseChart {
     private int [] rowYValuesToHide = new int[rowNumber];
     private String [] rowYTextsValues = new String[rowNumber];
     private String [] rowYTextsValuesToHide = new String[rowNumber];
+
+    private static final float ROW_AXIS_ALPHA = 0.1f;
+
     private int rowYValuesAlpha = 255;
 
     private final ArrayList<XAxisPoint> xAxisPoints = new ArrayList<>();
@@ -362,11 +365,11 @@ public final class LineChartView extends BaseChart {
 
         canvas.translate(sideMargin, 0);
 
+        drawPoints(canvas);
+
         drawXAxes(canvas);
 
         drawXTexts(canvas);
-
-        drawPoints(canvas);
     }
 
     private void drawXAxes(Canvas canvas) {
@@ -376,7 +379,7 @@ public final class LineChartView extends BaseChart {
             int y = rowYValues[i];
             canvas.save();
             canvas.translate(0, yCoordByValue(y));
-            axisPaint.setAlpha(rowYValuesAlpha);
+            axisPaint.setAlpha((int) (rowYValuesAlpha * ROW_AXIS_ALPHA));
             canvas.drawLine(0f, 0f, availableChartWidth, 0f, axisPaint);
 
             canvas.save();
@@ -397,7 +400,7 @@ public final class LineChartView extends BaseChart {
                 canvas.save();
 
                 canvas.translate(0, yCoordByValue(y));
-                axisPaint.setAlpha(255 - rowYValuesAlpha);
+                axisPaint.setAlpha((int) ((255 - rowYValuesAlpha) * ROW_AXIS_ALPHA));
                 canvas.drawLine(0f, 0f, availableChartWidth, 0f, axisPaint);
 
                 canvas.save();

@@ -27,6 +27,7 @@ class Utils {
     static final String AXIS_COLOR = "AXIS_COLOR";
     static final String AXIS_TEXT_COLOR = "AXIS_TEXT_COLOR";
     static final String SCROLL_COVER_COLOR = "SCROLL_COVER_COLOR";
+    static final String SCROLL_BORDER_COLOR = "SCROLL_BORDER_COLOR";
     static final String INFO_VIEW_BACKGROUND = "INFO_VIEW_BACKGROUND";
     static final String INFO_VIEW_CIRCLE_COLOR = "CIRCLE_COLOR";
 
@@ -54,6 +55,9 @@ class Utils {
 
         dayResource.put(SCROLL_COVER_COLOR, R.color.scroll_cover_day);
         nightResource.put(SCROLL_COVER_COLOR, R.color.scroll_cover_night);
+
+        dayResource.put(SCROLL_BORDER_COLOR, R.color.scroll_border_day);
+        nightResource.put(SCROLL_BORDER_COLOR, R.color.scroll_border_night);
 
         dayResource.put(INFO_VIEW_BACKGROUND, R.drawable.bg_info);
         nightResource.put(INFO_VIEW_BACKGROUND, R.drawable.bg_info_dark);
