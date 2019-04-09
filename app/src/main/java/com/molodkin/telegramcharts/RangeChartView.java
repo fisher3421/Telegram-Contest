@@ -12,6 +12,7 @@ import java.util.Collections;
 public class RangeChartView extends View {
 
     private final Matrix scrollMatrix = new Matrix();
+    private final Matrix scrollMatrix2 = new Matrix();
 
     private final BaseChart chartView;
 
@@ -30,23 +31,34 @@ public class RangeChartView extends View {
     protected void onSizeChanged(int w, int h, int oldw, int oldh) {
         super.onSizeChanged(w, h, oldw, oldh);
 
-        int maxYValue = chartView.yAxis1.maxYValue;
-
         float availableHeight = getHeight() - chartsTopMargin;
-        scaleY = availableHeight / maxYValue;
 
-        float scaleX = getWidth() * 1f / (chartView.xPoints.length - 1);
+        maxYValueTemp = chartView.yAxis1.maxValue;
+        scaleY = availableHeight / maxYValueTemp;
 
-        scrollMatrix.setScale(scaleX, scaleY, 0, 0);
+        scrollMatrix.set(chartView.chartMatrix);
+        scrollMatrix.postScale(1, availableHeight / chartView.availableChartHeight);
 
-        maxYValueTemp = maxYValue;
+        if (chartView.yAxis2 != null) {
+            scrollMatrix2.set(chartView.chartMatrix2);
+            scrollMatrix2.postScale(1, availableHeight / chartView.availableChartHeight);
+        }
+
     }
 
     @Override
     protected void onDraw(Canvas canvas) {
         canvas.translate(0, chartsTopMargin);
-        for (ChartGraph graph : chartView.graphs) {
-            if (graph.linePaint.getAlpha() > 0) graph.drawScroll(canvas, scrollMatrix);
+        for (int i = 0; i < chartView.graphs.length; i++) {
+            ChartGraph graph = chartView.graphs[i];
+            if (graph.linePaint.getAlpha() > 0) {
+                if (chartView.yAxis2 != null && i == 1) {
+                    graph.drawScroll(canvas, scrollMatrix2);
+                } else {
+                    graph.drawScroll(canvas, scrollMatrix);
+                }
+
+            }
         }
     }
 
@@ -65,9 +77,23 @@ public class RangeChartView extends View {
     }
 
     void adjustYAxis() {
+        if (chartView.yAxis2 != null) {
+            ValueAnimator valueAnimator = ValueAnimator.ofFloat(0f, 1f);
+            valueAnimator.setDuration(LineChartView.SCALE_ANIMATION_DURATION);
+            valueAnimator.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
+                @Override
+                public void onAnimationUpdate(ValueAnimator animation) {
+                    invalidate();
+
+                }
+            });
+            valueAnimator.start();
+            return;
+        }
+
         int newTempMaxYValue = getMaxYValue();
 
-        int maxYValue = chartView.yAxis1.maxYValue;
+        int maxYValue = chartView.yAxis1.maxValue;
 
         float toScale = scaleY * maxYValue / newTempMaxYValue;
 

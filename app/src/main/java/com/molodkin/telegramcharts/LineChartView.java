@@ -13,6 +13,7 @@ public final class LineChartView extends BaseChart {
     private XAxis xAxis = new XAxis(this);
 
     int sideMargin = Utils.getDim(this, R.dimen.margin20);
+    int clipMargin = Utils.dpToPx(this, 1);
     int xAxisHeight = Utils.getDim(this, R.dimen.xAxisHeight);
     private int xAxisWidth = Utils.getDim(this, R.dimen.xAxisWidth);
 
@@ -105,13 +106,13 @@ public final class LineChartView extends BaseChart {
                 ChartGraph graph = graphs[j];
                 int k = i * 4;
 
-                int maxY = yAxis2 != null && j == 1 ? yAxis2.maxYValue : yAxis1.maxYValue;
-                float y1 = maxY - graph.values[i];
+                int maxYValue = yAxis2 != null && j == 1 ? yAxis2.maxValue : yAxis1.maxValue;
+                float y1 = maxYValue - graph.values[i];
 
                 graph.linePoints[k] = i;
                 graph.linePoints[k + 1] = y1;
                 graph.linePoints[k + 2] = (i + 1);
-                graph.linePoints[k + 3] = maxY - graph.values[i + 1];
+                graph.linePoints[k + 3] = maxYValue - graph.values[i + 1];
             }
         }
     }
@@ -155,10 +156,16 @@ public final class LineChartView extends BaseChart {
 
         canvas.translate(sideMargin, 0);
 
+        canvas.save();
+
+        canvas.clipRect(-sideMargin, 0, availableChartWidth + sideMargin, availableChartHeight + clipMargin);
+
         drawPoints(canvas);
 
         if (yAxis1 != null) yAxis1.draw(canvas);
         if (yAxis2 != null) yAxis2.draw(canvas);
+
+        canvas.restore();
 
         xAxis.draw(canvas);
     }

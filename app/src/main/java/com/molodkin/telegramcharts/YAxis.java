@@ -43,7 +43,12 @@ class YAxis {
     boolean isHalfLine= false;
 
     private int maxYValueTemp = -1;
-    int maxYValue;
+    private int minYValueTemp = -1;
+    int maxValue;
+    int minValue;
+    int range;
+    private ValueAnimator scaleAnimator;
+    private float fromScale = 1f;
 
     YAxis(BaseChart chart, Matrix matrix) {
         this.chart = chart;
@@ -69,6 +74,10 @@ class YAxis {
 
     void draw(Canvas canvas) {
         canvas.save();
+
+//        axisPaint.setAlpha(255);
+//        canvas.drawLine(0, chart.availableChartHeight, chart.availableChartWidth, chart.availableChartHeight, axisPaint);
+//        canvas.drawLine(0, 0, chart.availableChartWidth, 0, axisPaint);
 
         drawLines(canvas, rowYValuesAlpha, rowYValues, rowYTextsValues, rowYTextsValuesWidth);
 
@@ -132,12 +141,26 @@ class YAxis {
     }
 
     private void adjustYAxis(boolean init) {
-        int newTempMaxYValue = getAdjustedMaxYValue();
+        int dirtyMin = getMinValue();
+        int dirtyMax = getMaxValue();
+
+        int newTempMinYValue = findAvailableMinValue(dirtyMin);
+
+        int tempStep = (int) Math.ceil((dirtyMax - newTempMinYValue) * 1f / rowNumber);
+
+        int newRange = findAvailableValue(tempStep);
+
+        int newTempMaxYValue = newTempMinYValue + newRange;
+
         if (init) {
-            maxYValue = newTempMaxYValue;
+            maxValue = newTempMaxYValue;
+            minValue = newTempMinYValue;
+            range = newRange;
         }
 
-        if (newTempMaxYValue == this.maxYValueTemp) return;
+        if (newTempMaxYValue == this.maxYValueTemp && newTempMinYValue == this.minYValueTemp) return;
+
+        final boolean isMaxUpdated = newTempMaxYValue != this.maxYValueTemp;
 
         System.arraycopy(rowYValues, 0, rowYValuesToHide, 0, rowNumber);
         System.arraycopy(rowYTextsValues, 0, rowYTextsValuesToHide, 0, rowNumber);
@@ -146,21 +169,20 @@ class YAxis {
         }
 
         for (int i = 0; i < rowNumber; i++) {
-            rowYValues[i] = (int) (i * newTempMaxYValue * 1f / rowNumber);
+            rowYValues[i] = newTempMinYValue + (int) (i * newRange * 1f / rowNumber);
             rowYTextsValues[i] = String.valueOf(rowYValues[i]);
             if (isRight) {
                 rowYTextsValuesWidth[i] = axisTextPaint.measureText(rowYTextsValues[i]);
             }
         }
 
-        float toScale = this.maxYValue * 1f / newTempMaxYValue;
-
-        float fromScale = this.maxYValue * 1f / this.maxYValueTemp;
+        final float toScale = range * 1f / newRange;
 
         this.maxYValueTemp = newTempMaxYValue;
+        this.minYValueTemp = newTempMinYValue;
 
         if (init){
-            matrix.postScale(1, chart.availableChartHeight / maxYValue, 0, 0);
+            matrix.postScale(1, chart.availableChartHeight / range, 0, 0);
             return;
         }
 
@@ -170,24 +192,45 @@ class YAxis {
         final float[] prev = new float[1];
         prev[0] = fromScale;
 
-        ValueAnimator valueAnimator = ValueAnimator.ofFloat(fromScale, toScale);
-        valueAnimator.setDuration(SCALE_ANIMATION_DURATION);
-        valueAnimator.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
+        if (scaleAnimator != null) {
+            scaleAnimator.cancel();
+        }
+
+        scaleAnimator = ValueAnimator.ofFloat(fromScale, toScale);
+        scaleAnimator.setDuration(SCALE_ANIMATION_DURATION);
+        scaleAnimator.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
             @Override
             public void onAnimationUpdate(ValueAnimator animation) {
                 float value = (float) animation.getAnimatedValue();
-                matrix.postScale(1, value / prev[0], 0f, chart.availableChartHeight);
+                float portion = animation.getAnimatedFraction();
+                fromScale = value;
+
+                if (isMaxUpdated) {
+                    float minYValueTempCoord = isRight ? chart.yCoordByValue2(minYValueTemp) : chart.yCoordByValue(minYValueTemp);
+                    if (minYValueTempCoord != chart.availableChartHeight) {
+                        matrix.postTranslate(0, (chart.availableChartHeight - minYValueTempCoord) * portion);
+                    }
+                    matrix.postScale(1, value / prev[0], 0f, chart.availableChartHeight);
+                } else {
+                    float maxYValueTempCoord = isRight ? chart.yCoordByValue2(minYValueTemp) : chart.yCoordByValue(maxYValueTemp);
+                    if (maxYValueTempCoord != 0) {
+                        matrix.postTranslate(0, -maxYValueTempCoord * portion);
+                    }
+                    matrix.postScale(1, value / prev[0], 0f, 0);
+                }
+
                 prev[0] = value;
                 chart.invalidate();
             }
         });
-        valueAnimator.start();
+
+        scaleAnimator.start();
 
         rowYValuesAlpha = 0;
 
-        ValueAnimator valueAnimator2 = ValueAnimator.ofInt(0, 255);
-        valueAnimator2.setDuration(SCALE_ANIMATION_DURATION);
-        valueAnimator2.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
+        ValueAnimator alphaAnimator = ValueAnimator.ofInt(0, 255);
+        alphaAnimator.setDuration(SCALE_ANIMATION_DURATION);
+        alphaAnimator.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
             @Override
             public void onAnimationUpdate(ValueAnimator animation) {
                 rowYValuesAlpha = (int) animation.getAnimatedValue();
@@ -195,36 +238,26 @@ class YAxis {
 
             }
         });
-        valueAnimator2.start();
+        alphaAnimator.start();
     }
 
-    private int getAdjustedMaxYValue() {
+    private int getMaxValue() {
         if (isHalfLine) {
             if (!isRight) {
-                return getAdjustedMaxYValue(0);
+                return getMaxValue(0);
             } else {
-                return getAdjustedMaxYValue(1);
+                return getMaxValue(1);
             }
         } else {
-            return getAdjustedMaxYValueAll();
+            return getMaxValueAll();
         }
     }
 
-    private int getAdjustedMaxYValueAll() {
-        int value = getMaxRangeValue();
-        int tempStep = (int) Math.ceil(value * 1f / rowNumber);
-
-        return findAvailableValue(tempStep);
-    }
-
-    private int getAdjustedMaxYValue(int graphIndex) {
+    private int getMaxValue(int graphIndex) {
         if (!chart.graphs[graphIndex].isEnable) {
-            return graphIndex == 0 ? maxYValueTemp : maxYValueTemp;
+            return maxYValueTemp;
         }
-        int value = chart.graphs[graphIndex].getMax(chart.start, chart.end);
-        int tempStep = (int) Math.ceil(value * 1f / rowNumber);
-
-        return findAvailableValue(tempStep);
+        return chart.graphs[graphIndex].getMax(chart.start, chart.end);
     }
 
     private int findAvailableValue(int value) {
@@ -238,7 +271,18 @@ class YAxis {
         return value;
     }
 
-    private int getMaxRangeValue() {
+    private int findAvailableMinValue(int value) {
+        if (value < 5) {
+            return 0;
+        } else {
+            while (true) {
+                if (value % 5 == 0) return value;
+                value--;
+            }
+        }
+    }
+
+    private int getMaxValueAll() {
         ArrayList<Integer> maxValues = new ArrayList<>(chart.graphs.length);
         for (ChartGraph graph : chart.graphs) {
             if (graph.isEnable) maxValues.add(graph.getMax(chart.start, chart.end));
@@ -250,5 +294,42 @@ class YAxis {
             return Collections.max(maxValues);
         }
     }
+
+
+
+    private int getMinValue(int index) {
+        if (!chart.graphs[index].isEnable) {
+            return minYValueTemp;
+        }
+
+        return chart.graphs[index].getMin(chart.start, chart.end);
+    }
+
+    private int getMinValueAll() {
+        ArrayList<Integer> minValues = new ArrayList<>(chart.graphs.length);
+        for (ChartGraph graph : chart.graphs) {
+            if (graph.isEnable) minValues.add(graph.getMin(chart.start, chart.end));
+        }
+
+        if (minValues.size() == 0) {
+            return maxYValueTemp;
+        } else {
+            return Collections.min(minValues);
+        }
+    }
+
+    private int getMinValue() {
+        if (isHalfLine) {
+            if (!isRight) {
+                return getMinValue(0);
+            } else {
+                return getMinValue(1);
+            }
+        } else {
+            return getMinValueAll();
+        }
+    }
+
+
 
 }

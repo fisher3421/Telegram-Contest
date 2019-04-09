@@ -274,42 +274,6 @@ class InfoView extends View {
         backgroundSize.bottom = (int) windowHeight;
 
         background.setBounds(backgroundSize);
-
-//        boolean isTopMarginValid = true;
-//
-//        int circleDiameter = circleRadius * 2;
-//
-//        for (int i = 0; i < yCoordsSored.size(); i++) {
-//            float y = yCoordsSored.get(i);
-//
-//            if (y + circleDiameter > windowTopMargin && y - circleDiameter < windowTopMargin + windowHeight) {
-//                isTopMarginValid = false;
-//                break;
-//            }
-//        }
-//
-//        if (!isTopMarginValid) {
-//            for (int i = 0; i < yCoordsSored.size(); i++) {
-//                float y = yCoordsSored.get(i);
-//                if (i == 0) {
-//                    if (y > windowHeight + circleDiameter) {
-//                        windowTopMargin = 0;
-//                        break;
-//                    }
-//                } else {
-//                    float yPre = yCoordsSored.get(i - 1);
-//                    if (Math.abs(y - yPre) > windowHeight + circleDiameter * 2) {
-//                        windowTopMargin = yPre + circleDiameter;
-//                        break;
-//                    } else if (i == yCoordsSored.size() - 1) {
-//                        if (y + circleDiameter + windowHeight < getHeight()) {
-//                            windowTopMargin = y + circleDiameter;
-//                            break;
-//                        }
-//                    }
-//                }
-//            }
-//        }
     }
 
     void measurePoints(float newXCoord) {
@@ -328,7 +292,7 @@ class InfoView extends View {
                 float fraction = xValue - xBefore;
                 float y = y2 * fraction + y1 * (1 - fraction);
 
-                float yCoord = chartView.yCoordByValue(y);
+                float yCoord = chartView.secondY && i == 1 ? chartView.yCoordByValue2(y) : chartView.yCoordByValue(y);
                 yCoords.add(yCoord);
                 if (yCoord < maxYCoord) {
                     maxYCoord = yCoord;

@@ -9,6 +9,7 @@ class ChartGraph {
     final int [] values;
 
     private final int [][] maxValuesMatrix;
+    private final int [][] minValuesMatrix;
 
     final Paint linePaint;
 
@@ -28,16 +29,23 @@ class ChartGraph {
         return maxValuesMatrix[start][end - 1];
     }
 
+    int getMin(int start, int end) {
+        return minValuesMatrix[start][end - 1];
+    }
+
     ChartGraph(int[] values, int color, float width, String name) {
         this.values = values;
 
         maxValuesMatrix = new int[values.length][values.length];
+        minValuesMatrix = new int[values.length][values.length];
         this.name = name;
 
         for (int i = 0; i < values.length; i++) {
             maxValuesMatrix[i][i] = values[i];
+            minValuesMatrix[i][i] = values[i];
             for (int j = i + 1; j < values.length; j++) {
                 maxValuesMatrix[i][j] = Math.max(maxValuesMatrix[i][j - 1], values[j]);
+                minValuesMatrix[i][j] = Math.min(minValuesMatrix[i][j - 1], values[j]);
             }
         }
 

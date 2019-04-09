@@ -71,13 +71,13 @@ abstract class BaseChart extends View {
     }
 
     float yCoordByValue(float y) {
-        tempPoint[1] = yAxis1.maxYValue - y;
+        tempPoint[1] = yAxis1.maxValue - y;
         chartMatrix.mapPoints(tempPoint);
         return tempPoint[1];
     }
 
     float yCoordByValue2(float y) {
-        tempPoint[1] = yAxis2.maxYValue - y;
+        tempPoint[1] = yAxis2.maxValue - y;
         chartMatrix2.mapPoints(tempPoint);
         return tempPoint[1];
     }
