@@ -15,7 +15,11 @@ abstract class BaseChart extends View {
 
     ChartGraph[] graphs;
 
+    YAxis yAxis1;
+    YAxis yAxis2;
+
     public final Matrix chartMatrix = new Matrix();
+    public final Matrix chartMatrix2 = new Matrix();
     public final Matrix chartInvertMatrix = new Matrix();
 
     int start = 0;
@@ -27,10 +31,12 @@ abstract class BaseChart extends View {
     int yAdjustStart = 0;
     int yAdjustEnd = 0;
 
-    int maxYValueTemp;
-    int maxYValue;
+    float availableChartHeight;
+    float availableChartWidth;
 
     int sideMargin = Utils.getDim(this, R.dimen.margin20);
+
+    boolean secondY = false;
 
     public BaseChart(Context context) {
         super(context);
@@ -40,7 +46,7 @@ abstract class BaseChart extends View {
     abstract void setEnd(int end);
     abstract void setStartEnd(int start, int end);
 
-    abstract int getMaxRangeValue();
+//    abstract int getMaxRangeValue();
 
     abstract void adjustYAxis();
 
@@ -65,9 +71,14 @@ abstract class BaseChart extends View {
     }
 
     float yCoordByValue(float y) {
-        tempPoint[1] = maxYValue - y;
+        tempPoint[1] = yAxis1.maxYValue - y;
         chartMatrix.mapPoints(tempPoint);
         return tempPoint[1];
     }
 
+    float yCoordByValue2(float y) {
+        tempPoint[1] = yAxis2.maxYValue - y;
+        chartMatrix2.mapPoints(tempPoint);
+        return tempPoint[1];
+    }
 }

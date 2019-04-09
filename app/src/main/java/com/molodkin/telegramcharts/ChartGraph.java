@@ -22,6 +22,8 @@ class ChartGraph {
 
     private float[] tempLinePoints;
 
+    int color;
+
     int getMax(int start, int end) {
         return maxValuesMatrix[start][end - 1];
     }
@@ -38,6 +40,8 @@ class ChartGraph {
                 maxValuesMatrix[i][j] = Math.max(maxValuesMatrix[i][j - 1], values[j]);
             }
         }
+
+        this.color = color;
 
         linePaint = new Paint();
         linePaint.setStyle(Paint.Style.STROKE);

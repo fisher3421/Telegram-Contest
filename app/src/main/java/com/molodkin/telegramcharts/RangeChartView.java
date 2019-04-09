@@ -30,14 +30,16 @@ public class RangeChartView extends View {
     protected void onSizeChanged(int w, int h, int oldw, int oldh) {
         super.onSizeChanged(w, h, oldw, oldh);
 
+        int maxYValue = chartView.yAxis1.maxYValue;
+
         float availableHeight = getHeight() - chartsTopMargin;
-        scaleY = availableHeight / chartView.maxYValue;
+        scaleY = availableHeight / maxYValue;
 
         float scaleX = getWidth() * 1f / (chartView.xPoints.length - 1);
 
         scrollMatrix.setScale(scaleX, scaleY, 0, 0);
 
-        maxYValueTemp = chartView.maxYValue;
+        maxYValueTemp = maxYValue;
     }
 
     @Override
@@ -65,9 +67,11 @@ public class RangeChartView extends View {
     void adjustYAxis() {
         int newTempMaxYValue = getMaxYValue();
 
-        float toScale = scaleY * chartView.maxYValue / newTempMaxYValue;
+        int maxYValue = chartView.yAxis1.maxYValue;
 
-        float fromScale = scaleY * chartView.maxYValue / this.maxYValueTemp;
+        float toScale = scaleY * maxYValue / newTempMaxYValue;
+
+        float fromScale = scaleY * maxYValue / this.maxYValueTemp;
 
         this.maxYValueTemp = newTempMaxYValue;
 

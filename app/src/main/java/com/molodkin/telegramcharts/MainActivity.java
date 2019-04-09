@@ -43,6 +43,7 @@ public class MainActivity extends Activity {
 
         for (int i = 0; i < data.size(); i++) {
             LineChartLayout chartLayout = new LineChartLayout(this);
+            if (i == 0) chartLayout.chartView.secondY = true;
             chartLayout.setPadding(0, layoutTopMargin, 0, 0);
             charts.add(chartLayout);
             chartLayout.setChartName(String.format("Chart %s", String.valueOf(i + 1)));
@@ -50,6 +51,7 @@ public class MainActivity extends Activity {
             LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
             lp.bottomMargin = Utils.dpToPx(this, 32);
             root.addView(chartLayout, lp);
+//            break;
         }
 
         findViewById(R.id.switchDayNightMode).setOnClickListener(new View.OnClickListener() {
