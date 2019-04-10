@@ -1,6 +1,7 @@
 package com.molodkin.telegramcharts;
 
 import android.animation.ValueAnimator;
+import android.annotation.SuppressLint;
 import android.content.Context;
 import android.graphics.Canvas;
 import android.graphics.Matrix;
@@ -9,6 +10,9 @@ import android.view.View;
 import java.util.ArrayList;
 import java.util.Collections;
 
+import static com.molodkin.telegramcharts.BaseChart.SCALE_ANIMATION_DURATION;
+
+@SuppressLint("ViewConstructor")
 public class RangeChartView extends View {
 
     private final Matrix scrollMatrix = new Matrix();
@@ -50,7 +54,7 @@ public class RangeChartView extends View {
     protected void onDraw(Canvas canvas) {
         canvas.translate(0, chartsTopMargin);
         for (int i = 0; i < chartView.graphs.length; i++) {
-            ChartGraph graph = chartView.graphs[i];
+            BaseChartGraph graph = chartView.graphs[i];
             if (graph.linePaint.getAlpha() > 0) {
                 if (chartView.yAxis2 != null && i == 1) {
                     graph.drawScroll(canvas, scrollMatrix2);
@@ -63,9 +67,9 @@ public class RangeChartView extends View {
     }
 
     private int getMaxYValue() {
-        ChartGraph[] graphs = chartView.graphs;
+        BaseChartGraph[] graphs = chartView.graphs;
         ArrayList<Integer> maxValues = new ArrayList<>(graphs.length);
-        for (ChartGraph graph : graphs) {
+        for (BaseChartGraph graph : graphs) {
             if (graph.isEnable) maxValues.add(graph.getMax(0, chartView.xPoints.length));
         }
 
@@ -79,7 +83,7 @@ public class RangeChartView extends View {
     void adjustYAxis() {
         if (chartView.yAxis2 != null) {
             ValueAnimator valueAnimator = ValueAnimator.ofFloat(0f, 1f);
-            valueAnimator.setDuration(LineChartView.SCALE_ANIMATION_DURATION);
+            valueAnimator.setDuration(SCALE_ANIMATION_DURATION);
             valueAnimator.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
                 @Override
                 public void onAnimationUpdate(ValueAnimator animation) {
@@ -108,7 +112,7 @@ public class RangeChartView extends View {
         prev[0] = fromScale;
 
         ValueAnimator valueAnimator = ValueAnimator.ofFloat(fromScale, toScale);
-        valueAnimator.setDuration(LineChartView.SCALE_ANIMATION_DURATION);
+        valueAnimator.setDuration(SCALE_ANIMATION_DURATION);
         valueAnimator.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
             @Override
             public void onAnimationUpdate(ValueAnimator animation) {

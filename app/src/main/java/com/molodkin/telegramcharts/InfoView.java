@@ -245,7 +245,7 @@ class InfoView extends View {
         valuesWidths.clear();
 
         for (int i = 0; i < chartView.graphs.length; i++) {
-            ChartGraph graph = chartView.graphs[i];
+            BaseChartGraph graph = chartView.graphs[i];
             if (graph.isEnable) {
                 textNames.add(graph.name);
 //                float nameWidth = nameTextPaint.measureText(graph.name);
@@ -283,7 +283,7 @@ class InfoView extends View {
         float xValue  = chartView.xValueByCoord(newXCoord);
 
         for (int i = 0; i < chartView.graphs.length; i++) {
-            ChartGraph graph = chartView.graphs[i];
+            BaseChartGraph graph = chartView.graphs[i];
             if (graph.isEnable) {
 
                 int xBefore = (int) xValue;

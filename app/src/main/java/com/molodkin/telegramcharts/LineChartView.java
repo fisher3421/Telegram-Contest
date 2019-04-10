@@ -21,8 +21,6 @@ public final class LineChartView extends BaseChart {
 
     private Paint axisPaint = new Paint();
 
-    private float[] tempPoint = new float[2];
-
     private ChartData data;
 
     public LineChartView(Context context) {
@@ -70,10 +68,10 @@ public final class LineChartView extends BaseChart {
         yAdjustStart = 0;
         yAdjustEnd = data.x.length;
 
-        graphs = new ChartGraph[data.values.size()];
+        graphs = new LineChartGraph[data.values.size()];
 
         for (int i = 0; i < graphs.length; i++) {
-            graphs[i] = new ChartGraph(data.values.get(i), Color.parseColor(data.colors.get(i)), graphLineWidth, data.names.get(i));
+            graphs[i] = new LineChartGraph(data.values.get(i), Color.parseColor(data.colors.get(i)), graphLineWidth, data.names.get(i));
         }
 
         availableChartHeight = (float) getHeight() - xAxisHeight;
@@ -82,15 +80,15 @@ public final class LineChartView extends BaseChart {
         float scaleX = availableChartWidth / (xPoints.length - 1);
 
         if (!secondY) {
-            yAxis1 = new YAxis(this, chartMatrix);
+            yAxis1 = new LineYAxis(this, chartMatrix);
             yAxis1.isHalfLine = false;
             yAxis1.init();
         } else {
-            yAxis1 = new YAxis(this, chartMatrix);
+            yAxis1 = new LineYAxis(this, chartMatrix);
             yAxis1.isHalfLine = true;
             yAxis1.init();
 
-            yAxis2 = new YAxis(this, chartMatrix2);
+            yAxis2 = new LineYAxis(this, chartMatrix2);
             yAxis2.isHalfLine = true;
             yAxis2.isRight = true;
             yAxis2.init();
@@ -103,7 +101,7 @@ public final class LineChartView extends BaseChart {
 
         for (int i = 0; i < end - 1; i++) {
             for (int j = 0; j < graphs.length; j++) {
-                ChartGraph graph = graphs[j];
+                LineChartGraph graph = (LineChartGraph) graphs[j];
                 int k = i * 4;
 
                 int maxYValue = yAxis2 != null && j == 1 ? yAxis2.maxValue : yAxis1.maxValue;
@@ -129,26 +127,6 @@ public final class LineChartView extends BaseChart {
         invalidate();
     }
 
-    float xCoordByIndex(int x) {
-        tempPoint[0] = x;
-        chartMatrix.mapPoints(tempPoint);
-        return sideMargin + tempPoint[0];
-    }
-
-    int xIndexByCoord(float x) {
-        return Math.round(xValueByCoord(x));
-    }
-
-    float xValueByCoord(float x) {
-        tempPoint[0] = x - sideMargin;
-
-        chartMatrix.invert(chartInvertMatrix);
-        chartInvertMatrix.mapPoints(tempPoint);
-
-        float value = tempPoint[0];
-        return Math.max(Math.min(value, xPoints.length - 1), 0);
-    }
-
     @Override
     protected void onDraw(Canvas canvas) {
         super.onDraw(canvas);
@@ -172,7 +150,7 @@ public final class LineChartView extends BaseChart {
 
     private void drawPoints(Canvas canvas) {
         for (int i = 0; i < graphs.length; i++) {
-            ChartGraph graph = graphs[i];
+            BaseChartGraph graph = graphs[i];
             if (graph.linePaint.getAlpha() > 0) {
                 if (secondY && i == 1) {
                     graph.draw(canvas, chartMatrix2, Math.max(drawStart, 0), Math.min(drawEnd, xPoints.length));
@@ -184,6 +162,7 @@ public final class LineChartView extends BaseChart {
         }
     }
 
+    @Override
     public void enableGraph(final int index, boolean enable) {
         graphs[index].isEnable = enable;
 
@@ -205,12 +184,6 @@ public final class LineChartView extends BaseChart {
         valueAnimator.start();
 
         adjustYAxis();
-    }
-
-    @Override
-    public void adjustYAxis() {
-        if (yAxis1 != null) yAxis1.adjustYAxis();
-        if (yAxis2 != null) yAxis2.adjustYAxis();
     }
 
     @Override

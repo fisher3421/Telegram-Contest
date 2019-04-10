@@ -6,61 +6,46 @@ import android.graphics.Matrix;
 import android.graphics.Paint;
 import android.text.TextPaint;
 
-import java.util.ArrayList;
-import java.util.Collections;
-
 import static com.molodkin.telegramcharts.BaseChart.SCALE_ANIMATION_DURATION;
 import static com.molodkin.telegramcharts.Utils.log;
 
-class YAxis {
-
-    private final BaseChart chart;
-    private final Matrix matrix;
-    private Paint axisPaint = new Paint();
-    private TextPaint axisTextPaint = new TextPaint();
-
-    private int xTextMargin;
-    private int axesTextSize;
-    private int xAxisWidth;
-
+abstract class BaseYAxis {
     private static final float ROW_AXIS_ALPHA = 0.1f;
-
-    private int [] availableYSteps = {5, 10, 20, 25, 40, 50, 100, 500, 1_000, 1_500, 2_000, 2_500, 3_000, 4_000, 5000, 10_000, 20_000, 30_000, 40_000, 50_000, 100_000, 200_000, 300_000, 400_000, 500_000, 1000_000};
-
-    private int rowNumber = 6;
-    private int [] rowYValues = new int[rowNumber];
-    private int [] rowYValuesToHide = new int[rowNumber];
-
-    private String [] rowYTextsValues = new String[rowNumber];
-    private String [] rowYTextsValuesToHide = new String[rowNumber];
-
-    private float [] rowYTextsValuesWidth = new float[rowNumber];
-    private float [] rowYTextsValuesToHideWidth = new float[rowNumber];
-
-    private int rowYValuesAlpha = 255;
-
+    protected final BaseChart chart;
+    protected final Matrix matrix;
+    protected int xTextMargin;
+    protected int axesTextSize;
+    protected int xAxisWidth;
     boolean isRight;
-    boolean isHalfLine= false;
-
-    private int maxYValueTemp = -1;
-    private int minYValueTemp = -1;
+    boolean isHalfLine = false;
     int maxValue;
     int minValue;
     int range;
+    private Paint axisPaint = new Paint();
+    private TextPaint axisTextPaint = new TextPaint();
+    private int [] availableYSteps = {5, 10, 20, 25, 40, 50, 100, 500, 1_000, 1_500, 2_000, 2_500, 3_000, 4_000, 5000, 10_000, 20_000, 30_000, 40_000, 50_000, 100_000, 200_000, 300_000, 400_000, 500_000, 1000_000};
+    private int rowNumber = 6;
+    private int [] rowYValues = new int[rowNumber];
+    private int [] rowYValuesToHide = new int[rowNumber];
+    private String [] rowYTextsValues = new String[rowNumber];
+    private String [] rowYTextsValuesToHide = new String[rowNumber];
+    private float [] rowYTextsValuesWidth = new float[rowNumber];
+    private float [] rowYTextsValuesToHideWidth = new float[rowNumber];
+    private int rowYValuesAlpha = 255;
+    protected int maxYValueTemp = -1;
+    protected int minYValueTemp = -1;
     private ValueAnimator scaleAnimator;
     private float fromScale = 1f;
 
-    YAxis(BaseChart chart, Matrix matrix) {
+    BaseYAxis(BaseChart chart, Matrix matrix) {
         this.chart = chart;
         this.matrix = matrix;
-
         xTextMargin = Utils.dpToPx(chart, 4);
         axesTextSize = Utils.spToPx(chart, 12);
         xAxisWidth = Utils.getDim(chart, R.dimen.xAxisWidth);
-
     }
 
-    void init() {
+    public void init() {
         axisPaint.setStyle(Paint.Style.STROKE);
         axisPaint.setStrokeWidth(xAxisWidth);
 
@@ -74,10 +59,6 @@ class YAxis {
 
     void draw(Canvas canvas) {
         canvas.save();
-
-//        axisPaint.setAlpha(255);
-//        canvas.drawLine(0, chart.availableChartHeight, chart.availableChartWidth, chart.availableChartHeight, axisPaint);
-//        canvas.drawLine(0, 0, chart.availableChartWidth, 0, axisPaint);
 
         drawLines(canvas, rowYValuesAlpha, rowYValues, rowYTextsValues, rowYTextsValuesWidth);
 
@@ -241,26 +222,10 @@ class YAxis {
         alphaAnimator.start();
     }
 
-    private int getMaxValue() {
-        if (isHalfLine) {
-            if (!isRight) {
-                return getMaxValue(0);
-            } else {
-                return getMaxValue(1);
-            }
-        } else {
-            return getMaxValueAll();
-        }
-    }
+    abstract int getMaxValue();
 
-    private int getMaxValue(int graphIndex) {
-        if (!chart.graphs[graphIndex].isEnable) {
-            return maxYValueTemp;
-        }
-        return chart.graphs[graphIndex].getMax(chart.start, chart.end);
-    }
 
-    private int findAvailableValue(int value) {
+    protected int findAvailableValue(int value) {
         for (int i = 0; i < availableYSteps.length - 1; i++) {
             if (availableYSteps[i] < value && value <= availableYSteps[i + 1]) {
                 value = rowNumber * availableYSteps[i + 1];
@@ -271,7 +236,7 @@ class YAxis {
         return value;
     }
 
-    private int findAvailableMinValue(int value) {
+    protected int findAvailableMinValue(int value) {
         if (value < 5) {
             return 0;
         } else {
@@ -282,54 +247,5 @@ class YAxis {
         }
     }
 
-    private int getMaxValueAll() {
-        ArrayList<Integer> maxValues = new ArrayList<>(chart.graphs.length);
-        for (ChartGraph graph : chart.graphs) {
-            if (graph.isEnable) maxValues.add(graph.getMax(chart.start, chart.end));
-        }
-
-        if (maxValues.size() == 0) {
-            return maxYValueTemp;
-        } else {
-            return Collections.max(maxValues);
-        }
-    }
-
-
-
-    private int getMinValue(int index) {
-        if (!chart.graphs[index].isEnable) {
-            return minYValueTemp;
-        }
-
-        return chart.graphs[index].getMin(chart.start, chart.end);
-    }
-
-    private int getMinValueAll() {
-        ArrayList<Integer> minValues = new ArrayList<>(chart.graphs.length);
-        for (ChartGraph graph : chart.graphs) {
-            if (graph.isEnable) minValues.add(graph.getMin(chart.start, chart.end));
-        }
-
-        if (minValues.size() == 0) {
-            return maxYValueTemp;
-        } else {
-            return Collections.min(minValues);
-        }
-    }
-
-    private int getMinValue() {
-        if (isHalfLine) {
-            if (!isRight) {
-                return getMinValue(0);
-            } else {
-                return getMinValue(1);
-            }
-        } else {
-            return getMinValueAll();
-        }
-    }
-
-
-
+    abstract int getMinValue();
 }

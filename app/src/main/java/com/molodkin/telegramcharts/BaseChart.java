@@ -13,10 +13,10 @@ abstract class BaseChart extends View {
 
     long[] xPoints;
 
-    ChartGraph[] graphs;
+    BaseChartGraph[] graphs;
 
-    YAxis yAxis1;
-    YAxis yAxis2;
+    BaseYAxis yAxis1;
+    BaseYAxis yAxis2;
 
     public final Matrix chartMatrix = new Matrix();
     public final Matrix chartMatrix2 = new Matrix();
@@ -45,10 +45,14 @@ abstract class BaseChart extends View {
     abstract void setStart(int start);
     abstract void setEnd(int end);
     abstract void setStartEnd(int start, int end);
+    abstract void enableGraph(final int index, boolean enable);
 
 //    abstract int getMaxRangeValue();
 
-    abstract void adjustYAxis();
+    public void adjustYAxis() {
+        if (yAxis1 != null) yAxis1.adjustYAxis();
+        if (yAxis2 != null) yAxis2.adjustYAxis();
+    }
 
     float xCoordByIndex(int x) {
         tempPoint[0] = x;

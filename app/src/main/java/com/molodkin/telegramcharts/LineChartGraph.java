@@ -4,41 +4,31 @@ import android.graphics.Canvas;
 import android.graphics.Matrix;
 import android.graphics.Paint;
 
-class ChartGraph {
+class LineChartGraph extends BaseChartGraph {
 
-    final int [] values;
 
     private final int [][] maxValuesMatrix;
     private final int [][] minValuesMatrix;
 
-    final Paint linePaint;
-
-    final Paint scrollLinePaint;
-
-    boolean isEnable = true;
-
     float[] linePoints;
-
-    final String name;
 
     private float[] tempLinePoints;
 
-    int color;
-
+    @Override
     int getMax(int start, int end) {
         return maxValuesMatrix[start][end - 1];
     }
 
+    @Override
     int getMin(int start, int end) {
         return minValuesMatrix[start][end - 1];
     }
 
-    ChartGraph(int[] values, int color, float width, String name) {
-        this.values = values;
+    LineChartGraph(int[] values, int color, float width, String name) {
+        super(values, name, color);
 
         maxValuesMatrix = new int[values.length][values.length];
         minValuesMatrix = new int[values.length][values.length];
-        this.name = name;
 
         for (int i = 0; i < values.length; i++) {
             maxValuesMatrix[i][i] = values[i];
@@ -48,8 +38,6 @@ class ChartGraph {
                 minValuesMatrix[i][j] = Math.min(minValuesMatrix[i][j - 1], values[j]);
             }
         }
-
-        this.color = color;
 
         linePaint = new Paint();
         linePaint.setStyle(Paint.Style.STROKE);
@@ -65,10 +53,12 @@ class ChartGraph {
         tempLinePoints = new float[values.length * 4 - 4];
     }
 
+    @Override
     void draw(Canvas canvas, Matrix matrix, int start, int end) {
         draw(canvas, matrix, linePaint, start, end);
     }
 
+    @Override
     void drawScroll(Canvas canvas, Matrix matrix) {
         draw(canvas, matrix, scrollLinePaint, 0, values.length);
     }

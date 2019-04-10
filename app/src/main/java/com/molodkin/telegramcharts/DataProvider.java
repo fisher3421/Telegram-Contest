@@ -27,6 +27,13 @@ public class DataProvider {
         return charts;
     }
 
+    static ChartData getData(Context context, int resId) throws IOException {
+        InputStream raw = context.getResources().openRawResource(resId);
+        JsonReader reader = new JsonReader(new BufferedReader(new InputStreamReader(raw, "UTF8")));
+
+        return parseChartData(reader);
+    }
+
     private static ChartData parseChartData(JsonReader reader) throws IOException {
         reader.beginObject();
 
