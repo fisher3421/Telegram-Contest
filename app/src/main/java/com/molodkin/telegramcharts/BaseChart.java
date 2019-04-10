@@ -1,5 +1,7 @@
 package com.molodkin.telegramcharts;
 
+import android.animation.Animator;
+import android.animation.AnimatorListenerAdapter;
 import android.animation.ValueAnimator;
 import android.content.Context;
 import android.graphics.Matrix;
@@ -9,6 +11,8 @@ import android.view.View;
 import static com.molodkin.telegramcharts.Utils.log;
 
 abstract class BaseChart extends View {
+
+    protected boolean enablingWithAlphaAnimation = true;
 
     static final long SCALE_ANIMATION_DURATION = 250L;
     static final long FADE_ANIMATION_DURATION = 150L;
@@ -79,7 +83,7 @@ abstract class BaseChart extends View {
         float toAlpha = enable ? 1f : 0f;
 
         ValueAnimator valueAnimator = ValueAnimator.ofFloat(fromAlpha, toAlpha);
-        valueAnimator.setDuration(FADE_ANIMATION_DURATION);
+        valueAnimator.setDuration(enablingWithAlphaAnimation ? FADE_ANIMATION_DURATION : FADE_ANIMATION_DURATION / 2);
         valueAnimator.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
             @Override
             public void onAnimationUpdate(ValueAnimator animation) {
@@ -91,7 +95,21 @@ abstract class BaseChart extends View {
         });
         valueAnimator.start();
 
-        adjustYAxis();
+        if (!enablingWithAlphaAnimation) {
+            valueAnimator.addListener(new AnimatorListenerAdapter() {
+                @Override
+                public void onAnimationEnd(Animator animation) {
+                    adjustYAxis();
+                }
+
+                @Override
+                public void onAnimationCancel(Animator animation) {
+                    adjustYAxis();
+                }
+            });
+        } else {
+            adjustYAxis();
+        }
     }
 
     protected void graphAlphaChanged() {}

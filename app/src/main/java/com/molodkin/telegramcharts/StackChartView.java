@@ -8,6 +8,7 @@ public final class StackChartView extends BaseChart {
 
     public StackChartView(Context context) {
         super(context);
+        enablingWithAlphaAnimation = false;
     }
 
     @Override
