@@ -1,6 +1,5 @@
 package com.molodkin.telegramcharts;
 
-import android.animation.ValueAnimator;
 import android.annotation.SuppressLint;
 import android.content.Context;
 import android.graphics.Canvas;
@@ -17,9 +16,9 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 
-class InfoView extends View {
+abstract class BaseInfoView extends View {
 
-    private final static long MOVE_ANIMATION = 200L;
+    protected final static long MOVE_ANIMATION = 200L;
 
     private final int dateTextSize = Utils.spToPx(getContext(), 12);
     private final int valueTextSize = Utils.spToPx(getContext(), 12);
@@ -33,27 +32,18 @@ class InfoView extends View {
     private final int rowMargin = Utils.dpToPx(getContext(), 8);
     private final int windowLineMargin = Utils.dpToPx(getContext(), 8);
 
-    private final int verticalLineWindowLeftMargin = Utils.dpToPx(getContext(), 24);
-
-    private int verticalLineWidth = Utils.dpToPx(getContext(), 1);
-    private int verticalLineTopMargin = Utils.dpToPx(getContext(), 10);
-
-    private int circleStrokeWidth = Utils.dpToPx(getContext(), 2);
-    private int circleRadius = Utils.dpToPx(getContext(), 4);
-
     private final Rect backgroundSize = new Rect();
     private final Rect backgroundPadding = new Rect();
 
     private NinePatchDrawable background;
 
+    protected final Paint circleFillPaint = new Paint();
+    protected final Paint circleStrokePaint = new Paint();
+    protected final Paint verticalLinePaint = new Paint();
+
     private final TextPaint dateTextPaint = new TextPaint();
     private final TextPaint valueTextPaint = new TextPaint();
     private final TextPaint nameTextPaint = new TextPaint();
-
-    private final Paint circleFillPaint = new Paint();
-    private final Paint circleStrokePaint = new Paint();
-
-    private final Paint verticalLinePaint = new Paint();
 
     private DateFormat dateFormat;
 
@@ -69,50 +59,33 @@ class InfoView extends View {
 
     private final ArrayList<Float> leftValues = new ArrayList<>();
     private final ArrayList<Float> topValues = new ArrayList<>();
-    private final ArrayList<Float> valuesWidths = new ArrayList<>();
     private final ArrayList<String> textValues = new ArrayList<>();
     private final ArrayList<String> textNames = new ArrayList<>();
-    private final ArrayList<Integer> textColors = new ArrayList<>();
-    private final ArrayList<Float> yCoords = new ArrayList<>();
-    private float maxYCoord;
+    protected final ArrayList<Integer> textColors = new ArrayList<>();
+
+    protected float maxYCoord;
 
     private float windowTopMargin = 0f;
 
     private boolean isMoving;
 
-    private final BaseChart chartView;
+    protected final BaseChart chartView;
 
-    private float xCoord = 0f;
-    private int xIndex = -1;
+    protected float xCoord = 0f;
+    protected int xIndex = -1;
 
     private float minX = 0;
     private float maxX = 0;
 
-    private ValueAnimator finisMovementAnimator;
-    private ValueAnimator.AnimatorUpdateListener finisMovementAnimatorUpdate = new ValueAnimator.AnimatorUpdateListener() {
-        @Override
-        public void onAnimationUpdate(ValueAnimator animation) {
-            xCoord = ((float) animation.getAnimatedValue());
-            measurePoints(xCoord);
-            invalidate();
-        }
-    };
 
-    InfoView(Context c, BaseChart chartView) {
+
+    BaseInfoView(Context c, BaseChart chartView) {
         super(c);
         dateFormat = new SimpleDateFormat("EEE, d MMM yyyy", Utils.getLocale(c));
 
         this.chartView = chartView;
 
-        verticalLinePaint.setStyle(Paint.Style.STROKE);
-        verticalLinePaint.setStrokeWidth(verticalLineWidth);
 
-        circleFillPaint.setStyle(Paint.Style.FILL);
-        circleFillPaint.setAntiAlias(true);
-
-        circleStrokePaint.setStyle(Paint.Style.STROKE);
-        circleStrokePaint.setAntiAlias(true);
-        circleStrokePaint.setStrokeWidth(circleStrokeWidth);
 
         dateTextPaint.setTextSize(dateTextSize);
         dateTextPaint.setAntiAlias(true);
@@ -139,9 +112,7 @@ class InfoView extends View {
         background.getPadding(backgroundPadding);
     }
 
-    private void initTheme() {
-        circleFillPaint.setColor(Utils.getColor(getContext(), Utils.INFO_VIEW_CIRCLE_COLOR));
-        verticalLinePaint.setColor(Utils.getColor(getContext(), Utils.AXIS_COLOR));
+    protected void initTheme() {
         background = (NinePatchDrawable) getContext().getResources().getDrawable(Utils.getResId(Utils.INFO_VIEW_BACKGROUND), getContext().getTheme());
         dateTextPaint.setColor(Utils.getColor(getContext(), Utils.PRIMARY_TEXT_COLOR));
         nameTextPaint.setColor(Utils.getColor(getContext(), Utils.PRIMARY_TEXT_COLOR));
@@ -177,31 +148,15 @@ class InfoView extends View {
                 xIndex = chartView.xIndexByCoord(x);
                 xCoord = chartView.xCoordByIndex(xIndex);
 
-                measurePoints(xCoord);
                 measureWindow(xIndex);
+
+                onActionDown(x);
 
                 invalidate();
 
                 break;
             case MotionEvent.ACTION_MOVE:
-                int newXIndex = chartView.xIndexByCoord(x);
-                if (newXIndex != xIndex) {
-                    measureWindow(newXIndex);
-
-                    float from = xCoord;
-                    float to = chartView.xCoordByIndex(newXIndex);
-
-                    if (finisMovementAnimator != null) {
-                        finisMovementAnimator.cancel();
-                    }
-
-                    finisMovementAnimator = ValueAnimator.ofFloat(from, to);
-                    finisMovementAnimator.setDuration(MOVE_ANIMATION);
-                    finisMovementAnimator.addUpdateListener(finisMovementAnimatorUpdate);
-                    finisMovementAnimator.start();
-
-                    xIndex = newXIndex;
-                }
+                onActionMove(x);
 
                 break;
             case MotionEvent.ACTION_UP:
@@ -212,18 +167,17 @@ class InfoView extends View {
                 break;
         }
 
-
-
-//        if (isMoving) {
-//            measure(newCoord);
-//            invalidate();
-//        }
-
         if (Math.abs(downX - event.getX()) > 50) {
             getParent().requestDisallowInterceptTouchEvent(true);
         }
 
         return isMoving;
+    }
+
+    protected void onActionDown(float x) {
+    }
+
+    protected void onActionMove(float x) {
     }
 
     void measureWindow(int newXIndex) {
@@ -232,9 +186,6 @@ class InfoView extends View {
 
         dateText = dateFormat.format(tempDate);
 
-//        float dateTextWidth = dateTextPaint.measureText(dateText);
-
-//        float valuesWidth = 0;
         float top = dateTextY + dateTextHeight + rowMargin;
 
         textNames.clear();
@@ -242,13 +193,11 @@ class InfoView extends View {
         textColors.clear();
         topValues.clear();
         leftValues.clear();
-        valuesWidths.clear();
 
         for (int i = 0; i < chartView.graphs.length; i++) {
             BaseChartGraph graph = chartView.graphs[i];
             if (graph.isEnable) {
                 textNames.add(graph.name);
-//                float nameWidth = nameTextPaint.measureText(graph.name);
 
                 String valueText = String.valueOf(graph.values[newXIndex]);
                 textValues.add(valueText);
@@ -257,7 +206,6 @@ class InfoView extends View {
                 leftValues.add(contentWidth - valueWidth);
                 topValues.add(top);
                 top += nameTextHeight;
-//                valuesWidth += Math.max(nameWidth, valueWidth);
                 if (i + 1 < chartView.graphs.length && chartView.graphs[i + 1].isEnable) {
                     top += rowMargin;
                 }
@@ -265,8 +213,6 @@ class InfoView extends View {
         }
 
         windowHeight = top + backgroundPadding.bottom;
-
-//        width = left + Math.max(dateTextWidth, valuesWidth) + backgroundPadding.right + leftRightPadding;
 
         backgroundSize.left = 0;
         backgroundSize.top = 0;
@@ -276,47 +222,13 @@ class InfoView extends View {
         background.setBounds(backgroundSize);
     }
 
-    void measurePoints(float newXCoord) {
-        yCoords.clear();
-        maxYCoord = Float.MAX_VALUE;
-
-        float xValue  = chartView.xValueByCoord(newXCoord);
-
-        for (int i = 0; i < chartView.graphs.length; i++) {
-            BaseChartGraph graph = chartView.graphs[i];
-            if (graph.isEnable) {
-
-                int xBefore = (int) xValue;
-                int y1 = graph.values[xBefore];
-                int y2 = graph.values[(int) Math.ceil(xValue)];
-                float fraction = xValue - xBefore;
-                float y = y2 * fraction + y1 * (1 - fraction);
-
-                float yCoord = chartView.secondY && i == 1 ? chartView.yCoordByValue2(y) : chartView.yCoordByValue(y);
-                yCoords.add(yCoord);
-                if (yCoord < maxYCoord) {
-                    maxYCoord = yCoord;
-                }
-            }
-        }
-    }
-
     @Override
     protected void onDraw(Canvas canvas) {
         super.onDraw(canvas);
 
         if (!isMoving || textValues.isEmpty()) return;
 
-        canvas.drawLine(xCoord, verticalLineTopMargin, xCoord, getHeight(), verticalLinePaint);
-
-        for (int i = 0; i < textValues.size(); i++) {
-            float yCoord = yCoords.get(i);
-
-            int color = textColors.get(i);
-            circleStrokePaint.setColor(color);
-            canvas.drawCircle(xCoord, yCoord, circleRadius, circleFillPaint);
-            canvas.drawCircle(xCoord, yCoord, circleRadius, circleStrokePaint);
-        }
+        drawContent(canvas);
 
         canvas.save();
 
@@ -364,6 +276,9 @@ class InfoView extends View {
         }
 
         canvas.restore();
+    }
+
+    protected void drawContent(Canvas canvas){
     }
 
     void updateTheme() {

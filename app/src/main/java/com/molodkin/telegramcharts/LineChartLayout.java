@@ -22,7 +22,7 @@ public class LineChartLayout extends FrameLayout {
     private final boolean isStack;
     public BaseChart chartView;
     private RangeChartView rangeChartView;
-    private InfoView infoView;
+    private BaseInfoView infoView;
 
     final int scrollHeight = Utils.getDim(this, R.dimen.scrollHeight);
     int chartHeight = Utils.getDim(this, R.dimen.chartHeight);
@@ -46,12 +46,13 @@ public class LineChartLayout extends FrameLayout {
     private void init() {
         if (isStack) {
             chartView = new StackChartView(getContext());
+            infoView = new StackInfoView(getContext(), chartView);
         } else {
             chartView = new LineChartView(getContext());
+            infoView = new LineInfoView(getContext(), chartView);
         }
         chartView.setLayoutParams(new FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, chartHeight));
 
-        infoView = new InfoView(getContext(), chartView);
         infoView.setLayoutParams(new FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, chartHeight - chartView.xAxisHeight));
 
         rangeChartView = new RangeChartView(getContext(), chartView);
