@@ -1,10 +1,10 @@
 package com.molodkin.telegramcharts;
 
+import android.annotation.SuppressLint;
 import android.content.Context;
 import android.content.res.ColorStateList;
 import android.graphics.Color;
 import android.graphics.Typeface;
-import android.util.AttributeSet;
 import android.util.TypedValue;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -16,9 +16,11 @@ import android.widget.TextView;
 
 import java.util.ArrayList;
 
+@SuppressLint("ViewConstructor")
 public class LineChartLayout extends FrameLayout {
 
-    public LineChartView chartView;
+    private final boolean isStack;
+    public BaseChart chartView;
     private RangeChartView rangeChartView;
     private InfoView infoView;
 
@@ -35,23 +37,18 @@ public class LineChartLayout extends FrameLayout {
 
     private TextView chartNameView;
 
-    public LineChartLayout(Context context) {
+    public LineChartLayout(Context context, boolean isStack) {
         super(context);
-        init();
-    }
-
-    public LineChartLayout(Context context, AttributeSet attrs) {
-        super(context, attrs);
-        init();
-    }
-
-    public LineChartLayout(Context context, AttributeSet attrs, int defStyleAttr) {
-        super(context, attrs, defStyleAttr);
+        this.isStack = isStack;
         init();
     }
 
     private void init() {
-        chartView = new LineChartView(getContext());
+        if (isStack) {
+            chartView = new StackChartView(getContext());
+        } else {
+            chartView = new LineChartView(getContext());
+        }
         chartView.setLayoutParams(new FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, chartHeight));
 
         infoView = new InfoView(getContext(), chartView);

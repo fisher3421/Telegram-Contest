@@ -10,9 +10,8 @@ class LineChartGraph extends BaseChartGraph {
     private final int [][] maxValuesMatrix;
     private final int [][] minValuesMatrix;
 
-    float[] linePoints;
-
-    private float[] tempLinePoints;
+    private Paint alphaLinePaint;
+    private Paint alphaScrollPaint;
 
     @Override
     int getMax(int start, int end) {
@@ -46,29 +45,25 @@ class LineChartGraph extends BaseChartGraph {
         linePaint.setColor(color);
         linePaint.setStrokeCap(Paint.Cap.SQUARE);
 
+        alphaLinePaint = new Paint(linePaint);
+
         scrollLinePaint = new Paint(linePaint);
         scrollLinePaint.setStrokeWidth(width / 2);
 
-        linePoints = new float[values.length * 4 - 4];
-        tempLinePoints = new float[values.length * 4 - 4];
+        alphaScrollPaint = new Paint(scrollLinePaint);
     }
 
     @Override
     void draw(Canvas canvas, Matrix matrix, int start, int end) {
-        draw(canvas, matrix, linePaint, start, end);
+        alphaLinePaint.setAlpha((int) (alpha * 255));
+        drawLines(canvas, matrix, alphaLinePaint, start, end);
     }
 
     @Override
     void drawScroll(Canvas canvas, Matrix matrix) {
-        draw(canvas, matrix, scrollLinePaint, 0, values.length);
+        alphaScrollPaint.setAlpha((int) (alpha * 255));
+        drawLines(canvas, matrix, alphaScrollPaint, 0, values.length);
     }
 
-    private void draw(Canvas canvas, Matrix matrix, Paint linePaint, int start, int end) {
-        int startLineIndex = start * 4;
-        int countLineIndex = (end - start - 1) * 2;
 
-        matrix.mapPoints(tempLinePoints, startLineIndex, linePoints, startLineIndex, countLineIndex);
-
-        canvas.drawLines(tempLinePoints, start * 4, (end - start - 1) * 4, linePaint);
-    }
 }

@@ -7,9 +7,6 @@ import android.graphics.Canvas;
 import android.graphics.Matrix;
 import android.view.View;
 
-import java.util.ArrayList;
-import java.util.Collections;
-
 import static com.molodkin.telegramcharts.BaseChart.SCALE_ANIMATION_DURATION;
 
 @SuppressLint("ViewConstructor")
@@ -55,7 +52,7 @@ public class RangeChartView extends View {
         canvas.translate(0, chartsTopMargin);
         for (int i = 0; i < chartView.graphs.length; i++) {
             BaseChartGraph graph = chartView.graphs[i];
-            if (graph.linePaint.getAlpha() > 0) {
+            if (graph.alpha > 0) {
                 if (chartView.yAxis2 != null && i == 1) {
                     graph.drawScroll(canvas, scrollMatrix2);
                 } else {
@@ -67,16 +64,11 @@ public class RangeChartView extends View {
     }
 
     private int getMaxYValue() {
-        BaseChartGraph[] graphs = chartView.graphs;
-        ArrayList<Integer> maxValues = new ArrayList<>(graphs.length);
-        for (BaseChartGraph graph : graphs) {
-            if (graph.isEnable) maxValues.add(graph.getMax(0, chartView.xPoints.length));
-        }
-
-        if (maxValues.size() == 0) {
+        int value = chartView.yAxis1.getMaxValueFullRange();
+        if (value == -1) {
             return maxYValueTemp;
         } else {
-            return Collections.max(maxValues);
+            return value;
         }
     }
 

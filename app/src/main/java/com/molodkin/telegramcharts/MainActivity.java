@@ -30,6 +30,7 @@ public class MainActivity extends Activity {
 //            data = DataProvider.getData(this);
             data.add(DataProvider.getData(this, R.raw.c1));
             data.add(DataProvider.getData(this, R.raw.c2));
+            data.add(DataProvider.getData(this, R.raw.c3));
         } catch (IOException e) {
             e.printStackTrace();
             return;
@@ -44,8 +45,15 @@ public class MainActivity extends Activity {
         int layoutTopMargin = Utils.getDim(this, R.dimen.margin20);
 
         for (int i = 0; i < data.size(); i++) {
-            LineChartLayout chartLayout = new LineChartLayout(this);
+            LineChartLayout chartLayout;
+            if (i == 2) {
+                chartLayout = new LineChartLayout(this, true);
+            } else {
+                chartLayout = new LineChartLayout(this, false);
+            }
+
             if (i == 1) chartLayout.chartView.secondY = true;
+
             chartLayout.setPadding(0, layoutTopMargin, 0, 0);
             charts.add(chartLayout);
             chartLayout.setChartName(String.format("Chart %s", String.valueOf(i + 1)));

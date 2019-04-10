@@ -24,6 +24,11 @@ class LineYAxis extends BaseYAxis {
         }
     }
 
+    @Override
+    int getMaxValueFullRange() {
+        return getMaxValueAll(0, chart.xPoints.length);
+    }
+
     private int getMaxValue(int graphIndex) {
         if (!chart.graphs[graphIndex].isEnable) {
             return maxYValueTemp;
@@ -32,13 +37,22 @@ class LineYAxis extends BaseYAxis {
     }
 
     private int getMaxValueAll() {
+        int value = getMaxValueAll(chart.start, chart.end);
+        if (value == -1) {
+            return maxYValueTemp;
+        } else {
+            return value;
+        }
+    }
+
+    private int getMaxValueAll(int start, int end) {
         ArrayList<Integer> maxValues = new ArrayList<>(chart.graphs.length);
         for (BaseChartGraph graph : chart.graphs) {
-            if (graph.isEnable) maxValues.add(graph.getMax(chart.start, chart.end));
+            if (graph.isEnable) maxValues.add(graph.getMax(start, end));
         }
 
         if (maxValues.size() == 0) {
-            return maxYValueTemp;
+            return -1;
         } else {
             return Collections.max(maxValues);
         }

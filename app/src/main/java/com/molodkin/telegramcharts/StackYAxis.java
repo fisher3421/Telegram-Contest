@@ -14,7 +14,16 @@ class StackYAxis extends BaseYAxis {
     }
 
     @Override
+    int getMaxValueFullRange() {
+        return getMatrix()[0][chart.xPoints.length-1];
+    }
+
+    @Override
     int getMaxValue() {
+        return getMatrix()[chart.start][chart.end - 1];
+    }
+
+    private int[][] getMatrix() {
         StringBuilder keyBuilder = new StringBuilder();
         for (BaseChartGraph graph : chart.graphs) {
             if (graph.isEnable) keyBuilder.append(graph.name);
@@ -32,8 +41,7 @@ class StackYAxis extends BaseYAxis {
             }
             maxValuesMap.put(key, maxMatrix);
         }
-
-        return maxMatrix[chart.start][chart.end - 1];
+        return maxMatrix;
     }
 
     private int getSum(int index) {

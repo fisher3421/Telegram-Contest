@@ -98,7 +98,7 @@ class InfoView extends View {
         }
     };
 
-    InfoView(Context c, LineChartView chartView) {
+    InfoView(Context c, BaseChart chartView) {
         super(c);
         dateFormat = new SimpleDateFormat("EEE, d MMM yyyy", Utils.getLocale(c));
 

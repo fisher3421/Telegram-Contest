@@ -11,16 +11,16 @@ import static com.molodkin.telegramcharts.Utils.log;
 
 abstract class BaseYAxis {
     private static final float ROW_AXIS_ALPHA = 0.1f;
-    protected final BaseChart chart;
-    protected final Matrix matrix;
-    protected int xTextMargin;
-    protected int axesTextSize;
-    protected int xAxisWidth;
+    final BaseChart chart;
+    private final Matrix matrix;
+    private int xTextMargin;
+    private int axesTextSize;
+    private int xAxisWidth;
     boolean isRight;
     boolean isHalfLine = false;
     int maxValue;
-    int minValue;
-    int range;
+    private int minValue;
+    private int range;
     private Paint axisPaint = new Paint();
     private TextPaint axisTextPaint = new TextPaint();
     private int [] availableYSteps = {5, 10, 20, 25, 40, 50, 100, 500, 1_000, 1_500, 2_000, 2_500, 3_000, 4_000, 5000, 10_000, 20_000, 30_000, 40_000, 50_000, 100_000, 200_000, 300_000, 400_000, 500_000, 1000_000};
@@ -32,8 +32,8 @@ abstract class BaseYAxis {
     private float [] rowYTextsValuesWidth = new float[rowNumber];
     private float [] rowYTextsValuesToHideWidth = new float[rowNumber];
     private int rowYValuesAlpha = 255;
-    protected int maxYValueTemp = -1;
-    protected int minYValueTemp = -1;
+    int maxYValueTemp = -1;
+    int minYValueTemp = -1;
     private ValueAnimator scaleAnimator;
     private float fromScale = 1f;
 
@@ -45,7 +45,7 @@ abstract class BaseYAxis {
         xAxisWidth = Utils.getDim(chart, R.dimen.xAxisWidth);
     }
 
-    public void init() {
+    void init() {
         axisPaint.setStyle(Paint.Style.STROKE);
         axisPaint.setStrokeWidth(xAxisWidth);
 
@@ -224,8 +224,10 @@ abstract class BaseYAxis {
 
     abstract int getMaxValue();
 
+    abstract int getMaxValueFullRange();
 
-    protected int findAvailableValue(int value) {
+
+    private int findAvailableValue(int value) {
         for (int i = 0; i < availableYSteps.length - 1; i++) {
             if (availableYSteps[i] < value && value <= availableYSteps[i + 1]) {
                 value = rowNumber * availableYSteps[i + 1];
@@ -236,7 +238,7 @@ abstract class BaseYAxis {
         return value;
     }
 
-    protected int findAvailableMinValue(int value) {
+    private int findAvailableMinValue(int value) {
         if (value < 5) {
             return 0;
         } else {
