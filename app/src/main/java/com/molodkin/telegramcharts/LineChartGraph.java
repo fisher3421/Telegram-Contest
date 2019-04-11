@@ -38,19 +38,19 @@ class LineChartGraph extends BaseChartGraph {
             }
         }
 
-        linePaint = new Paint();
-        linePaint.setStyle(Paint.Style.STROKE);
-        linePaint.setAntiAlias(true);
-        linePaint.setStrokeWidth(width);
-        linePaint.setColor(color);
-        linePaint.setStrokeCap(Paint.Cap.SQUARE);
+        paint = new Paint();
+        paint.setStyle(Paint.Style.STROKE);
+        paint.setAntiAlias(true);
+        paint.setStrokeWidth(width);
+        paint.setColor(color);
+        paint.setStrokeCap(Paint.Cap.SQUARE);
 
-        alphaLinePaint = new Paint(linePaint);
+        alphaLinePaint = new Paint(paint);
 
-        scrollLinePaint = new Paint(linePaint);
-        scrollLinePaint.setStrokeWidth(width / 2);
+        scrollPaint = new Paint(paint);
+        scrollPaint.setStrokeWidth(width / 2);
 
-        alphaScrollPaint = new Paint(scrollLinePaint);
+        alphaScrollPaint = new Paint(scrollPaint);
     }
 
     @Override

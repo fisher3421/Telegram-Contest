@@ -42,6 +42,10 @@ public class DataProvider {
         ArrayList<String> names = new ArrayList<>();
         ArrayList<String> colors = new ArrayList<>();
 
+        boolean stacked = false;
+        boolean percentage = false;
+        boolean yScaled = false;
+
         while (reader.hasNext()) {
             String name = reader.nextName();
             switch (name) {
@@ -88,6 +92,15 @@ public class DataProvider {
                     reader.endObject();
                     break;
                 }
+                case "percentage" :
+                    percentage = reader.nextBoolean();
+                    break;
+                case "stacked" :
+                    stacked = reader.nextBoolean();
+                    break;
+                case "y_scaled" :
+                    yScaled = reader.nextBoolean();
+                    break;
                 default: {
                     reader.skipValue();
                     break;
@@ -102,7 +115,14 @@ public class DataProvider {
             yPrimitives.add(toIntArray(integers));
         }
 
-        return new ChartData(toLongArray(x), yPrimitives, names, colors);
+        ChartData.Type type;
+        if (stacked) {
+            type = percentage ? ChartData.Type.STACK_PERCENTAGE : ChartData.Type.STACK;
+        } else {
+            type = yScaled ? ChartData.Type.LINE_SCALED : ChartData.Type.LINE;
+        }
+
+        return new ChartData(toLongArray(x), yPrimitives, names, colors, type);
     }
 
 

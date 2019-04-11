@@ -8,21 +8,19 @@ import android.view.ViewGroup;
 import android.widget.LinearLayout;
 
 import java.io.IOException;
-import java.sql.Time;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Timer;
 
 public class MainActivity extends Activity {
 
-    ArrayList<LineChartLayout> charts = new ArrayList<>();
+    ArrayList<ChartLayout> charts = new ArrayList<>();
     private LinearLayout actionBarLayout;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        List<ChartData> data = null;
+        List<ChartData> data =null;
 
         data = new ArrayList<>();
 
@@ -31,6 +29,8 @@ public class MainActivity extends Activity {
             data.add(DataProvider.getData(this, R.raw.c1));
             data.add(DataProvider.getData(this, R.raw.c2));
             data.add(DataProvider.getData(this, R.raw.c3));
+            data.add(DataProvider.getData(this, R.raw.c4));
+            data.add(DataProvider.getData(this, R.raw.c5));
         } catch (IOException e) {
             e.printStackTrace();
             return;
@@ -45,19 +45,14 @@ public class MainActivity extends Activity {
         int layoutTopMargin = Utils.getDim(this, R.dimen.margin20);
 
         for (int i = 0; i < data.size(); i++) {
-            LineChartLayout chartLayout;
-            if (i == 2) {
-                chartLayout = new LineChartLayout(this, true);
-            } else {
-                chartLayout = new LineChartLayout(this, false);
-            }
-
-            if (i == 1) chartLayout.chartView.secondY = true;
+            ChartLayout chartLayout = new ChartLayout(this);
 
             chartLayout.setPadding(0, layoutTopMargin, 0, 0);
-            charts.add(chartLayout);
-            chartLayout.setChartName(String.format("Chart %s", String.valueOf(i + 1)));
+
             chartLayout.setData(data.get(i));
+            chartLayout.setChartName(String.format("Chart %s", String.valueOf(i + 1)));
+
+            charts.add(chartLayout);
             LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
             lp.bottomMargin = Utils.dpToPx(this, 32);
             root.addView(chartLayout, lp);
@@ -79,7 +74,7 @@ public class MainActivity extends Activity {
         getWindow().setStatusBarColor(Utils.getColor(MainActivity.this, Utils.PRIMARY_DARK_COLOR));
         getWindow().getDecorView().setBackgroundColor(Utils.getColor(MainActivity.this, Utils.WINDOW_BACKGROUND_COLOR));
         actionBarLayout.setBackgroundColor(Utils.getColor(MainActivity.this, Utils.PRIMARY_COLOR));
-        for (LineChartLayout chart : charts) {
+        for (ChartLayout chart : charts) {
             chart.setBackgroundColor(Utils.getColor(MainActivity.this, Utils.CHART_BACKGROUND_COLOR));
             chart.updateTheme();
         }

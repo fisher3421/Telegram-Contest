@@ -65,10 +65,10 @@ public final class LineChartView extends BaseChart {
                 int maxYValue = yAxis2 != null && j == 1 ? yAxis2.maxValue : yAxis1.maxValue;
                 float y1 = maxYValue - graph.values[i];
 
-                graph.linePoints[k] = i;
-                graph.linePoints[k + 1] = y1;
-                graph.linePoints[k + 2] = (i + 1);
-                graph.linePoints[k + 3] = maxYValue - graph.values[i + 1];
+                graph.points[k] = i;
+                graph.points[k + 1] = y1;
+                graph.points[k + 2] = (i + 1);
+                graph.points[k + 3] = maxYValue - graph.values[i + 1];
             }
         }
     }

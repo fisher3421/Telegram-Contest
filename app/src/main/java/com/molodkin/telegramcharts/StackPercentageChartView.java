@@ -4,9 +4,11 @@ import android.content.Context;
 import android.graphics.Canvas;
 import android.graphics.Color;
 
-public final class StackChartView extends BaseChart {
+public final class StackPercentageChartView extends BaseChart {
 
-    public StackChartView(Context context) {
+    private float[] sums;
+
+    public StackPercentageChartView(Context context) {
         super(context);
         enablingWithAlphaAnimation = false;
     }
@@ -16,6 +18,7 @@ public final class StackChartView extends BaseChart {
         if (getWidth() == 0 || getHeight() == 0 || data == null) return;
 
         xPoints = data.x;
+        sums = new float[xPoints.length];
 
         start = 0;
         end = data.x.length;
@@ -26,10 +29,10 @@ public final class StackChartView extends BaseChart {
         yAdjustStart = 0;
         yAdjustEnd = data.x.length;
 
-        graphs = new StackChartGraph[data.values.size()];
+        graphs = new StackPercentageChartGraph[data.values.size()];
 
         for (int i = 0; i < graphs.length; i++) {
-            graphs[i] = new StackChartGraph(data.values.get(i), Color.parseColor(data.colors.get(i)), graphLineWidth, data.names.get(i));
+            graphs[i] = new StackPercentageChartGraph(data.values.get(i), Color.parseColor(data.colors.get(i)), data.names.get(i));
         }
 
         availableChartHeight = (float) getHeight() - xAxisHeight;
@@ -37,7 +40,7 @@ public final class StackChartView extends BaseChart {
 
         float scaleX = availableChartWidth / (xPoints.length - 1);
 
-        yAxis1 = new StackYAxis(this, chartMatrix);
+        yAxis1 = new StackPercentageYAxis(this, chartMatrix);
         yAxis1.isHalfLine = false;
         yAxis1.init();
 
@@ -45,13 +48,7 @@ public final class StackChartView extends BaseChart {
 
         xAxis.init(scaleX);
 
-        buildLines();
-
-        float strokeWidth = availableChartWidth / (xPoints.length - 1);
-        for (BaseChartGraph graph1 : graphs) {
-            StackChartGraph graph = (StackChartGraph) graph1;
-            graph.scrollPaint.setStrokeWidth(strokeWidth);
-        }
+        buildRectangles();
     }
 
     @Override
@@ -70,61 +67,69 @@ public final class StackChartView extends BaseChart {
 
         canvas.save();
 
-        canvas.clipRect(-sideMargin, 0, availableChartWidth + sideMargin, availableChartHeight + clipMargin);
-
-        drawPoints(canvas);
+        drawData(canvas);
 
         if (yAxis1 != null) yAxis1.draw(canvas);
-        if (yAxis2 != null) yAxis2.draw(canvas);
 
         canvas.restore();
 
         xAxis.draw(canvas);
     }
 
-    private void buildLines() {
-
-        float top;
+    private void buildRectangles() {
 
         for (int i = 0; i < xPoints.length; i++) {
-            top = yAxis1.maxValue;
+            float sum = 0f;
             for (BaseChartGraph graph : graphs) {
+                if (graph.alpha == 0) continue;
+                sum += graph.values[i] * graph.alpha;
+            }
+            sums[i] = sum;
+        }
 
+        int maxValue = yAxis1.maxValue;
+
+        for (int i = 0; i < xPoints.length; i++) {
+
+            float top = maxValue;
+
+            for (BaseChartGraph graph1 : graphs) {
+
+                StackPercentageChartGraph graph = (StackPercentageChartGraph) graph1;
                 if (graph.alpha == 0) continue;
 
-                int k = i * 4;
+                float value = 100 * graph.values[i] * graph.alpha / sums[i];
+                float currentTop = top - value;
 
-                float value = graph.values[i] * graph.alpha;
+                if (i == 0) {
+                    graph.path.reset();
+                    graph.path.moveTo(i, maxValue);
+                    graph.path.lineTo(i, currentTop);
+                } else if (i == xPoints.length - 1) {
+                    graph.path.lineTo(i, currentTop);
+                    graph.path.lineTo(i, maxValue);
+                    graph.path.lineTo(0, maxValue);
+                } else {
+                    graph.path.lineTo(i, currentTop);
+                }
 
-                graph.points[k] = i;
-                graph.points[k + 1] = top;
-                graph.points[k + 2] = i;
                 top -= value;
-                graph.points[k + 3] = top;
             }
         }
     }
 
     @Override
     protected void graphAlphaChanged() {
-        buildLines();
+        buildRectangles();
     }
 
-    private void drawPoints(Canvas canvas) {
-
-        float currentWidth = xCoordByIndex(end) - xCoordByIndex(start);
-        float strokeWidth = currentWidth / (end - start - 1);
-        for (BaseChartGraph graph1 : graphs) {
-            StackChartGraph graph = (StackChartGraph) graph1;
-            graph.paint.setStrokeWidth(strokeWidth);
-        }
-
-        for (BaseChartGraph graph : graphs) {
+    private void drawData(Canvas canvas) {
+        for (int i = graphs.length - 1; i >= 0; i--) {
+            BaseChartGraph graph = graphs[i];
             if (graph.alpha == 0) continue;
             graph.draw(canvas, chartMatrix, drawStart, drawEnd);
         }
     }
-
 
 
 }

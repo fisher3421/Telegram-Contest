@@ -126,7 +126,7 @@ class XAxis {
             rightPointX += currentStepX;
         }
 
-        //remove left linePoints
+        //remove left points
         Iterator<XAxisPoint> iterator = xAxisPoints.iterator();
         while (iterator.hasNext()) {
             XAxisPoint point = iterator.next();
@@ -134,7 +134,7 @@ class XAxis {
             else break;
         }
 
-        //remove right linePoints
+        //remove right points
         ListIterator<XAxisPoint> reverse = xAxisPoints.listIterator(xAxisPoints.size());
         while (reverse.hasPrevious()) {
             XAxisPoint point = reverse.previous();

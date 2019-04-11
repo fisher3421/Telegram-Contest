@@ -15,22 +15,30 @@ import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.Iterator;
 
 abstract class BaseInfoView extends View {
 
     protected final static long MOVE_ANIMATION = 200L;
 
+    @SuppressWarnings("FieldCanBeLocal")
     private final int dateTextSize = Utils.spToPx(getContext(), 12);
+    @SuppressWarnings("FieldCanBeLocal")
     private final int valueTextSize = Utils.spToPx(getContext(), 12);
+    @SuppressWarnings("FieldCanBeLocal")
     private final int nameTextSize = Utils.spToPx(getContext(), 12);
 
     private float dateTextHeight;
     private float nameTextHeight;
 
+    @SuppressWarnings("FieldCanBeLocal")
     private final int topBottomPadding = Utils.dpToPx(getContext(), 8);
+    @SuppressWarnings("FieldCanBeLocal")
     private final int leftRightPadding = Utils.dpToPx(getContext(), 16);
+
     private final int rowMargin = Utils.dpToPx(getContext(), 8);
     private final int windowLineMargin = Utils.dpToPx(getContext(), 8);
+    private final int dataSideMargin = Utils.dpToPx(getContext(), 8);
 
     private final Rect backgroundSize = new Rect();
     private final Rect backgroundPadding = new Rect();
@@ -61,11 +69,14 @@ abstract class BaseInfoView extends View {
     private final ArrayList<Float> topValues = new ArrayList<>();
     private final ArrayList<String> textValues = new ArrayList<>();
     private final ArrayList<String> textNames = new ArrayList<>();
+    private final ArrayList<String> textPercentage = new ArrayList<>();
+    private final ArrayList<Float> textPercentageWidths = new ArrayList<>();
+    private final ArrayList<Float> textPercentageLeft = new ArrayList<>();
     protected final ArrayList<Integer> textColors = new ArrayList<>();
 
     protected float maxYCoord;
 
-    private float windowTopMargin = 0f;
+    float windowTopMargin = 0f;
 
     private boolean isMoving;
 
@@ -77,7 +88,9 @@ abstract class BaseInfoView extends View {
     private float minX = 0;
     private float maxX = 0;
 
+    boolean showPercentage = false;
 
+    private float percentageMaxWidth;
 
     BaseInfoView(Context c, BaseChart chartView) {
         super(c);
@@ -161,7 +174,6 @@ abstract class BaseInfoView extends View {
                 break;
             case MotionEvent.ACTION_UP:
             case MotionEvent.ACTION_CANCEL:
-                windowTopMargin = 0;
                 isMoving = false;
                 invalidate();
                 break;
@@ -190,9 +202,32 @@ abstract class BaseInfoView extends View {
 
         textNames.clear();
         textValues.clear();
+        textPercentage.clear();
+        textPercentageWidths.clear();
+        textPercentageLeft.clear();
         textColors.clear();
         topValues.clear();
         leftValues.clear();
+
+
+        if (showPercentage) {
+            float sum = 0;
+            percentageMaxWidth = 0;
+            for (BaseChartGraph graph : chartView.graphs) {
+                if (graph.isEnable) sum += graph.values[newXIndex];
+            }
+            for (BaseChartGraph graph : chartView.graphs) {
+                if (graph.isEnable) {
+                    String value = String.format("%s %%", String.valueOf(Math.round(100 * graph.values[newXIndex] / sum)));
+                    float textWidth = dateTextPaint.measureText(value);
+                    textPercentageWidths.add(textWidth);
+                    if (textWidth > percentageMaxWidth) percentageMaxWidth = textWidth;
+                    textPercentage.add(value);
+                }
+            }
+        }
+
+        Iterator<Float> textPercentageWidthsIterator = textPercentageWidths.iterator();
 
         for (int i = 0; i < chartView.graphs.length; i++) {
             BaseChartGraph graph = chartView.graphs[i];
@@ -201,16 +236,19 @@ abstract class BaseInfoView extends View {
 
                 String valueText = String.valueOf(graph.values[newXIndex]);
                 textValues.add(valueText);
-                textColors.add(graph.linePaint.getColor());
+                textColors.add(graph.paint.getColor());
                 float valueWidth = valueTextPaint.measureText(valueText);
                 leftValues.add(contentWidth - valueWidth);
                 topValues.add(top);
-                top += nameTextHeight;
-                if (i + 1 < chartView.graphs.length && chartView.graphs[i + 1].isEnable) {
-                    top += rowMargin;
+
+                if (showPercentage) {
+                    textPercentageLeft.add(percentageMaxWidth - textPercentageWidthsIterator.next());
                 }
+
+                top += nameTextHeight + rowMargin;
             }
         }
+        top -= rowMargin;
 
         windowHeight = top + backgroundPadding.bottom;
 
@@ -235,14 +273,12 @@ abstract class BaseInfoView extends View {
         float windowLeftMargin;
 
         if (maxYCoord < windowHeight) {
-            windowTopMargin = 0;
             if (xCoord > getWidth() / 2) {
                 windowLeftMargin = xCoord - windowLineMargin - windowWidth;
             } else {
                 windowLeftMargin = xCoord + windowLineMargin;
             }
         } else {
-            windowTopMargin = 0;
             windowLeftMargin = xCoord - windowWidth / 2f;
 
             if (windowLeftMargin < 0) {
@@ -265,7 +301,13 @@ abstract class BaseInfoView extends View {
         canvas.drawText(dateText, 0, dateTextY, dateTextPaint);
 
         for (int i = 0; i < textValues.size(); i++) {
-            canvas.drawText(textNames.get(i), 0, topValues.get(i), nameTextPaint);
+            if (showPercentage) {
+                canvas.drawText(textPercentage.get(i), textPercentageLeft.get(i), topValues.get(i), dateTextPaint);
+                canvas.drawText(textNames.get(i), percentageMaxWidth + dataSideMargin, topValues.get(i), nameTextPaint);
+            } else {
+                canvas.drawText(textNames.get(i), 0, topValues.get(i), nameTextPaint);
+            }
+
 
             String textValue = textValues.get(i);
             int color = textColors.get(i);

@@ -21,7 +21,13 @@ public class RangeChartView extends View {
 
     private float scaleY;
 
+
+
     private float chartsTopMargin = Utils.dpToPx(this, 4);
+
+    float yScale = 1f;
+    float translateY;
+    boolean addTopMargin = true;
 
     RangeChartView(Context context, BaseChart lineChartView) {
         super(context);
@@ -32,13 +38,23 @@ public class RangeChartView extends View {
     protected void onSizeChanged(int w, int h, int oldw, int oldh) {
         super.onSizeChanged(w, h, oldw, oldh);
 
-        float availableHeight = getHeight() - chartsTopMargin;
+        float availableHeight = getHeight();
+        if (addTopMargin)  availableHeight -= chartsTopMargin;
 
         maxYValueTemp = chartView.yAxis1.maxValue;
         scaleY = availableHeight / maxYValueTemp;
 
         scrollMatrix.set(chartView.chartMatrix);
-        scrollMatrix.postScale(1, availableHeight / chartView.availableChartHeight);
+        scrollMatrix.postScale(1, yScale * availableHeight / chartView.availableChartHeight);
+
+        if (translateY != 0) {
+            float [] p = new float[2];
+            p[1] = translateY;
+            scrollMatrix.mapPoints(p);
+            scrollMatrix.postTranslate(0, -p[1]);
+        }
+
+
 
         if (chartView.yAxis2 != null) {
             scrollMatrix2.set(chartView.chartMatrix2);
@@ -49,8 +65,8 @@ public class RangeChartView extends View {
 
     @Override
     protected void onDraw(Canvas canvas) {
-        canvas.translate(0, chartsTopMargin);
-        for (int i = 0; i < chartView.graphs.length; i++) {
+        if (addTopMargin) canvas.translate(0, chartsTopMargin);
+        for (int i = chartView.graphs.length - 1; i >= 0; i--) {
             BaseChartGraph graph = chartView.graphs[i];
             if (graph.alpha > 0) {
                 if (chartView.yAxis2 != null && i == 1) {

@@ -16,10 +16,11 @@ import android.widget.TextView;
 
 import java.util.ArrayList;
 
-@SuppressLint("ViewConstructor")
-public class LineChartLayout extends FrameLayout {
+import static com.molodkin.telegramcharts.ChartData.Type.STACK_PERCENTAGE;
 
-    private final boolean isStack;
+@SuppressLint("ViewConstructor")
+public class ChartLayout extends FrameLayout {
+
     public BaseChart chartView;
     private RangeChartView rangeChartView;
     private BaseInfoView infoView;
@@ -36,26 +37,41 @@ public class LineChartLayout extends FrameLayout {
     private ArrayList<View> dividers = new ArrayList<>();
 
     private TextView chartNameView;
+    private ChartData data;
 
-    public LineChartLayout(Context context, boolean isStack) {
+    public ChartLayout(Context context) {
         super(context);
-        this.isStack = isStack;
-        init();
     }
 
     private void init() {
-        if (isStack) {
-            chartView = new StackChartView(getContext());
-            infoView = new StackInfoView(getContext(), chartView);
-        } else {
-            chartView = new LineChartView(getContext());
-            infoView = new LineInfoView(getContext(), chartView);
+        switch (data.type) {
+            case LINE:
+            case LINE_SCALED:
+                chartView = new LineChartView(getContext());
+                chartView.secondY = data.type == ChartData.Type.LINE_SCALED;
+                infoView = new LineInfoView(getContext(), chartView);
+                break;
+            case STACK:
+                chartView = new StackChartView(getContext());
+                infoView = new StackInfoView(getContext(), chartView);
+                break;
+            case STACK_PERCENTAGE:
+                chartView = new StackPercentageChartView(getContext());
+                infoView = new StackPercentageInfoView(getContext(), chartView);
+                infoView.showPercentage = true;
+                break;
         }
+
         chartView.setLayoutParams(new FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, chartHeight));
 
         infoView.setLayoutParams(new FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, chartHeight - chartView.xAxisHeight));
 
         rangeChartView = new RangeChartView(getContext(), chartView);
+        if (data.type == STACK_PERCENTAGE) {
+            rangeChartView.addTopMargin = false;
+            rangeChartView.yScale = 125f/100;
+            rangeChartView.translateY = 25;
+        }
         rangeBorderView = new RangeBorderView(getContext(), chartView);
 
         LayoutParams scrollLP = new LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, scrollHeight);
@@ -80,13 +96,11 @@ public class LineChartLayout extends FrameLayout {
         addView(infoView);
         addView(rangeChartView);
         addView(rangeBorderView);
+
+        initCheckboxes();
     }
 
-    public void setChartName(String chartName) {
-        chartNameView.setText(chartName);
-    }
-
-    public void setData(ChartData data) {
+    private void initCheckboxes() {
         int height = chartHeight + scrollHeight;// + checkboxTopMargin;
         chartView.setData(data);
         for (int i = 0; i < data.names.size(); i++) {
@@ -124,6 +138,15 @@ public class LineChartLayout extends FrameLayout {
                 addView(divider);
             }
         }
+    }
+
+    public void setChartName(String chartName) {
+        chartNameView.setText(chartName);
+    }
+
+    public void setData(ChartData data) {
+        this.data = data;
+        init();
     }
 
     public void updateTheme() {

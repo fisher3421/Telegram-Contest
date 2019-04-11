@@ -19,12 +19,11 @@ abstract class BaseYAxis {
     boolean isRight;
     boolean isHalfLine = false;
     int maxValue;
-    private int minValue;
     private int range;
     private Paint axisPaint = new Paint();
     private TextPaint axisTextPaint = new TextPaint();
     private int [] availableYSteps = {5, 10, 20, 25, 40, 50, 100, 500, 1_000, 1_500, 2_000, 2_500, 3_000, 4_000, 5000, 10_000, 20_000, 30_000, 40_000, 50_000, 100_000, 200_000, 300_000, 400_000, 500_000, 1000_000};
-    private int rowNumber = 6;
+    int rowNumber = 6;
     private int [] rowYValues = new int[rowNumber];
     private int [] rowYValuesToHide = new int[rowNumber];
     private String [] rowYTextsValues = new String[rowNumber];
@@ -70,7 +69,7 @@ abstract class BaseYAxis {
     }
 
     private void drawLines(Canvas canvas, int alpha, int [] rowYValues, String [] rowYTextsValues, float [] rowYTextsValuesWidth) {
-        for (int i = 0; i < rowYValues.length; i++) {
+        for (int i = 0; i < rowNumber; i++) {
             int y = rowYValues[i];
             canvas.save();
             canvas.translate(0, !isRight ? chart.yCoordByValue(y) : chart.yCoordByValue2(y));
@@ -135,7 +134,6 @@ abstract class BaseYAxis {
 
         if (init) {
             maxValue = newTempMaxYValue;
-            minValue = newTempMinYValue;
             range = newRange;
         }
 

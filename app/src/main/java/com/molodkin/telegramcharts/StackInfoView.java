@@ -30,7 +30,7 @@ class StackInfoView extends BaseInfoView {
 
     @Override
     protected void drawContent(Canvas canvas) {
-        float strokeWidth = chartView.graphs[0].linePaint.getStrokeWidth() / 2;
+        float strokeWidth = chartView.graphs[0].paint.getStrokeWidth() / 2;
         canvas.drawRect(0, 0, xCoord - strokeWidth, chartView.availableChartHeight, coverPaint);
         canvas.drawRect(xCoord + strokeWidth, 0, getWidth(), chartView.availableChartHeight, coverPaint);
     }

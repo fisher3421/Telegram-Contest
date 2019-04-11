@@ -3,8 +3,11 @@ package com.molodkin.telegramcharts;
 import android.graphics.Canvas;
 import android.graphics.Matrix;
 import android.graphics.Paint;
+import android.graphics.Path;
 
-class StackChartGraph extends BaseChartGraph {
+class StackPercentageChartGraph extends BaseChartGraph {
+
+    final Path path = new Path();
 
     @Override
     int getMax(int start, int end) {
@@ -16,28 +19,32 @@ class StackChartGraph extends BaseChartGraph {
         return 0;
     }
 
-    StackChartGraph(int[] values, int color, float width, String name) {
+    StackPercentageChartGraph(int[] values, int color, String name) {
         super(values, name, color);
 
         paint = new Paint();
-        paint.setStyle(Paint.Style.STROKE);
-        paint.setStrokeWidth(width);
+        paint.setStyle(Paint.Style.FILL);
         paint.setColor(color);
 
         scrollPaint = new Paint(paint);
-        scrollPaint.setStrokeWidth(width / 2);
-
-        points = new float[values.length * 4];
-        tempPoints = new float[values.length * 4];
     }
 
     @Override
     void draw(Canvas canvas, Matrix matrix, int start, int end) {
-        drawLines(canvas, matrix, paint, start, end + 1);
+        drawPath(canvas, matrix, path, paint);
     }
 
     @Override
     void drawScroll(Canvas canvas, Matrix matrix) {
-        drawLines(canvas, matrix, scrollPaint, 0, values.length);
+        drawPath(canvas, matrix, path, scrollPaint);
+    }
+
+    private void drawPath(Canvas canvas, Matrix matrix, Path path, Paint paint) {
+        canvas.save();
+        canvas.concat(matrix);
+
+        canvas.drawPath(path, paint);
+
+        canvas.restore();
     }
 }

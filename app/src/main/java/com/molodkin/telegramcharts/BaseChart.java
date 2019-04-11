@@ -15,7 +15,7 @@ abstract class BaseChart extends View {
     protected boolean enablingWithAlphaAnimation = true;
 
     static final long SCALE_ANIMATION_DURATION = 250L;
-    static final long FADE_ANIMATION_DURATION = 150L;
+    static final long FADE_ANIMATION_DURATION = 250L;
 
     public XAxis xAxis = new XAxis(this);
 
@@ -80,7 +80,7 @@ abstract class BaseChart extends View {
         graphs[index].isEnable = enable;
 
         float fromAlpha = enable ? 0 : 1f;
-        float toAlpha = enable ? 1f : 0f;
+        final float toAlpha = enable ? 1f : 0f;
 
         ValueAnimator valueAnimator = ValueAnimator.ofFloat(fromAlpha, toAlpha);
         valueAnimator.setDuration(enablingWithAlphaAnimation ? FADE_ANIMATION_DURATION : FADE_ANIMATION_DURATION / 2);
