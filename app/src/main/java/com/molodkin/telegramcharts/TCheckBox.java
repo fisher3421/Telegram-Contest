@@ -150,6 +150,7 @@ public class TCheckBox extends CompoundButton {
 
     private void updateAnimatedValues() {
         checkPaint.setAlpha((int) (255 * animatorFraction));
+        rectanglePaint.setAlpha((int) (255 * animatorFraction));
         setTextColor(Utils.mixTwoColors(Color.WHITE, color, animatorFraction));
     }
 
@@ -158,12 +159,7 @@ public class TCheckBox extends CompoundButton {
 
         canvas.drawRoundRect(0, 0, getWidth(), getHeight(), roundDim, roundDim, borderPaint);
 
-        float newWidth = getWidth() * animatorFraction;
-        float newHeight = getHeight() * animatorFraction;
-        float left = (getWidth() - getWidth() * animatorFraction) / 2;
-        float top = (getHeight() - newHeight) / 2;
-
-        canvas.drawRoundRect(left, top, left + newWidth, top + newHeight, roundDim, roundDim, rectanglePaint);
+        canvas.drawRoundRect(0, 0, getWidth(), getHeight(), roundDim, roundDim, rectanglePaint);
 
         canvas.save();
 
