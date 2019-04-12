@@ -15,12 +15,12 @@ class StackYAxis extends BaseYAxis {
 
     @Override
     int getMaxValueFullRange() {
-        return getMatrix()[0][chart.xPoints.length-1];
+        return getMatrix()[0][chart.xPoints.length - 1];
     }
 
     @Override
     int getMaxValue() {
-        return getMatrix()[chart.start][chart.end - 1];
+        return getMatrix()[chart.visibleStart][chart.visibleEnd - 1];
     }
 
     private int[][] getMatrix() {

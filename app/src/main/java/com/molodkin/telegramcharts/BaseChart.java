@@ -42,11 +42,8 @@ abstract class BaseChart extends View {
     int start = 0;
     int end = 0;
 
-    int drawStart = 0;
-    int drawEnd = 0;
-
-    int yAdjustStart = 0;
-    int yAdjustEnd = 0;
+    int visibleStart = 0;
+    int visibleEnd = 0;
 
     float availableChartHeight;
     float availableChartWidth;
@@ -122,9 +119,6 @@ abstract class BaseChart extends View {
         startScaleAnimation(toScale, true);
         this.start = start;
 
-        this.yAdjustStart = xIndexByCoord(0);
-        this.yAdjustEnd = xIndexByCoord(getWidth()) + 1;
-
         adjustYAxis();
     }
 
@@ -139,13 +133,34 @@ abstract class BaseChart extends View {
 
         this.end = end;
 
-        this.yAdjustStart = xIndexByCoord(0);
-        this.yAdjustEnd = xIndexByCoord(getWidth()) + 1;
-
         adjustYAxis();
     }
 
     public void setStartEnd(int start, int end) {
+        if (end > xPoints.length) return;
+        if (start >= end - 1) return;
+
+        if (start == this.start && end == this.end) return;
+
+        float fromCoordStart = xCoordByIndex(this.start);
+        float toCoordStart = xCoordByIndex(start);
+
+        chartMatrix.postTranslate(fromCoordStart - toCoordStart, 0);
+        chartMatrix2.postTranslate(fromCoordStart - toCoordStart, 0);
+        visibleStart = xIndexByCoord(0);
+        visibleEnd = xIndexByCoord(getWidth()) + 1;
+
+
+        this.start = start;
+        this.end = end;
+
+        xAxis.adjustXAxis();
+        adjustYAxis();
+
+        invalidate();
+    }
+
+    public void setStartEnd2(int start, int end) {
         if (end > xPoints.length) return;
         if (start >= end - 1) return;
 
@@ -165,8 +180,8 @@ abstract class BaseChart extends View {
                 float value = (float) animation.getAnimatedValue();
                 chartMatrix.postTranslate(value - prev[0], 0);
                 chartMatrix2.postTranslate(value - prev[0], 0);
-                drawStart = xIndexByCoord(0);
-                drawEnd = xIndexByCoord(getWidth()) + 1;
+                visibleStart = xIndexByCoord(0);
+                visibleEnd = xIndexByCoord(getWidth()) + 1;
                 prev[0] = value;
                 xAxis.adjustXAxis();
                 invalidate();
@@ -178,13 +193,19 @@ abstract class BaseChart extends View {
         this.start = start;
         this.end = end;
 
-        this.yAdjustStart = xIndexByCoord(0);
-        this.yAdjustEnd = xIndexByCoord(getWidth()) + 1;
-
         adjustYAxis();
     }
 
     private void startScaleAnimation(float toScale, final boolean isStart) {
+        chartMatrix.postScale(toScale, 1, isStart ? availableChartWidth : 0f, 0f);
+        chartMatrix2.postScale(toScale, 1, isStart ? availableChartWidth : 0f, 0f);
+        visibleStart = xIndexByCoord(0);
+        visibleEnd = xIndexByCoord(getWidth()) + 1;
+        xAxis.adjustXAxis();
+        invalidate();
+    }
+
+    private void startScaleAnimation2(float toScale, final boolean isStart) {
         float fromScale = availableChartWidth / (xCoordByIndex(end - 1) - xCoordByIndex(start));
 
         log("fromScale: " + fromScale);
@@ -201,8 +222,8 @@ abstract class BaseChart extends View {
                 float value = (float) animation.getAnimatedValue();
                 chartMatrix.postScale(value / prev[0], 1, isStart ? availableChartWidth : 0f, 0f);
                 chartMatrix2.postScale(value / prev[0], 1, isStart ? availableChartWidth : 0f, 0f);
-                drawStart = xIndexByCoord(0);
-                drawEnd = xIndexByCoord(getWidth()) + 1;
+                visibleStart = xIndexByCoord(0);
+                visibleEnd = xIndexByCoord(getWidth()) + 1;
                 prev[0] = value;
                 xAxis.adjustXAxis();
                 invalidate();

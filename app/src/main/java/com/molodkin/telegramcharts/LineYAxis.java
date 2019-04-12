@@ -33,11 +33,11 @@ class LineYAxis extends BaseYAxis {
         if (!chart.graphs[graphIndex].isEnable) {
             return maxYValueTemp;
         }
-        return chart.graphs[graphIndex].getMax(chart.start, chart.end);
+        return chart.graphs[graphIndex].getMax(chart.visibleStart, chart.visibleEnd);
     }
 
     private int getMaxValueAll() {
-        int value = getMaxValueAll(chart.start, chart.end);
+        int value = getMaxValueAll(chart.visibleStart, chart.visibleEnd);
         if (value == -1) {
             return maxYValueTemp;
         } else {
@@ -63,13 +63,13 @@ class LineYAxis extends BaseYAxis {
             return minYValueTemp;
         }
 
-        return chart.graphs[index].getMin(chart.start, chart.end);
+        return chart.graphs[index].getMin(chart.visibleStart, chart.visibleEnd);
     }
 
     private int getMinValueAll() {
         ArrayList<Integer> minValues = new ArrayList<>(chart.graphs.length);
         for (BaseChartGraph graph : chart.graphs) {
-            if (graph.isEnable) minValues.add(graph.getMin(chart.start, chart.end));
+            if (graph.isEnable) minValues.add(graph.getMin(chart.visibleStart, chart.visibleEnd));
         }
 
         if (minValues.size() == 0) {

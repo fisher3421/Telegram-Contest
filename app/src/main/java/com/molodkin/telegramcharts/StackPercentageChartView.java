@@ -23,11 +23,8 @@ public final class StackPercentageChartView extends BaseChart {
         start = 0;
         end = data.x.length;
 
-        drawStart = 0;
-        drawEnd = data.x.length;
-
-        yAdjustStart = 0;
-        yAdjustEnd = data.x.length;
+        visibleStart = 0;
+        visibleEnd = data.x.length;
 
         graphs = new StackPercentageChartGraph[data.values.size()];
 
@@ -127,7 +124,7 @@ public final class StackPercentageChartView extends BaseChart {
         for (int i = graphs.length - 1; i >= 0; i--) {
             BaseChartGraph graph = graphs[i];
             if (graph.alpha == 0) continue;
-            graph.draw(canvas, chartMatrix, drawStart, drawEnd);
+            graph.draw(canvas, chartMatrix, visibleStart, visibleEnd);
         }
     }
 

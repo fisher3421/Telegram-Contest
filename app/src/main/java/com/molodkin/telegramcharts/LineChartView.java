@@ -20,11 +20,8 @@ public final class LineChartView extends BaseChart {
         start = 0;
         end = data.x.length;
 
-        drawStart = 0;
-        drawEnd = data.x.length;
-
-        yAdjustStart = 0;
-        yAdjustEnd = data.x.length;
+        visibleStart = 0;
+        visibleEnd = data.x.length;
 
         graphs = new LineChartGraph[data.values.size()];
 
@@ -111,9 +108,9 @@ public final class LineChartView extends BaseChart {
             BaseChartGraph graph = graphs[i];
             if (graph.alpha > 0) {
                 if (secondY && i == 1) {
-                    graph.draw(canvas, chartMatrix2, Math.max(drawStart, 0), Math.min(drawEnd, xPoints.length));
+                    graph.draw(canvas, chartMatrix2, Math.max(visibleStart, 0), Math.min(visibleEnd, xPoints.length));
                 } else {
-                    graph.draw(canvas, chartMatrix, Math.max(drawStart, 0), Math.min(drawEnd, xPoints.length));
+                    graph.draw(canvas, chartMatrix, Math.max(visibleStart, 0), Math.min(visibleEnd, xPoints.length));
                 }
 
             }

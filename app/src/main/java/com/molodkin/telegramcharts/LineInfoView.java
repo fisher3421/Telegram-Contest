@@ -1,13 +1,18 @@
 package com.molodkin.telegramcharts;
 
 
+import android.animation.Animator;
+import android.animation.AnimatorListenerAdapter;
 import android.animation.ValueAnimator;
 import android.annotation.SuppressLint;
 import android.content.Context;
 import android.graphics.Canvas;
 import android.graphics.Paint;
+import android.view.animation.DecelerateInterpolator;
 
 import java.util.ArrayList;
+
+import static com.molodkin.telegramcharts.Utils.log;
 
 @SuppressLint("ViewConstructor")
 class LineInfoView extends BaseInfoView {
@@ -16,20 +21,28 @@ class LineInfoView extends BaseInfoView {
 
     private int verticalLineTopMargin = Utils.dpToPx(getContext(), 10);
 
-    private ValueAnimator finisMovementAnimator;
+    private ValueAnimator finisMovementAnimator = ValueAnimator.ofFloat(0 , 0);
     private ValueAnimator.AnimatorUpdateListener finisMovementAnimatorUpdate = new ValueAnimator.AnimatorUpdateListener() {
         @Override
         public void onAnimationUpdate(ValueAnimator animation) {
-            xCoord = ((float) animation.getAnimatedValue());
-            measurePoints(xCoord);
-            invalidate();
+            log("finisMovementAnimatorUpdate" + finisMovementAnimator.hashCode() + " time: " + finisMovementAnimator.getCurrentPlayTime());
+            log("finisMovementAnimatorUpdate" + finisMovementAnimator.hashCode() + " fraction: " + finisMovementAnimator.getAnimatedFraction());
+            updateXCoord(((float) animation.getAnimatedValue()));
         }
     };
 
+    @SuppressWarnings("FieldCanBeLocal")
     private int verticalLineWidth = Utils.dpToPx(getContext(), 1);
+    @SuppressWarnings("FieldCanBeLocal")
     private int circleStrokeWidth = Utils.dpToPx(getContext(), 2);
     private int circleRadius = Utils.dpToPx(getContext(), 4);
 
+    private AnimatorListenerAdapter listener = new AnimatorListenerAdapter() {
+        @Override
+        public void onAnimationEnd(Animator animation) {
+            finisMovementAnimator = null;
+        }
+    };
 
     LineInfoView(Context c, BaseChart chartView) {
         super(c, chartView);
@@ -66,17 +79,27 @@ class LineInfoView extends BaseInfoView {
             float from = xCoord;
             float to = chartView.xCoordByIndex(newXIndex);
 
+            long currentPlayTime = 0;
             if (finisMovementAnimator != null) {
+                currentPlayTime = finisMovementAnimator.getCurrentPlayTime();
                 finisMovementAnimator.cancel();
             }
-
             finisMovementAnimator = ValueAnimator.ofFloat(from, to);
+            finisMovementAnimator.setCurrentPlayTime(currentPlayTime);
+            finisMovementAnimator.setInterpolator(new DecelerateInterpolator());
             finisMovementAnimator.setDuration(MOVE_ANIMATION);
             finisMovementAnimator.addUpdateListener(finisMovementAnimatorUpdate);
+            finisMovementAnimator.addListener(listener);
             finisMovementAnimator.start();
 
             xIndex = newXIndex;
         }
+    }
+
+    private void updateXCoord(float xCoord) {
+        this.xCoord = xCoord;
+        measurePoints(xCoord);
+        invalidate();
     }
 
     void measurePoints(float newXCoord) {
