@@ -8,6 +8,7 @@ class StackPercentageYAxis extends BaseYAxis {
     StackPercentageYAxis(BaseChart chart, Matrix matrix) {
 
         super(chart, matrix);
+        adjustValues = false;
         rowNumber = 5;
     }
 

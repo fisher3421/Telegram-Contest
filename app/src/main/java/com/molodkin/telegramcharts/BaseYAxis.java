@@ -22,7 +22,6 @@ abstract class BaseYAxis {
     private int range;
     private Paint axisPaint = new Paint();
     private TextPaint axisTextPaint = new TextPaint();
-    private int [] availableYSteps = {5, 10, 20, 25, 40, 50, 100, 500, 1_000, 1_500, 2_000, 2_500, 3_000, 4_000, 5000, 10_000, 20_000, 30_000, 40_000, 50_000, 100_000, 200_000, 300_000, 400_000, 500_000, 1_000_000, 11_000_000};
     int rowNumber = 6;
     private int [] rowYValues = new int[rowNumber];
     private int [] rowYValuesToHide = new int[rowNumber];
@@ -35,6 +34,7 @@ abstract class BaseYAxis {
     int minYValueTemp = -1;
     private ValueAnimator scaleAnimator;
     private float fromScale = 1f;
+    boolean adjustValues = true;
 
     BaseYAxis(BaseChart chart, Matrix matrix) {
         this.chart = chart;
@@ -123,14 +123,25 @@ abstract class BaseYAxis {
     private void adjustYAxis(boolean init) {
         int dirtyMin = getMinValue();
         int dirtyMax = getMaxValue();
+        int delta = dirtyMax - dirtyMin;
 
-        int newTempMinYValue = findAvailableMinValue(dirtyMin);
+        int newTempMinYValue = dirtyMin;
+        int newRange = delta;
+        int newTempMaxYValue = dirtyMax;
 
-        int tempStep = (int) Math.ceil((dirtyMax - newTempMinYValue) * 1f / rowNumber);
+        if (adjustValues) {
+            double e = Math.pow(10, Math.floor(Math.log10(delta)) - 1);
+            double c = ((int) (delta / (e * rowNumber) + 1)) * e * rowNumber;
 
-        int newRange = findAvailableValue(tempStep);
+            newTempMinYValue = (int) ((int)(dirtyMin / e) * e);
+            if (delta > c) {
+                c = ((int)(delta / e * rowNumber) + 2) * e * rowNumber;
+            }
+            newRange = (int) c;
+            newTempMaxYValue = newTempMinYValue + newRange;
+        }
 
-        int newTempMaxYValue = newTempMinYValue + newRange;
+
 
         if (init) {
             maxValue = newTempMaxYValue;
@@ -149,7 +160,7 @@ abstract class BaseYAxis {
 
         for (int i = 0; i < rowNumber; i++) {
             rowYValues[i] = newTempMinYValue + (int) (i * newRange * 1f / rowNumber);
-            rowYTextsValues[i] = String.valueOf(rowYValues[i]);
+            rowYTextsValues[i] = Utils.formatValue(rowYValues[i]);
             if (isRight) {
                 rowYTextsValuesWidth[i] = axisTextPaint.measureText(rowYTextsValues[i]);
             }
@@ -223,29 +234,6 @@ abstract class BaseYAxis {
     abstract int getMaxValue();
 
     abstract int getMaxValueFullRange();
-
-
-    private int findAvailableValue(int value) {
-        for (int i = 0; i < availableYSteps.length - 1; i++) {
-            if (availableYSteps[i] < value && value <= availableYSteps[i + 1]) {
-                value = rowNumber * availableYSteps[i + 1];
-                break;
-            }
-        }
-
-        return value;
-    }
-
-    private int findAvailableMinValue(int value) {
-        if (value < 5) {
-            return 0;
-        } else {
-            while (true) {
-                if (value % 5 == 0) return value;
-                value--;
-            }
-        }
-    }
 
     abstract int getMinValue();
 }
