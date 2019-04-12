@@ -7,6 +7,7 @@ import android.text.TextPaint;
 import android.util.Log;
 import android.view.View;
 
+import java.text.DecimalFormat;
 import java.util.HashMap;
 import java.util.Locale;
 
@@ -30,8 +31,6 @@ class Utils {
     static final String SCROLL_BORDER_COLOR = "SCROLL_BORDER_COLOR";
     static final String INFO_VIEW_BACKGROUND = "INFO_VIEW_BACKGROUND";
     static final String INFO_VIEW_CIRCLE_COLOR = "CIRCLE_COLOR";
-
-    private static String [] NUMBER_SUFFIXES = {"", "K", "M", "B", "T"};
 
     static {
         dayResource.put(PRIMARY_COLOR, R.color.colorPrimary);
@@ -124,15 +123,6 @@ class Utils {
     static float getFontHeight(TextPaint textPaint) {
         Paint.FontMetrics fontMetrics = textPaint.getFontMetrics();
         return fontMetrics.descent - fontMetrics.ascent;
-    }
-
-    static String formatValue(int value) {
-        if (value > 1_000) {
-            int s = (int) (Math.log10(value) / 3);
-            double newValue = value / (Math.pow(10, 3 * s));
-            return String.format(Locale.US, "%.1f%s", newValue, NUMBER_SUFFIXES[s]);
-        }
-        return String.valueOf(value);
     }
 
     public static void log(String message) {

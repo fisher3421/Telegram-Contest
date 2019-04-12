@@ -175,6 +175,5 @@ public class TCheckBox extends CompoundButton {
         canvas.drawPath(checkMark, checkPaint);
 
         canvas.restore();
-
     }
 }

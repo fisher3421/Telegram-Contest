@@ -6,11 +6,15 @@ import android.graphics.Matrix;
 import android.graphics.Paint;
 import android.text.TextPaint;
 
+import java.text.DecimalFormat;
+
 import static com.molodkin.telegramcharts.BaseChart.SCALE_ANIMATION_DURATION;
 import static com.molodkin.telegramcharts.Utils.log;
 
 abstract class BaseYAxis {
     private static final float ROW_AXIS_ALPHA = 0.1f;
+    private static String [] NUMBER_SUFFIXES = {"", "K", "M", "B", "T"};
+
     final BaseChart chart;
     private final Matrix matrix;
     private int xTextMargin;
@@ -35,6 +39,8 @@ abstract class BaseYAxis {
     private ValueAnimator scaleAnimator;
     private float fromScale = 1f;
     boolean adjustValues = true;
+
+    private static DecimalFormat decimalFormat = new DecimalFormat("#.#");
 
     BaseYAxis(BaseChart chart, Matrix matrix) {
         this.chart = chart;
@@ -160,7 +166,7 @@ abstract class BaseYAxis {
 
         for (int i = 0; i < rowNumber; i++) {
             rowYValues[i] = newTempMinYValue + (int) (i * newRange * 1f / rowNumber);
-            rowYTextsValues[i] = Utils.formatValue(rowYValues[i]);
+            rowYTextsValues[i] = formatValue(rowYValues[i]);
             if (isRight) {
                 rowYTextsValuesWidth[i] = axisTextPaint.measureText(rowYTextsValues[i]);
             }
@@ -229,6 +235,15 @@ abstract class BaseYAxis {
             }
         });
         alphaAnimator.start();
+    }
+
+    String formatValue(int value) {
+        if (value > 1_000) {
+            int s = (int) (Math.log10(value) / 3);
+            double newValue = value / (Math.pow(10, 3 * s));
+            return String.format("%s%s", decimalFormat.format(newValue), NUMBER_SUFFIXES[s]);
+        }
+        return String.valueOf(value);
     }
 
     abstract int getMaxValue();

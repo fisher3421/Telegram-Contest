@@ -5,13 +5,16 @@ import android.content.Context;
 import android.graphics.Color;
 import android.graphics.Typeface;
 import android.util.TypedValue;
+import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.FrameLayout;
 import android.widget.TextView;
 
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Date;
 
 import static com.molodkin.telegramcharts.ChartData.Type.STACK_PERCENTAGE;
 
@@ -21,17 +24,21 @@ public class ChartLayout extends FrameLayout {
     public BaseChart chartView;
     private RangeChartView rangeChartView;
     private BaseInfoView infoView;
+    private RangeBorderView rangeBorderView;
 
     final int scrollHeight = Utils.getDim(this, R.dimen.scrollHeight);
+    final int scrollPadding = Utils.getDim(this, R.dimen.range_top_bottom_padding);
     int chartHeight = Utils.getDim(this, R.dimen.chartHeight);
     int sideMargin = Utils.getDim(this, R.dimen.margin20);
     int checkBoxMargin = Utils.dpToPx(this, 8);
-    private RangeBorderView rangeBorderView;
+
+    private Date tempDate = new Date();
+    private SimpleDateFormat dateFormat = new SimpleDateFormat("d MMMM yyyy", Utils.getLocale(getContext()));
 
     private ArrayList<TCheckBox> checkBoxes = new ArrayList<>();
-    private ArrayList<View> dividers = new ArrayList<>();
 
     private TextView chartNameView;
+    private TextView dateView;
     private ChartData data;
 
     public ChartLayout(Context context) {
@@ -62,21 +69,31 @@ public class ChartLayout extends FrameLayout {
         infoView.setLayoutParams(new FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, chartHeight - chartView.xAxisHeight));
 
         rangeChartView = new RangeChartView(getContext(), chartView);
+        rangeChartView.setBackground(getContext().getDrawable(R.drawable.bg_range));
+        rangeChartView.setClipToOutline(true);
         if (data.type == STACK_PERCENTAGE) {
             rangeChartView.addTopMargin = false;
             rangeChartView.yScale = 125f/100;
             rangeChartView.translateY = 25;
         }
         rangeBorderView = new RangeBorderView(getContext(), chartView);
+        rangeBorderView.setBackground(getContext().getDrawable(R.drawable.bg_range));
+        rangeBorderView.setClipToOutline(true);
 
         LayoutParams scrollLP = new LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, scrollHeight);
-        scrollLP.topMargin = chartHeight;
+        scrollLP.topMargin = chartHeight + scrollPadding;
         scrollLP.leftMargin = sideMargin;
         scrollLP.rightMargin = sideMargin;
         scrollLP.bottomMargin = sideMargin;
         rangeChartView.setLayoutParams(scrollLP);
 
-        rangeBorderView.setLayoutParams(scrollLP);
+        LayoutParams scrollBorderLP = new LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, scrollHeight + scrollPadding * 2);
+        scrollBorderLP.topMargin = chartHeight;
+        scrollBorderLP.leftMargin = sideMargin;
+        scrollBorderLP.rightMargin = sideMargin;
+        scrollBorderLP.bottomMargin = sideMargin;
+
+        rangeBorderView.setLayoutParams(scrollBorderLP);
 
         chartNameView = new TextView(getContext());
         chartNameView.setTextSize(TypedValue.COMPLEX_UNIT_PX, Utils.getDim(this, R.dimen.chartNameTextSize));
@@ -87,8 +104,21 @@ public class ChartLayout extends FrameLayout {
         chartNameLP.leftMargin = sideMargin;
         chartNameView.setLayoutParams(chartNameLP);
 
+        dateView = new TextView(getContext());
+        dateView.setTextSize(TypedValue.COMPLEX_UNIT_PX, Utils.getDim(this, R.dimen.chartDateTextSize));
+        dateView.setGravity(Gravity.END);
+        dateView.setTextColor(Utils.getColor(getContext(), R.color.chartName));
+        dateView.setTypeface(Typeface.DEFAULT_BOLD);
+
+        FrameLayout.LayoutParams dateViewLP = new LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+        dateViewLP.gravity = Gravity.END;
+        dateViewLP.topMargin = Utils.dpToPx(this, 2);
+        dateViewLP.rightMargin = sideMargin;
+        dateView.setLayoutParams(dateViewLP);
+
         addView(chartView);
         addView(chartNameView);
+        addView(dateView);
         addView(infoView);
         addView(rangeChartView);
         addView(rangeBorderView);
@@ -96,6 +126,19 @@ public class ChartLayout extends FrameLayout {
         chartView.setData(data);
 
         initCheckboxes();
+
+        rangeBorderView.setOnRangeChanged(new RangeBorderView.OnRangeChanged() {
+            @Override
+            public void onChanged(int start, int end) {
+                long dateStartMills = chartView.xPoints[start];
+                tempDate.setTime(dateStartMills);
+                String dateStartStr = dateFormat.format(tempDate);
+                long dateEndMills = chartView.xPoints[end - 1];
+                tempDate.setTime(dateEndMills);
+                String dateEndStr = dateFormat.format(tempDate);
+                dateView.setText(String.format("%s - %s", dateStartStr, dateEndStr));
+            }
+        });
     }
 
     private void initCheckboxes() {
@@ -130,12 +173,15 @@ public class ChartLayout extends FrameLayout {
     public void setData(ChartData data) {
         this.data = data;
         init();
+
     }
 
     public void updateTheme() {
         chartView.updateTheme();
         rangeBorderView.updateTheme();
         infoView.updateTheme();
+        chartNameView.setTextColor(Utils.getColor(getContext(), Utils.PRIMARY_TEXT_COLOR));
+        dateView.setTextColor(Utils.getColor(getContext(), Utils.PRIMARY_TEXT_COLOR));
     }
 
     @Override
@@ -143,7 +189,7 @@ public class ChartLayout extends FrameLayout {
         super.onMeasure(widthMeasureSpec, heightMeasureSpec);
         if (checkBoxes.size()  < 2) return;
 
-        int top = chartHeight + scrollHeight + sideMargin * 3 + checkBoxes.get(0).getMeasuredHeight();
+        int top = chartHeight + scrollHeight + scrollPadding * 2 + sideMargin * 3 + checkBoxes.get(0).getMeasuredHeight();
         int left = sideMargin;
 
         for (TCheckBox checkBox : checkBoxes) {
@@ -164,7 +210,7 @@ public class ChartLayout extends FrameLayout {
 
         if (checkBoxes.size()  < 2) return;
 
-        int topChild = chartHeight + scrollHeight + sideMargin * 2;
+        int topChild = chartHeight + scrollHeight + sideMargin * 2 + scrollPadding * 2;
         int leftChild = sideMargin;
 
         for (TCheckBox checkBox : checkBoxes) {

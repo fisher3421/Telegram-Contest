@@ -12,6 +12,8 @@ import android.view.MotionEvent;
 import android.view.View;
 
 import java.text.DateFormat;
+import java.text.DecimalFormat;
+import java.text.DecimalFormatSymbols;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
@@ -92,13 +94,20 @@ abstract class BaseInfoView extends View {
 
     private float percentageMaxWidth;
 
+    private final DecimalFormat decimalFormat;
+
     BaseInfoView(Context c, BaseChart chartView) {
         super(c);
         dateFormat = new SimpleDateFormat("EEE, d MMM yyyy", Utils.getLocale(c));
 
         this.chartView = chartView;
 
+        decimalFormat = new DecimalFormat("###,###");
 
+        DecimalFormatSymbols symbols = decimalFormat.getDecimalFormatSymbols();
+
+        symbols.setGroupingSeparator(' ');
+        decimalFormat.setDecimalFormatSymbols(symbols);
 
         dateTextPaint.setTextSize(dateTextSize);
         dateTextPaint.setAntiAlias(true);
@@ -234,7 +243,7 @@ abstract class BaseInfoView extends View {
             if (graph.isEnable) {
                 textNames.add(graph.name);
 
-                String valueText = String.valueOf(graph.values[newXIndex]);
+                String valueText = decimalFormat.format(graph.values[newXIndex]);
                 textValues.add(valueText);
                 textColors.add(graph.paint.getColor());
                 float valueWidth = valueTextPaint.measureText(valueText);

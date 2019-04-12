@@ -5,7 +5,9 @@ import android.app.Activity;
 import android.os.Bundle;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.ImageView;
 import android.widget.LinearLayout;
+import android.widget.TextView;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -14,6 +16,8 @@ public class MainActivity extends Activity {
 
     ArrayList<ChartLayout> charts = new ArrayList<>();
     private LinearLayout actionBarLayout;
+    private TextView title;
+    private ImageView switchDayNightIcon;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -37,6 +41,8 @@ public class MainActivity extends Activity {
 
         setContentView(R.layout.activity_main);
 
+        title = findViewById(R.id.title);
+
         actionBarLayout = findViewById(R.id.actionBarLayout);
 
         LinearLayout root = findViewById(R.id.root);
@@ -58,7 +64,8 @@ public class MainActivity extends Activity {
 //            break;
         }
 
-        findViewById(R.id.switchDayNightMode).setOnClickListener(new View.OnClickListener() {
+        switchDayNightIcon = findViewById(R.id.switchDayNightMode);
+        switchDayNightIcon.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 Utils.isDayMode = !Utils.isDayMode;
@@ -71,8 +78,17 @@ public class MainActivity extends Activity {
 
     private void updateMode() {
         getWindow().setStatusBarColor(Utils.getColor(MainActivity.this, Utils.PRIMARY_DARK_COLOR));
+        if (Utils.isDayMode) {
+            getWindow().getDecorView().setSystemUiVisibility(View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR);
+            switchDayNightIcon.setColorFilter(Utils.getColor(this, R.color.iconLightColor));
+        } else {
+            getWindow().getDecorView().setSystemUiVisibility(0);
+            switchDayNightIcon.setColorFilter(Utils.getColor(this, R.color.white));
+        }
+
         getWindow().getDecorView().setBackgroundColor(Utils.getColor(MainActivity.this, Utils.WINDOW_BACKGROUND_COLOR));
         actionBarLayout.setBackgroundColor(Utils.getColor(MainActivity.this, Utils.PRIMARY_COLOR));
+        title.setTextColor(Utils.getColor(this, Utils.PRIMARY_TEXT_COLOR));
         for (ChartLayout chart : charts) {
             chart.setBackgroundColor(Utils.getColor(MainActivity.this, Utils.CHART_BACKGROUND_COLOR));
             chart.updateTheme();

@@ -11,7 +11,9 @@
         android:layout_height="56dp">
 
         <TextView
-            android:text="@string/app_name"
+            android:id="@+id/title"
+            android:text="Statistics"
+            android:textStyle="bold"
             android:textColor="@color/white"
             android:textSize="20sp"
             android:layout_gravity="center_vertical"
@@ -28,8 +30,7 @@
             android:layout_gravity="center_vertical"
             android:layout_marginStart="16dp"
             android:layout_marginEnd="16dp"
-            android:rotation="150"
-            android:src="@drawable/baseline_brightness_2_white_24"/>
+            android:src="@drawable/outline_brightness_2_black_24"/>
 
     </LinearLayout>
 
@@ -38,6 +39,7 @@
         android:layout_height="wrap_content">
         <LinearLayout
             android:id="@+id/root"
+            android:layout_marginTop="32dp"
             android:orientation="vertical"
             android:layout_width="match_parent"
             android:layout_height="wrap_content">

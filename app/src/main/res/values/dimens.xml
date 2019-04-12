@@ -10,4 +10,7 @@
     <dimen name="checkboxDividerLeftMargin">60dp</dimen>
 
     <dimen name="chartNameTextSize">14sp</dimen>
+    <dimen name="chartDateTextSize">12sp</dimen>
+    <dimen name="range_round">6dp</dimen>
+    <dimen name="range_top_bottom_padding">2dp</dimen>
 </resources>
