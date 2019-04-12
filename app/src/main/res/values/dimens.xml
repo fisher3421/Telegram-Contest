@@ -6,7 +6,7 @@
     <dimen name="scrollHeight">40dp</dimen>
     <dimen name="chartHeight">340dp</dimen>
     <dimen name="xAxisHeight">33dp</dimen>
-    <dimen name="checkboxHeight">48dp</dimen>
+    <dimen name="checkboxHeight">36dp</dimen>
     <dimen name="checkboxDividerLeftMargin">60dp</dimen>
 
     <dimen name="chartNameTextSize">14sp</dimen>

@@ -7,7 +7,6 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.LinearLayout;
 
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -31,7 +30,7 @@ public class MainActivity extends Activity {
             data.add(DataProvider.getData(this, R.raw.c3));
             data.add(DataProvider.getData(this, R.raw.c4));
             data.add(DataProvider.getData(this, R.raw.c5));
-        } catch (IOException e) {
+        } catch (Throwable e) {
             e.printStackTrace();
             return;
         }

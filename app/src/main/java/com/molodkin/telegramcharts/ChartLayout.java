@@ -2,15 +2,12 @@ package com.molodkin.telegramcharts;
 
 import android.annotation.SuppressLint;
 import android.content.Context;
-import android.content.res.ColorStateList;
 import android.graphics.Color;
 import android.graphics.Typeface;
 import android.util.TypedValue;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.CheckBox;
-import android.widget.CompoundButton;
 import android.widget.FrameLayout;
 import android.widget.TextView;
 
@@ -27,13 +24,11 @@ public class ChartLayout extends FrameLayout {
 
     final int scrollHeight = Utils.getDim(this, R.dimen.scrollHeight);
     int chartHeight = Utils.getDim(this, R.dimen.chartHeight);
-    int checkboxHeight = Utils.getDim(this, R.dimen.checkboxHeight);
-    int dividerHeight = Utils.dpToPx(this, 1);
-    int checkboxDividerLeftMargin = Utils.getDim(this, R.dimen.checkboxDividerLeftMargin);
     int sideMargin = Utils.getDim(this, R.dimen.margin20);
+    int checkBoxMargin = Utils.dpToPx(this, 8);
     private RangeBorderView rangeBorderView;
 
-    private ArrayList<CheckBox> checkBoxes = new ArrayList<>();
+    private ArrayList<TCheckBox> checkBoxes = new ArrayList<>();
     private ArrayList<View> dividers = new ArrayList<>();
 
     private TextView chartNameView;
@@ -78,6 +73,7 @@ public class ChartLayout extends FrameLayout {
         scrollLP.topMargin = chartHeight;
         scrollLP.leftMargin = sideMargin;
         scrollLP.rightMargin = sideMargin;
+        scrollLP.bottomMargin = sideMargin;
         rangeChartView.setLayoutParams(scrollLP);
 
         rangeBorderView.setLayoutParams(scrollLP);
@@ -97,46 +93,33 @@ public class ChartLayout extends FrameLayout {
         addView(rangeChartView);
         addView(rangeBorderView);
 
+        chartView.setData(data);
+
         initCheckboxes();
     }
 
     private void initCheckboxes() {
-        int height = chartHeight + scrollHeight;// + checkboxTopMargin;
-        chartView.setData(data);
+
+        if (data.names.size()  < 2) return;
+
         for (int i = 0; i < data.names.size(); i++) {
             String name = data.names.get(i);
             String color = data.colors.get(i);
-            CheckBox checkBox = (CheckBox) LayoutInflater.from(getContext()).inflate(R.layout.check_view, this, false);
-//            checkBox.setBackgroundColor(Color.parseColor(color));
-            checkBox.setButtonTintList(ColorStateList.valueOf(Color.parseColor(color)));
-            checkBox.setTextColor(Utils.getColor(getContext(), Utils.PRIMARY_TEXT_COLOR));
+            final TCheckBox checkBox = (TCheckBox) LayoutInflater.from(getContext()).inflate(R.layout.check_view, this, false);
+            checkBox.setColor(Color.parseColor(color));
             checkBox.setText(name);
             checkBox.setChecked(true);
             final int finalI = i;
-            checkBox.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+            checkBox.setOnClickListener(new OnClickListener() {
                 @Override
-                public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
-                    chartView.enableGraph(finalI, isChecked);
+                public void onClick(View v) {
+                    chartView.enableGraph(finalI, checkBox.isChecked());
                     rangeChartView.adjustYAxis();
                 }
             });
-            ((MarginLayoutParams) checkBox.getLayoutParams()).topMargin = height;
+
             checkBoxes.add(checkBox);
             addView(checkBox);
-            height += checkboxHeight;
-
-            if (i < data.names.size() - 1) {
-                View divider = new View(getContext());
-                divider.setBackgroundColor(Utils.getColor(getContext(), Utils.AXIS_COLOR));
-
-                FrameLayout.LayoutParams lp = new LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, dividerHeight);
-                lp.leftMargin = checkboxDividerLeftMargin;
-                lp.topMargin = height;
-                divider.setLayoutParams(lp);
-
-                dividers.add(divider);
-                addView(divider);
-            }
         }
     }
 
@@ -153,12 +136,47 @@ public class ChartLayout extends FrameLayout {
         chartView.updateTheme();
         rangeBorderView.updateTheme();
         infoView.updateTheme();
-        for (CheckBox checkBox : checkBoxes) {
-            checkBox.setTextColor(Utils.getColor(getContext(), Utils.PRIMARY_TEXT_COLOR));
-        }
-        for (View divider : dividers) {
-            divider.setBackgroundColor(Utils.getColor(getContext(), Utils.AXIS_COLOR));
-        }
     }
 
+    @Override
+    protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
+        super.onMeasure(widthMeasureSpec, heightMeasureSpec);
+        if (checkBoxes.size()  < 2) return;
+
+        int top = chartHeight + scrollHeight + sideMargin * 3 + checkBoxes.get(0).getMeasuredHeight();
+        int left = sideMargin;
+
+        for (TCheckBox checkBox : checkBoxes) {
+            if (left + checkBoxMargin * 2 + checkBox.getMeasuredWidth() > getMeasuredWidth()) {
+                top += checkBox.getMeasuredHeight() + checkBoxMargin;
+                left = sideMargin + checkBox.getMeasuredWidth() + checkBoxMargin;
+            } else {
+                left += sideMargin + checkBox.getMeasuredWidth();
+            }
+        }
+
+        setMeasuredDimension(getMeasuredWidth(), MeasureSpec.makeMeasureSpec(top, MeasureSpec.EXACTLY));
+    }
+
+    @Override
+    protected void onLayout(boolean changed, int left, int top, int right, int bottom) {
+        super.onLayout(changed, left, top, right, bottom);
+
+        if (checkBoxes.size()  < 2) return;
+
+        int topChild = chartHeight + scrollHeight + sideMargin * 2;
+        int leftChild = sideMargin;
+
+        for (TCheckBox checkBox : checkBoxes) {
+            if (leftChild + checkBoxMargin * 2 + checkBox.getMeasuredWidth() > right) {
+                topChild += checkBox.getMeasuredHeight() + checkBoxMargin;
+                leftChild = sideMargin;
+                checkBox.layout(leftChild, topChild, leftChild + checkBox.getMeasuredWidth(), topChild + checkBox.getMeasuredHeight());
+                leftChild += checkBox.getMeasuredWidth() + checkBoxMargin;
+            } else {
+                checkBox.layout(leftChild, topChild, leftChild + checkBox.getMeasuredWidth(), topChild + checkBox.getMeasuredHeight());
+                leftChild += checkBoxMargin + checkBox.getMeasuredWidth();
+            }
+        }
+    }
 }
