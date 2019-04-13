@@ -1,12 +1,19 @@
 package com.molodkin.telegramcharts;
 
 import android.content.Context;
+import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.Color;
+import android.graphics.Paint;
 
 public final class StackPercentageChartView extends BaseChart {
 
     private float[] sums;
+
+    private Bitmap bitmap;
+    private Canvas bitmapCanvas;
+    private Paint paint = new Paint();
+    private float topOffset;
 
     public StackPercentageChartView(Context context) {
         super(context);
@@ -35,11 +42,17 @@ public final class StackPercentageChartView extends BaseChart {
         availableChartHeight = (float) getHeight() - xAxisHeight;
         availableChartWidth = (float) getWidth() - sideMargin * 2;
 
+        topOffset = 25 * availableChartHeight / 125;
+
         float scaleX = availableChartWidth / (xPoints.length - 1);
 
         yAxis1 = new StackPercentageYAxis(this, chartMatrix);
         yAxis1.isHalfLine = false;
         yAxis1.init();
+
+        bitmap = Bitmap.createBitmap((int) availableChartWidth, (int) (availableChartHeight - topOffset), Bitmap.Config.RGB_565);
+        bitmapCanvas = new Canvas(bitmap);
+        bitmapCanvas.translate(0, -topOffset);
 
         chartMatrix.postScale(scaleX, 1, 0, 0);
 
@@ -124,8 +137,9 @@ public final class StackPercentageChartView extends BaseChart {
         for (int i = graphs.length - 1; i >= 0; i--) {
             BaseChartGraph graph = graphs[i];
             if (graph.alpha == 0) continue;
-            graph.draw(canvas, chartMatrix, visibleStart, visibleEnd);
+            graph.draw(bitmapCanvas, chartMatrix, visibleStart, visibleEnd);
         }
+        canvas.drawBitmap(bitmap, 0, topOffset, paint);
     }
 
 
