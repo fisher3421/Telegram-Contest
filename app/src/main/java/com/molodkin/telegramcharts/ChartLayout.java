@@ -77,8 +77,6 @@ public class ChartLayout extends FrameLayout {
             rangeChartView.translateY = 25;
         }
         rangeBorderView = new RangeBorderView(getContext(), chartView);
-        rangeBorderView.setBackground(getContext().getDrawable(R.drawable.bg_range));
-        rangeBorderView.setClipToOutline(true);
 
         LayoutParams scrollLP = new LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, scrollHeight);
         scrollLP.topMargin = chartHeight + scrollPadding;

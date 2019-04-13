@@ -148,15 +148,13 @@ class RangeBorderView extends View {
                         chartView.setStartEnd(start + scrollDistanceInSteps, end + scrollDistanceInSteps);
                     }
                 }
-                notifyListener();
-
                 break;
             }
-            default:
-                chartView.adjustYAxis();
         }
-        chartView.invalidate();
-        invalidate();
+        if (chartView.start != start || chartView.end != end) {
+            notifyListener();
+            invalidate();
+        }
     }
 
 
