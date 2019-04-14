@@ -36,7 +36,7 @@ public class ChartLayout extends FrameLayout {
     private Date tempDate = new Date();
     private SimpleDateFormat dateFormat = new SimpleDateFormat("d MMMM yyyy", Utils.getLocale(getContext()));
 
-    private ArrayList<TCheckBox> checkBoxes = new ArrayList<>();
+    ArrayList<TCheckBox> checkBoxes = new ArrayList<>();
 
     private TextView chartNameView;
     private TextView dateView;
@@ -193,10 +193,19 @@ public class ChartLayout extends FrameLayout {
             checkBox.setText(name);
             checkBox.setChecked(true);
             final int finalI = i;
-            checkBox.setOnClickListener(new OnClickListener() {
+            checkBox.setLongClickListener(new TCheckBox.CheckBoxListener() {
                 @Override
-                public void onClick(View v) {
+                public void onClick() {
                     chartView.enableGraph(finalI, checkBox.isChecked());
+                    if (rangeChartView != null) rangeChartView.adjustYAxis();
+                }
+
+                @Override
+                public void onLongClick() {
+                    for (TCheckBox box : checkBoxes) {
+                        if (checkBox != box) box.setChecked(true);
+                    }
+                    chartView.enableAll(true);
                     if (rangeChartView != null) rangeChartView.adjustYAxis();
                 }
             });

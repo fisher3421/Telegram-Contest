@@ -7,6 +7,7 @@ import android.content.Context;
 import android.graphics.Matrix;
 import android.graphics.Paint;
 import android.view.View;
+import java.util.ArrayList;
 
 import static com.molodkin.telegramcharts.Utils.log;
 
@@ -88,8 +89,24 @@ abstract class BaseChart extends View {
         initTheme();
     }
 
+    public void enableAll(boolean enable) {
+        ArrayList<BaseChartGraph> graphsToChange = new ArrayList<>();
+        for (BaseChartGraph graph : graphs) {
+            if (graph.isEnable != enable) graphsToChange.add(graph);
+        }
+        enableGraph(enable, graphsToChange.toArray(new BaseChartGraph[graphsToChange.size()]));
+    }
+
     public void enableGraph(final int index, boolean enable) {
-        graphs[index].isEnable = enable;
+        enableGraph(enable, graphs[index]);
+    }
+
+    private void enableGraph(boolean enable, final BaseChartGraph... graphs) {
+        if (graphs == null || graphs.length == 0) return;
+
+        for (BaseChartGraph graph : graphs) {
+            graph.isEnable = enable;
+        }
 
         float fromAlpha = enable ? 0 : 1f;
         final float toAlpha = enable ? 1f : 0f;
@@ -99,7 +116,9 @@ abstract class BaseChart extends View {
         valueAnimator.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
             @Override
             public void onAnimationUpdate(ValueAnimator animation) {
-                graphs[index].alpha = (float) animation.getAnimatedValue();
+                for (BaseChartGraph graph : graphs) {
+                    graph.alpha = (float) animation.getAnimatedValue();
+                }
                 graphAlphaChanged();
                 chartListener.updateInfoView();
                 invalidate();

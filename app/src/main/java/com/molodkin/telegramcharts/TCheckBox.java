@@ -7,7 +7,10 @@ import android.graphics.Color;
 import android.graphics.Paint;
 import android.graphics.Path;
 import android.util.AttributeSet;
+import android.view.GestureDetector;
 import android.view.MotionEvent;
+import android.view.animation.Animation;
+import android.view.animation.AnimationUtils;
 import android.widget.CompoundButton;
 
 
@@ -28,6 +31,43 @@ public class TCheckBox extends CompoundButton {
     private float textSideMargin = Utils.dpToPx(this, 8);
 
     private float animatorFraction;
+
+    private CheckBoxListener listener;
+
+    private GestureDetector gestureDetector = new GestureDetector(getContext(), new GestureDetector.SimpleOnGestureListener(){
+        @Override
+        public boolean onDown(MotionEvent e) {
+            startTouchAnimation(true);
+            return true;
+        }
+
+        @Override
+        public boolean onSingleTapUp(MotionEvent e) {
+            if (isLocked()) {
+                startTouchAnimation(false);
+                startShakeAnimation();
+            } else {
+                setChecked(!isChecked());
+                if (listener != null) listener.onClick();
+
+            }
+            return true;
+        }
+
+        @Override
+        public void onLongPress(MotionEvent e) {
+            if (!isChecked()) {
+                setChecked(true);
+            } else {
+                startTouchAnimation(false);
+            }
+            if (listener != null) listener.onLongClick();
+        }
+    });
+
+    public void setLongClickListener(CheckBoxListener longClickListener) {
+        this.listener = longClickListener;
+    }
 
     private ValueAnimator.AnimatorUpdateListener animatorUpdateListener = new ValueAnimator.AnimatorUpdateListener() {
         @Override
@@ -53,20 +93,35 @@ public class TCheckBox extends CompoundButton {
         init();
     }
 
+    private boolean isLocked() {
+        for (TCheckBox checkBox : ((ChartLayout) getParent()).checkBoxes) {
+            if (checkBox != this && checkBox.isChecked()) return false;
+        }
+        return true;
+    }
+
     @Override
     public boolean onTouchEvent(MotionEvent event) {
-        switch (event.getAction()) {
-            case MotionEvent.ACTION_DOWN:
-                startTouchAnimation(true);
-                break;
-            case MotionEvent.ACTION_CANCEL:
-            case MotionEvent.ACTION_UP:
-                startTouchAnimation(false);
-                break;
-        }
-
-        return super.onTouchEvent(event);
+        return gestureDetector.onTouchEvent(event);
+//        switch (event.getAction()) {
+//            case MotionEvent.ACTION_DOWN:
+//                if (isLocked()) {
+//                    startShakeAnimation();
+//                    return false;
+//                } else {
+//                    startTouchAnimation(true);
+//                }
+//                break;
+//            case MotionEvent.ACTION_CANCEL:
+//            case MotionEvent.ACTION_UP:
+//                startTouchAnimation(false);
+//                break;
+//        }
+//
+//        return super.onTouchEvent(event);
     }
+
+
 
     public void setColor(int color) {
         this.color = color;
@@ -109,6 +164,11 @@ public class TCheckBox extends CompoundButton {
                 startAnimation(0f);
             }
         }
+    }
+
+    private void startShakeAnimation() {
+        Animation animation = AnimationUtils.loadAnimation(getContext(), R.anim.shake);
+        this.startAnimation(animation);
     }
 
     private void startAnimation(float to) {
@@ -175,5 +235,10 @@ public class TCheckBox extends CompoundButton {
         canvas.drawPath(checkMark, checkPaint);
 
         canvas.restore();
+    }
+
+    interface CheckBoxListener {
+        void onClick();
+        void onLongClick();
     }
 }
