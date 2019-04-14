@@ -25,6 +25,8 @@ class StackInfoView extends BaseInfoView {
         xIndex = chartView.xIndexByCoord(x);
         xCoord = chartView.xCoordByIndex(xIndex);
         measureWindow(xIndex);
+        preWindowLeftMargin = windowLeftMargin;
+        calcWindowMargin();
         invalidate();
     }
 

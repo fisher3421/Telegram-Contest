@@ -44,6 +44,7 @@ class StackPercentageInfoView extends BaseInfoView {
             measureWindow(newXIndex);
             xCoord = chartView.xCoordByIndex(newXIndex);
             xIndex = newXIndex;
+            calcWindowMargin();
             invalidate();
         }
     }
