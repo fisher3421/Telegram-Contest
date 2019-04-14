@@ -237,7 +237,7 @@ abstract class BaseYAxis {
                 }
 
                 prev[0] = value;
-                chart.invalidate();
+                chart.yAxisAdjusted();
             }
         });
 

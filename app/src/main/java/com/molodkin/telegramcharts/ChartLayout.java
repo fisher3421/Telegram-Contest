@@ -12,7 +12,6 @@ import android.view.ViewGroup;
 import android.widget.FrameLayout;
 import android.widget.TextView;
 
-import java.io.IOException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
@@ -43,9 +42,11 @@ public class ChartLayout extends FrameLayout {
     private ChartData data;
 
     private ChartListener chartListener;
+    private final boolean isZoomed;
 
-    public ChartLayout(Context context) {
+    public ChartLayout(Context context, boolean isZoomed) {
         super(context);
+        this.isZoomed = isZoomed;
     }
 
     public void setChartListener(ChartListener selectDayListener) {
@@ -111,6 +112,10 @@ public class ChartLayout extends FrameLayout {
         chartNameLP.leftMargin = sideMargin;
         chartNameView.setLayoutParams(chartNameLP);
 
+        if (isZoomed) {
+            chartNameView.setText("Zoom Out");
+        }
+
         dateView = new TextView(getContext());
         dateView.setTextSize(TypedValue.COMPLEX_UNIT_PX, Utils.getDim(this, R.dimen.chartDateTextSize));
         dateView.setGravity(Gravity.END);
@@ -134,9 +139,17 @@ public class ChartLayout extends FrameLayout {
 
         initCheckboxes();
 
+        chartView.setChartListener(new BaseChart.AbsChartListenr() {
+            @Override
+            public void updateInfoView() {
+                infoView.move();
+            }
+        });
+
         rangeBorderView.setOnRangeChanged(new RangeBorderView.OnRangeChanged() {
             @Override
             public void onChanged(int start, int end) {
+                infoView.move();
                 long dateStartMills = chartView.xPoints[start];
                 tempDate.setTime(dateStartMills);
                 String dateStartStr = dateFormat.format(tempDate);
@@ -153,30 +166,44 @@ public class ChartLayout extends FrameLayout {
             }
         });
 
-        dateView.setOnClickListener(new OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                ChartData zoomData;
-                try {
-                    zoomData = DataProvider.getData(getContext(), R.raw.c_1_2018_04_07);
-                } catch (IOException ignore) { return; }
-                chartListener.onZoomOut();
-//                chartView.zoom(400, false);
-//                infoView.setChartView(zoomChartView);
-//                zoomChartView.setData(zoomData);
-//                zoomChartView.zoom(100, true);
-            }
-        });
-
-        chartNameView.setOnClickListener(new OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                chartListener.onDaySelected();
+        if (!isZoomed) {
+            chartNameView.setOnClickListener(new OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    chartListener.onDaySelected(100);
 //                chartView.zoom(400, true);
 //                zoomChartView.zoom(100, false);
 //                infoView.setChartView(chartView);
-            }
-        });
+                }
+            });
+        } else {
+            chartNameView.setOnClickListener(new OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    chartListener.onZoomOut();
+//                chartView.zoom(400, true);
+//                zoomChartView.zoom(100, false);
+//                infoView.setChartView(chartView);
+                }
+            });
+        }
+//
+//        dateView.setOnClickListener(new OnClickListener() {
+//            @Override
+//            public void onClick(View v) {
+//                ChartData zoomData;
+//                try {
+//                    zoomData = DataProvider.getData(getContext(), R.raw.c_1_2018_04_07);
+//                } catch (IOException ignore) { return; }
+//                chartListener.onZoomOut();
+////                chartView.zoom(400, false);
+////                infoView.setChartView(zoomChartView);
+////                zoomChartView.setData(zoomData);
+////                zoomChartView.zoom(100, true);
+//            }
+//        });
+
+
     }
 
     private void initCheckboxes() {
@@ -269,13 +296,13 @@ public class ChartLayout extends FrameLayout {
     }
 
     public interface ChartListener {
-        void onDaySelected();
+        void onDaySelected(long date);
         void onZoomOut();
     }
 
     public abstract static class AbsChartListener implements ChartListener {
         @Override
-        public void onDaySelected() {
+        public void onDaySelected(long date) {
 
         }
 

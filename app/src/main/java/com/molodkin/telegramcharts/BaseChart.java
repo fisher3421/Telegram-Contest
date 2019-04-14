@@ -61,9 +61,15 @@ abstract class BaseChart extends View {
     boolean isOpening = false;
     private float lastZoomedX;
 
+    private ChartListener chartListener;
+
     public BaseChart(Context context) {
         super(context);
         init();
+    }
+
+    public void setChartListener(ChartListener chartListener) {
+        this.chartListener = chartListener;
     }
 
     abstract void initGraphs();
@@ -93,6 +99,7 @@ abstract class BaseChart extends View {
             public void onAnimationUpdate(ValueAnimator animation) {
                 graphs[index].alpha = (float) animation.getAnimatedValue();
                 graphAlphaChanged();
+                chartListener.updateInfoView();
                 invalidate();
 
             }
@@ -247,6 +254,11 @@ abstract class BaseChart extends View {
         }
     }
 
+    public void yAxisAdjusted() {
+        chartListener.updateInfoView();
+        invalidate();
+    }
+
     public void zoom(final float x, final boolean isOpening) {
         this.isOpening = isOpening;
         isGone = false;
@@ -341,5 +353,16 @@ abstract class BaseChart extends View {
         tempPoint[1] = yAxis2.maxValue - y;
         chartMatrix2.mapPoints(tempPoint);
         return tempPoint[1];
+    }
+
+    interface ChartListener {
+        void updateInfoView();
+    }
+
+    static abstract class  AbsChartListenr implements ChartListener {
+        @Override
+        public void updateInfoView() {
+
+        }
     }
 }

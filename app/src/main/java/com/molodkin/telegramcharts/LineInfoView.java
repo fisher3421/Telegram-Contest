@@ -110,7 +110,7 @@ class LineInfoView extends BaseInfoView {
 
         for (int i = 0; i < chartView.graphs.length; i++) {
             BaseChartGraph graph = chartView.graphs[i];
-            if (graph.isEnable) {
+            if (graph.isVisible()) {
 
                 int xBefore = (int) xValue;
                 int y1 = graph.values[xBefore];
@@ -133,9 +133,11 @@ class LineInfoView extends BaseInfoView {
 
         for (int i = 0; i < yCoords.size(); i++) {
             float yCoord = yCoords.get(i);
-
+            float alpha = alphas.get(i);
             int color = textColors.get(i);
             circleStrokePaint.setColor(color);
+            circleFillPaint.setAlpha((int) (255 * alpha));
+            circleStrokePaint.setAlpha((int) (255 * alpha));
             canvas.drawCircle(xCoord, yCoord, circleRadius, circleFillPaint);
             canvas.drawCircle(xCoord, yCoord, circleRadius, circleStrokePaint);
         }

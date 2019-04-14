@@ -5,9 +5,11 @@ import android.content.Context;
 import android.graphics.Canvas;
 import android.graphics.Paint;
 import android.graphics.Rect;
+import android.graphics.RectF;
 import android.graphics.Typeface;
 import android.graphics.drawable.NinePatchDrawable;
 import android.text.TextPaint;
+import android.view.GestureDetector;
 import android.view.MotionEvent;
 import android.view.View;
 
@@ -75,12 +77,14 @@ abstract class BaseInfoView extends View {
     private final ArrayList<Float> textPercentageWidths = new ArrayList<>();
     private final ArrayList<Float> textPercentageLeft = new ArrayList<>();
     protected final ArrayList<Integer> textColors = new ArrayList<>();
+    protected final ArrayList<Float> alphas = new ArrayList<>();
 
     protected float maxYCoord;
 
     float windowTopMargin = 0f;
 
-    private boolean isMoving;
+    private boolean isVisible;
+    private boolean isScrolling;
 
     protected final BaseChart chartView;
 
@@ -97,6 +101,57 @@ abstract class BaseInfoView extends View {
     private final DecimalFormat decimalFormat;
 
     private ZoomInListenr zoomInListenr;
+    private long prevDate = -1;
+    private RectF tempRect = new RectF();
+
+    private GestureDetector gestureDetector = new GestureDetector(this.getContext(), new GestureDetector.SimpleOnGestureListener(){
+        @Override
+        public boolean onScroll(MotionEvent e1, MotionEvent e2, float distanceX, float distanceY) {
+            if (Math.abs(distanceX) > Math.abs(distanceY)) {
+                isScrolling = true;
+                getParent().requestDisallowInterceptTouchEvent(true);
+                isVisible = true;
+            }
+
+            if (isScrolling) {
+                onActionMove(e2.getX());
+            }
+
+            return isScrolling;
+        }
+
+        @Override
+        public void onLongPress(MotionEvent e) {
+            super.onLongPress(e);
+        }
+
+        @Override
+        public boolean onSingleTapUp(MotionEvent e) {
+            float x = e.getX();
+            tempRect.set(windowLeftMargin, windowTopMargin, windowLeftMargin + windowWidth, windowTopMargin + windowHeight);
+            if (!isVisible || isOutSide()) {
+                isVisible = true;
+
+                xIndex = chartView.xIndexByCoord(x);
+
+                move();
+            } else if (tempRect.contains(e.getX(), e.getY())) {
+                notifyZoomIn();
+            } else {
+                isScrolling = false;
+                isVisible = false;
+                invalidate();
+            }
+
+            return isVisible;
+        }
+
+        @Override
+        public boolean onDown(MotionEvent e) {
+            return true;
+        }
+    });
+    private float windowLeftMargin;
 
     BaseInfoView(Context c, BaseChart chartView) {
         super(c);
@@ -136,6 +191,18 @@ abstract class BaseInfoView extends View {
         background.getPadding(backgroundPadding);
     }
 
+    public void move() {
+        if (!isVisible) return;
+
+        xCoord = chartView.xCoordByIndex(xIndex);
+
+        measureWindow(xIndex);
+
+        onActionDown(xCoord);
+
+        invalidate();
+    }
+
     public void setZoomInListenr(ZoomInListenr zoomInListenr) {
         this.zoomInListenr = zoomInListenr;
     }
@@ -157,66 +224,23 @@ abstract class BaseInfoView extends View {
         maxX = getWidth() - chartView.sideMargin;
     }
 
-    float downX = 0;
+//    float downX = 0;
 
     @SuppressLint("ClickableViewAccessibility")
     @Override
     public boolean onTouchEvent(MotionEvent event) {
-        float x = event.getX();
-        float y = event.getY();
-        if (y < chartView.graphTopMargin) return false;
-
-        if (x > maxX) {
-            x = maxX;
-        }
-
-        if (x < minX) {
-            x = minX;
-        }
-
-        switch (event.getAction()) {
-            case MotionEvent.ACTION_DOWN:
-                isMoving = true;
-                downX = event.getX();
-
-                xIndex = chartView.xIndexByCoord(x);
-                xCoord = chartView.xCoordByIndex(xIndex);
-
-                measureWindow(xIndex);
-
-                onActionDown(x);
-
-                invalidate();
-
-                notifyZoomIn();
-
-                break;
-            case MotionEvent.ACTION_MOVE:
-                onActionMove(x);
-
-                break;
-            case MotionEvent.ACTION_UP:
-            case MotionEvent.ACTION_CANCEL:
-                isMoving = false;
-                invalidate();
-                break;
-        }
-
-        if (Math.abs(downX - event.getX()) > 50) {
-            getParent().requestDisallowInterceptTouchEvent(true);
-        }
-
-        return isMoving;
+        return gestureDetector.onTouchEvent(event);
     }
 
     protected void onActionDown(float x) {
     }
-
     protected void onActionMove(float x) {
     }
-
     void measureWindow(int newXIndex) {
         long date = chartView.xPoints[newXIndex];
+//        if (date == prevDate) return;
+//        prevDate = date;
+
         tempDate.setTime(date);
 
         dateText = dateFormat.format(tempDate);
@@ -231,16 +255,17 @@ abstract class BaseInfoView extends View {
         textColors.clear();
         topValues.clear();
         leftValues.clear();
+        alphas.clear();
 
 
         if (showPercentage) {
             float sum = 0;
             percentageMaxWidth = 0;
             for (BaseChartGraph graph : chartView.graphs) {
-                if (graph.isEnable) sum += graph.values[newXIndex];
+                if (graph.alpha > 0) sum += graph.values[newXIndex];
             }
             for (BaseChartGraph graph : chartView.graphs) {
-                if (graph.isEnable) {
+                if (graph.alpha > 0) {
                     String value = String.format("%s %%", String.valueOf(Math.round(100 * graph.values[newXIndex] / sum)));
                     float textWidth = dateTextPaint.measureText(value);
                     textPercentageWidths.add(textWidth);
@@ -254,12 +279,13 @@ abstract class BaseInfoView extends View {
 
         for (int i = 0; i < chartView.graphs.length; i++) {
             BaseChartGraph graph = chartView.graphs[i];
-            if (graph.isEnable) {
+            if (graph.isVisible()) {
                 textNames.add(graph.name);
 
                 String valueText = decimalFormat.format(graph.values[newXIndex]);
                 textValues.add(valueText);
                 textColors.add(graph.paint.getColor());
+                alphas.add(graph.alpha);
                 float valueWidth = valueTextPaint.measureText(valueText);
                 leftValues.add(contentWidth - valueWidth);
                 topValues.add(top);
@@ -268,7 +294,7 @@ abstract class BaseInfoView extends View {
                     textPercentageLeft.add(percentageMaxWidth - textPercentageWidthsIterator.next());
                 }
 
-                top += nameTextHeight + rowMargin;
+                top += nameTextHeight * graph.alpha + rowMargin;
             }
         }
         top -= rowMargin;
@@ -283,17 +309,21 @@ abstract class BaseInfoView extends View {
         background.setBounds(backgroundSize);
     }
 
+    private boolean isOutSide() {
+        return xCoord < 0 || xCoord > getWidth();
+    }
+
     @Override
     protected void onDraw(Canvas canvas) {
         super.onDraw(canvas);
 
-        if (!isMoving || textValues.isEmpty()) return;
+        if (!isVisible || textValues.isEmpty()) return;
+
+        if (isOutSide()) return;
 
         drawContent(canvas);
 
         canvas.save();
-
-        float windowLeftMargin;
 
         if (maxYCoord < windowHeight) {
             if (xCoord > getWidth() / 2) {
@@ -324,6 +354,8 @@ abstract class BaseInfoView extends View {
         canvas.drawText(dateText, 0, dateTextY, dateTextPaint);
 
         for (int i = 0; i < textValues.size(); i++) {
+            float alpha = alphas.get(i);
+            nameTextPaint.setAlpha((int) (255 * alpha));
             if (showPercentage) {
                 canvas.drawText(textPercentage.get(i), textPercentageLeft.get(i), topValues.get(i), dateTextPaint);
                 canvas.drawText(textNames.get(i), percentageMaxWidth + dataSideMargin, topValues.get(i), nameTextPaint);
@@ -335,6 +367,7 @@ abstract class BaseInfoView extends View {
             String textValue = textValues.get(i);
             int color = textColors.get(i);
             valueTextPaint.setColor(color);
+            valueTextPaint.setAlpha((int) (255 * alpha));
 
             canvas.drawText(textValue, leftValues.get(i), topValues.get(i), valueTextPaint);
 

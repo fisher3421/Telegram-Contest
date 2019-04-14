@@ -32,6 +32,10 @@ abstract class BaseChartGraph {
         tempPoints = new float[(values.length - 1) * 4];
     }
 
+    public boolean isVisible() {
+        return alpha > 0;
+    }
+
     abstract int getMax(int start, int end);
 
     abstract int getMin(int start, int end);
