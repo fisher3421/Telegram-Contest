@@ -34,6 +34,9 @@ public final class LineChartView extends BaseChart {
 
         float scaleX = availableChartWidth / (xPoints.length - 1);
 
+        chartMatrix.reset();
+        chartMatrix2.reset();
+
         if (!secondY) {
             yAxis1 = new LineYAxis(this, chartMatrix);
             yAxis1.isHalfLine = false;
@@ -85,7 +88,7 @@ public final class LineChartView extends BaseChart {
     @Override
     protected void onDraw(Canvas canvas) {
         super.onDraw(canvas);
-        if (getWidth() == 0 || getHeight() == 0) return;
+        if (getWidth() == 0 || getHeight() == 0 || data == null || isGone) return;
 
         canvas.translate(sideMargin, 0);
 

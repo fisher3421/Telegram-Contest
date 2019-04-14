@@ -12,6 +12,7 @@ import android.view.ViewGroup;
 import android.widget.FrameLayout;
 import android.widget.TextView;
 
+import java.io.IOException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
@@ -41,8 +42,14 @@ public class ChartLayout extends FrameLayout {
     private TextView dateView;
     private ChartData data;
 
+    private ChartListener chartListener;
+
     public ChartLayout(Context context) {
         super(context);
+    }
+
+    public void setChartListener(ChartListener selectDayListener) {
+        this.chartListener = selectDayListener;
     }
 
     private void init() {
@@ -51,6 +58,7 @@ public class ChartLayout extends FrameLayout {
             case LINE_SCALED:
                 chartView = new LineChartView(getContext());
                 chartView.secondY = data.type == ChartData.Type.LINE_SCALED;
+                chartView.isBig = true;
                 infoView = new LineInfoView(getContext(), chartView);
                 break;
             case STACK:
@@ -64,7 +72,8 @@ public class ChartLayout extends FrameLayout {
                 break;
         }
 
-        chartView.setLayoutParams(new FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, chartHeight));
+        LayoutParams chartLp = new LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, chartHeight);
+        chartView.setLayoutParams(chartLp);
 
         infoView.setLayoutParams(new FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, chartHeight - chartView.xAxisHeight));
 
@@ -108,7 +117,7 @@ public class ChartLayout extends FrameLayout {
         dateView.setTextColor(Utils.getColor(getContext(), R.color.chartName));
         dateView.setTypeface(Typeface.DEFAULT_BOLD);
 
-        FrameLayout.LayoutParams dateViewLP = new LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+        FrameLayout.LayoutParams dateViewLP = new LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
         dateViewLP.gravity = Gravity.END;
         dateViewLP.topMargin = Utils.dpToPx(this, 2);
         dateViewLP.rightMargin = sideMargin;
@@ -135,6 +144,37 @@ public class ChartLayout extends FrameLayout {
                 tempDate.setTime(dateEndMills);
                 String dateEndStr = dateFormat.format(tempDate);
                 dateView.setText(String.format("%s - %s", dateStartStr, dateEndStr));
+            }
+        });
+
+        infoView.setZoomInListenr(new BaseInfoView.ZoomInListenr() {
+            @Override
+            public void zoomIn(float x) {
+            }
+        });
+
+        dateView.setOnClickListener(new OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                ChartData zoomData;
+                try {
+                    zoomData = DataProvider.getData(getContext(), R.raw.c_1_2018_04_07);
+                } catch (IOException ignore) { return; }
+                chartListener.onZoomOut();
+//                chartView.zoom(400, false);
+//                infoView.setChartView(zoomChartView);
+//                zoomChartView.setData(zoomData);
+//                zoomChartView.zoom(100, true);
+            }
+        });
+
+        chartNameView.setOnClickListener(new OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                chartListener.onDaySelected();
+//                chartView.zoom(400, true);
+//                zoomChartView.zoom(100, false);
+//                infoView.setChartView(chartView);
             }
         });
     }
@@ -170,11 +210,15 @@ public class ChartLayout extends FrameLayout {
 
     public void setData(ChartData data) {
         this.data = data;
-        init();
-
+        if (chartView == null) {
+            init();
+        } else {
+            chartView.setData(data);
+        }
     }
 
     public void updateTheme() {
+        if (chartView == null) return;
         chartView.updateTheme();
         rangeBorderView.updateTheme();
         infoView.updateTheme();
@@ -221,6 +265,23 @@ public class ChartLayout extends FrameLayout {
                 checkBox.layout(leftChild, topChild, leftChild + checkBox.getMeasuredWidth(), topChild + checkBox.getMeasuredHeight());
                 leftChild += checkBoxMargin + checkBox.getMeasuredWidth();
             }
+        }
+    }
+
+    public interface ChartListener {
+        void onDaySelected();
+        void onZoomOut();
+    }
+
+    public abstract static class AbsChartListener implements ChartListener {
+        @Override
+        public void onDaySelected() {
+
+        }
+
+        @Override
+        public void onZoomOut() {
+
         }
     }
 }

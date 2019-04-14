@@ -63,6 +63,14 @@ abstract class BaseYAxis {
     }
 
     void draw(Canvas canvas) {
+        if (chart.zoomAnimator != null && chart.zoomAnimator.isRunning()) {
+            drawZoom(canvas, chart.zoomAnimator.getAnimatedFraction(), chart.isBig, chart.isOpening);
+        } else {
+            drawInner(canvas);
+        }
+    }
+
+    void drawInner(Canvas canvas) {
         canvas.save();
 
         drawLines(canvas, rowYValuesAlpha, rowYValues, rowYTextsValues, rowYTextsValuesWidth);
@@ -71,6 +79,17 @@ abstract class BaseYAxis {
             drawLines(canvas, 255 -rowYValuesAlpha, rowYValuesToHide, rowYTextsValuesToHide, rowYTextsValuesToHideWidth);
         }
 
+        canvas.restore();
+    }
+
+    void drawZoom(Canvas canvas, float fraction, boolean big, boolean opening) {
+        float availableChartHeight = chart.availableChartHeight;
+        canvas.save();
+
+        float yScale = opening ? fraction : 1 - fraction;
+        canvas.scale(1, yScale, 0, big ? 0 : availableChartHeight);
+
+        drawInner(canvas);
         canvas.restore();
     }
 
@@ -136,6 +155,8 @@ abstract class BaseYAxis {
         int newTempMaxYValue = dirtyMax;
 
         if (adjustValues) {
+            int margin = (int) (chart.graphTopMargin / chart.availableChartHeight * delta);
+            delta += margin;
             double e = Math.pow(10, Math.floor(Math.log10(delta)) - 1);
             double c = ((int) (delta / (e * rowNumber) + 1)) * e * rowNumber;
 
@@ -172,8 +193,6 @@ abstract class BaseYAxis {
             }
         }
 
-        final float toScale = range * 1f / newRange;
-
         this.maxYValueTemp = newTempMaxYValue;
         this.minYValueTemp = newTempMinYValue;
 
@@ -181,6 +200,8 @@ abstract class BaseYAxis {
             matrix.postScale(1, chart.availableChartHeight / range, 0, 0);
             return;
         }
+
+        final float toScale = range * 1f / newRange;
 
         log("adjustYAxis_fromScale: " + fromScale);
         log("adjustYAxis_toScale: " + toScale);

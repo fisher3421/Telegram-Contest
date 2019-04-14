@@ -96,6 +96,8 @@ abstract class BaseInfoView extends View {
 
     private final DecimalFormat decimalFormat;
 
+    private ZoomInListenr zoomInListenr;
+
     BaseInfoView(Context c, BaseChart chartView) {
         super(c);
         dateFormat = new SimpleDateFormat("EEE, d MMM yyyy", Utils.getLocale(c));
@@ -134,6 +136,14 @@ abstract class BaseInfoView extends View {
         background.getPadding(backgroundPadding);
     }
 
+    public void setZoomInListenr(ZoomInListenr zoomInListenr) {
+        this.zoomInListenr = zoomInListenr;
+    }
+
+    private void notifyZoomIn() {
+        if (zoomInListenr != null) zoomInListenr.zoomIn(xCoord);
+    }
+
     protected void initTheme() {
         background = (NinePatchDrawable) getContext().getResources().getDrawable(Utils.getResId(Utils.INFO_VIEW_BACKGROUND), getContext().getTheme());
         dateTextPaint.setColor(Utils.getColor(getContext(), Utils.PRIMARY_TEXT_COLOR));
@@ -153,6 +163,8 @@ abstract class BaseInfoView extends View {
     @Override
     public boolean onTouchEvent(MotionEvent event) {
         float x = event.getX();
+        float y = event.getY();
+        if (y < chartView.graphTopMargin) return false;
 
         if (x > maxX) {
             x = maxX;
@@ -175,6 +187,8 @@ abstract class BaseInfoView extends View {
                 onActionDown(x);
 
                 invalidate();
+
+                notifyZoomIn();
 
                 break;
             case MotionEvent.ACTION_MOVE:
@@ -335,5 +349,9 @@ abstract class BaseInfoView extends View {
     void updateTheme() {
         initTheme();
         invalidate();
+    }
+
+    public interface ZoomInListenr {
+        void zoomIn(float x);
     }
 }

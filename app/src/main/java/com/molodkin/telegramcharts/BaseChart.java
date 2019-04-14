@@ -14,6 +14,7 @@ abstract class BaseChart extends View {
 
     protected boolean enablingWithAlphaAnimation = true;
 
+    static final long ZOOM_ANIMATION_DURATION = 250L;
     static final long SCALE_ANIMATION_DURATION = 250L;
     static final long FADE_ANIMATION_DURATION = 250L;
 
@@ -23,7 +24,7 @@ abstract class BaseChart extends View {
     public int clipMargin = Utils.dpToPx(this, 1);
     public int xAxisHeight = Utils.getDim(this, R.dimen.xAxisHeight);
     public  int xAxisWidth = Utils.getDim(this, R.dimen.xAxisWidth);
-
+    public  int graphTopMargin = Utils.getDim(this, R.dimen.graphTopMargin);
     public int graphLineWidth = Utils.dpToPx(this, 2);
 
     private float[] tempPoint = new float[2];
@@ -53,6 +54,12 @@ abstract class BaseChart extends View {
     boolean secondY = false;
 
     public ChartData data;
+
+    ValueAnimator zoomAnimator;
+    boolean isGone = false;
+    boolean isBig = false;
+    boolean isOpening = false;
+    private float lastZoomedX;
 
     public BaseChart(Context context) {
         super(context);
@@ -238,6 +245,54 @@ abstract class BaseChart extends View {
         if (getWidth() > 0 && getHeight() > 0) {
             initGraphs();
         }
+    }
+
+    public void zoom(final float x, final boolean isOpening) {
+        this.isOpening = isOpening;
+        isGone = false;
+        final float[] prev = new float[1];
+        float scale = isBig ? 20f : 0.01f;
+        float fromScale = isOpening ? scale : 1;
+        float toScale = isOpening ? 1 : scale;
+        prev[0] = fromScale;
+        if (isBig && !isOpening) {
+            lastZoomedX = x;
+        } else if (!isBig && isOpening){
+            chartMatrix.postScale(scale, 1, availableChartWidth / 2, 0);
+            chartMatrix2.postScale(scale, 1, availableChartWidth / 2, 0);
+        }
+        zoomAnimator = ValueAnimator.ofFloat(fromScale, toScale);
+        zoomAnimator.setDuration(ZOOM_ANIMATION_DURATION);
+        zoomAnimator.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
+            @Override
+            public void onAnimationUpdate(ValueAnimator animation) {
+                float fraction = animation.getAnimatedFraction();
+                float value = (float) animation.getAnimatedValue();
+                for (BaseChartGraph graph : graphs) {
+                    graph.alpha = isOpening ? fraction : 1 - fraction;
+                }
+                float scale = value / prev[0];
+                prev[0] = value;
+                float newX = x;
+                if (isBig) {
+                    if (isOpening) newX = lastZoomedX;
+                } else {
+                    newX = availableChartWidth / 2;
+                }
+                chartMatrix.postScale(scale, 1, newX, 0);
+                chartMatrix2.postScale(scale, 1, newX, 0);
+                invalidate();
+
+            }
+        });
+        zoomAnimator.addListener(new AnimatorListenerAdapter() {
+            @Override
+            public void onAnimationEnd(Animator animation) {
+                isGone = !isOpening;
+                invalidate();
+            }
+        });
+        zoomAnimator.start();
     }
 
     public void initTheme() {
