@@ -14,10 +14,19 @@ public final class StackPercentageChartView extends BaseChart {
     private Canvas bitmapCanvas;
     private Paint paint = new Paint();
     private float topOffset;
+    private Paint sideRectanglePaint;
 
     public StackPercentageChartView(Context context) {
         super(context);
         enablingWithAlphaAnimation = false;
+    }
+
+    @Override
+    public void initTheme() {
+        super.initTheme();
+        sideRectanglePaint = new Paint();
+        sideRectanglePaint.setStyle(Paint.Style.FILL);
+        sideRectanglePaint.setColor(Utils.getColor(getContext(), Utils.CHART_BACKGROUND_COLOR));
     }
 
     @Override
@@ -50,7 +59,7 @@ public final class StackPercentageChartView extends BaseChart {
         yAxis1.isHalfLine = false;
         yAxis1.init();
 
-        bitmap = Bitmap.createBitmap((int) availableChartWidth, (int) (availableChartHeight - topOffset), Bitmap.Config.RGB_565);
+        bitmap = Bitmap.createBitmap((int) availableChartWidth + sideMargin * 2, (int) (availableChartHeight - topOffset), Bitmap.Config.RGB_565);
         bitmapCanvas = new Canvas(bitmap);
         bitmapCanvas.translate(0, -topOffset);
 
@@ -134,13 +143,27 @@ public final class StackPercentageChartView extends BaseChart {
     }
 
     private void drawData(Canvas canvas) {
+
+        bitmapCanvas.save();
+        bitmapCanvas.translate(sideMargin, 0);
         for (int i = graphs.length - 1; i >= 0; i--) {
             BaseChartGraph graph = graphs[i];
             if (graph.alpha == 0) continue;
             graph.draw(bitmapCanvas, chartMatrix, visibleStart, visibleEnd);
         }
-        canvas.drawBitmap(bitmap, 0, topOffset, paint);
+        bitmapCanvas.restore();
+        canvas.drawBitmap(bitmap, -sideMargin, topOffset, paint);
+
+
+        float startCoord = xCoordByIndex(0);
+        float endCoord = xCoordByIndex(xPoints.length - 1);
+
+        if (startCoord > 0) {
+            canvas.drawRect(-sideMargin, 0, startCoord - sideMargin, availableChartHeight, sideRectanglePaint);
+        }
+
+        if (endCoord < getWidth()) {
+            canvas.drawRect(endCoord - sideMargin, 0, endCoord, availableChartHeight, sideRectanglePaint);
+        }
     }
-
-
 }
