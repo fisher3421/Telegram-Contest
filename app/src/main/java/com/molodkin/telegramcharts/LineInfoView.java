@@ -19,7 +19,7 @@ class LineInfoView extends BaseInfoView {
 
     private final ArrayList<Float> yCoords = new ArrayList<>();
 
-    private int verticalLineTopMargin = Utils.dpToPx(getContext(), 10);
+    private int verticalLineTopMargin = Utils.dpToPx(getContext(), 32);
 
     private ValueAnimator finisMovementAnimator = ValueAnimator.ofFloat(0 , 0);
     private ValueAnimator.AnimatorUpdateListener finisMovementAnimatorUpdate = new ValueAnimator.AnimatorUpdateListener() {
@@ -84,6 +84,7 @@ class LineInfoView extends BaseInfoView {
                 currentPlayTime = finisMovementAnimator.getCurrentPlayTime();
                 finisMovementAnimator.cancel();
             }
+            preWindowLeftMargin = windowLeftMargin;
             finisMovementAnimator = ValueAnimator.ofFloat(from, to);
             finisMovementAnimator.setCurrentPlayTime(currentPlayTime);
             finisMovementAnimator.setInterpolator(new DecelerateInterpolator());
@@ -99,6 +100,9 @@ class LineInfoView extends BaseInfoView {
     private void updateXCoord(float xCoord) {
         this.xCoord = xCoord;
         measurePoints(xCoord);
+
+        calcWindowMargin();
+
         invalidate();
     }
 

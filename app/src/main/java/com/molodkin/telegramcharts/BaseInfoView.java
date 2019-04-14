@@ -46,7 +46,7 @@ abstract class BaseInfoView extends View {
     private final int leftRightPadding = Utils.dpToPx(getContext(), 16);
 
     private final int rowMargin = Utils.dpToPx(getContext(), 8);
-    private final int windowLineMargin = Utils.dpToPx(getContext(), 8);
+    final int windowLineMargin = Utils.dpToPx(getContext(), 8);
     private final int dataSideMargin = Utils.dpToPx(getContext(), 8);
 
     private final Rect backgroundSize = new Rect();
@@ -67,8 +67,8 @@ abstract class BaseInfoView extends View {
     private final Date tempDate = new Date();
 
     private final float left;
-    private final int windowWidth = Utils.spToPx(getContext(), 160);
-    private float windowHeight;
+    final int windowWidth = Utils.spToPx(getContext(), 160);
+    float windowHeight;
     private float contentWidth;
 
     private final float dateTextY;
@@ -93,7 +93,7 @@ abstract class BaseInfoView extends View {
 
     protected float maxYCoord;
 
-    float windowTopMargin = 0f;
+    float windowTopMargin = Utils.dpToPx(getContext(), 30);
 
     private boolean isVisible;
     private boolean isScrolling;
@@ -113,6 +113,9 @@ abstract class BaseInfoView extends View {
 
     private ZoomInListenr zoomInListenr;
     private RectF tempRect = new RectF();
+
+    float preWindowLeftMargin;
+    float windowLeftMargin;
 
     private GestureDetector gestureDetector = new GestureDetector(this.getContext(), new GestureDetector.SimpleOnGestureListener() {
         @Override
@@ -168,7 +171,6 @@ abstract class BaseInfoView extends View {
             return true;
         }
     });
-    private float windowLeftMargin;
 
     BaseInfoView(Context c, BaseChart chartView) {
         super(c);
@@ -222,9 +224,29 @@ abstract class BaseInfoView extends View {
 
         measureWindow(xIndex);
 
+        calcWindowMargin();
+
         onActionDown(xCoord);
 
         invalidate();
+    }
+
+    void calcWindowMargin() {
+        if (maxYCoord - windowTopMargin < windowHeight) {
+            if (xCoord > getWidth() / 2) {
+                windowLeftMargin = xCoord - windowLineMargin - windowWidth;
+            } else {
+                windowLeftMargin = xCoord + windowLineMargin;
+            }
+        } else {
+            windowLeftMargin = xCoord - windowWidth / 2f;
+
+            if (windowLeftMargin < 0) {
+                windowLeftMargin = 0;
+            } else if (windowLeftMargin + windowWidth >= getWidth()) {
+                windowLeftMargin = getWidth() - windowWidth;
+            }
+        }
     }
 
     public void setZoomInListenr(ZoomInListenr zoomInListenr) {
@@ -257,11 +279,17 @@ abstract class BaseInfoView extends View {
     void measureWindow(int newXIndex) {
         long date = chartView.xPoints[newXIndex];
 
-        if (changeValueAnimator != null) changeValueAnimator.cancel();
+        long animationPlayTime = 0;
+        if (changeValueAnimator != null) {
+            if (changeValueAnimator.isRunning()) {
+                animationPlayTime = changeValueAnimator.getCurrentPlayTime();
+            }
+            changeValueAnimator.cancel();
+        }
 
         if (!TextUtils.isEmpty(prevDateText1)) {
             changeValueAnimator = ValueAnimator.ofFloat(0, 1);
-//            changeValueAnimator.setDuration(3000);
+            changeValueAnimator.setCurrentPlayTime(animationPlayTime);
             changeValueAnimator.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
                 @Override
                 public void onAnimationUpdate(ValueAnimator animation) {
@@ -370,26 +398,17 @@ abstract class BaseInfoView extends View {
 
         canvas.save();
 
-        if (maxYCoord < windowHeight) {
-            if (xCoord > getWidth() / 2) {
-                windowLeftMargin = xCoord - windowLineMargin - windowWidth;
-            } else {
-                windowLeftMargin = xCoord + windowLineMargin;
-            }
-        } else {
-            windowLeftMargin = xCoord - windowWidth / 2f;
-
-            if (windowLeftMargin < 0) {
-                windowLeftMargin = 0;
-            } else if (windowLeftMargin + windowWidth >= getWidth()) {
-                windowLeftMargin = getWidth() - windowWidth;
-            }
-        }
-
-
         canvas.translate(0, windowTopMargin);
 
-        canvas.translate(windowLeftMargin, 0);
+        Utils.log("onDraw preWindowLeftMargin: " + preWindowLeftMargin);
+        Utils.log("onDraw windowLeftMargin: " + windowLeftMargin);
+
+        if (changeValueAnimator != null && changeValueAnimator.isRunning() && preWindowLeftMargin > 0) {
+            float fraction = changeValueAnimator.getAnimatedFraction();
+            canvas.translate(preWindowLeftMargin * (1 - fraction) + windowLeftMargin * fraction, 0);
+        } else {
+            canvas.translate(windowLeftMargin, 0);
+        }
 
         background.draw(canvas);
 
