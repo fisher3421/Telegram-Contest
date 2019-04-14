@@ -1,3 +1,4 @@
 <resources>
     <string name="app_name">VMTCharts</string>
+    <string name="zoom_out">Zoom Out</string>
 </resources>

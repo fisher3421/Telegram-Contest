@@ -89,9 +89,11 @@ abstract class BaseChart extends View {
         initTheme();
     }
 
-    public void enableAll(boolean enable) {
+    public void enableAll(boolean enable, int exceptionIndex) {
         ArrayList<BaseChartGraph> graphsToChange = new ArrayList<>();
-        for (BaseChartGraph graph : graphs) {
+        for (int i = 0; i < graphs.length; i++) {
+            if (i == exceptionIndex) continue;
+            BaseChartGraph graph = graphs[i];
             if (graph.isEnable != enable) graphsToChange.add(graph);
         }
         enableGraph(enable, graphsToChange.toArray(new BaseChartGraph[graphsToChange.size()]));

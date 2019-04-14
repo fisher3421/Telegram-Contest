@@ -3,7 +3,9 @@ package com.molodkin.telegramcharts;
 import android.annotation.SuppressLint;
 import android.content.Context;
 import android.graphics.Color;
+import android.graphics.PorterDuff;
 import android.graphics.Typeface;
+import android.graphics.drawable.Drawable;
 import android.util.TypedValue;
 import android.view.Gravity;
 import android.view.LayoutInflater;
@@ -33,6 +35,7 @@ public class ChartLayout extends FrameLayout {
     ArrayList<TCheckBox> checkBoxes = new ArrayList<>();
 
     private TextView chartNameView;
+    private TextView zoomOutView;
     private DateTextView dateView;
     private ChartData data;
 
@@ -72,29 +75,52 @@ public class ChartLayout extends FrameLayout {
 
         infoView.setLayoutParams(new FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, chartHeight - chartView.xAxisHeight));
 
-        chartNameView = new TextView(getContext());
-        chartNameView.setTextSize(TypedValue.COMPLEX_UNIT_PX, Utils.getDim(this, R.dimen.chartNameTextSize));
-        chartNameView.setTextColor(Utils.getColor(getContext(), R.color.chartName));
-        chartNameView.setTypeface(Typeface.DEFAULT_BOLD);
 
-        FrameLayout.LayoutParams chartNameLP = new LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
-        chartNameLP.leftMargin = sideMargin;
-        chartNameView.setLayoutParams(chartNameLP);
-
-        if (isZoomed) {
-            chartNameView.setText("Zoom Out");
-        }
 
         dateView = new DateTextView(getContext());
 
         FrameLayout.LayoutParams dateViewLP = new LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
         dateViewLP.gravity = Gravity.END;
-        dateViewLP.topMargin = Utils.dpToPx(this, 2);
+        dateViewLP.topMargin = Utils.dpToPx(this, 4);
         dateViewLP.rightMargin = sideMargin;
         dateView.setLayoutParams(dateViewLP);
 
         addView(chartView);
-        addView(chartNameView);
+
+
+
+        if (isZoomed) {
+            zoomOutView = new TextView(getContext());
+            zoomOutView.setTextSize(TypedValue.COMPLEX_UNIT_PX, Utils.getDim(this, R.dimen.chartNameTextSize));
+            zoomOutView.setTextColor(Utils.getColor(getContext(), R.color.chartName));
+            zoomOutView.setTypeface(Typeface.DEFAULT_BOLD);
+            zoomOutView.setText(R.string.zoom_out);
+            Drawable drawable = getContext().getDrawable(R.drawable.baseline_zoom_out_black_24);
+            drawable.setColorFilter(Utils.getColor(getContext(), R.color.chartName), PorterDuff.Mode.SRC_ATOP);
+            zoomOutView.setCompoundDrawablesWithIntrinsicBounds(drawable, null, null, null);
+            zoomOutView.setGravity(Gravity.TOP);
+            zoomOutView.setCompoundDrawablePadding(Utils.dpToPx(this, 4));
+            zoomOutView.setPadding(0, Utils.dpToPx(this, 2), 0, 0);
+
+            FrameLayout.LayoutParams zoomOutLP = new LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+            zoomOutLP.leftMargin = sideMargin;
+            zoomOutView.setLayoutParams(zoomOutLP);
+
+            addView(zoomOutView);
+        } else {
+            chartNameView = new TextView(getContext());
+            chartNameView.setTextSize(TypedValue.COMPLEX_UNIT_PX, Utils.getDim(this, R.dimen.chartNameTextSize));
+            chartNameView.setTextColor(Utils.getColor(getContext(), R.color.chartName));
+            chartNameView.setTypeface(Typeface.DEFAULT_BOLD);
+
+            FrameLayout.LayoutParams chartNameLP = new LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+            chartNameLP.leftMargin = sideMargin;
+            chartNameLP.topMargin = Utils.dpToPx(this, 2);
+            chartNameView.setLayoutParams(chartNameLP);
+            addView(chartNameView);
+        }
+
+
         addView(dateView);
         addView(infoView);
         if (isRangeViewVisible) {
@@ -152,8 +178,8 @@ public class ChartLayout extends FrameLayout {
             }
         });
 
-        if (isZoomed) {
-            chartNameView.setOnClickListener(new OnClickListener() {
+        if (zoomOutView != null) {
+            zoomOutView.setOnClickListener(new OnClickListener() {
                 @Override
                 public void onClick(View v) {
                     chartListener.onZoomOut();
@@ -187,9 +213,9 @@ public class ChartLayout extends FrameLayout {
                 @Override
                 public void onLongClick() {
                     for (TCheckBox box : checkBoxes) {
-                        if (checkBox != box) box.setChecked(true);
+                        if (checkBox != box) box.setChecked(false);
                     }
-                    chartView.enableAll(true);
+                    chartView.enableAll(false, finalI);
                     if (rangeChartView != null) rangeChartView.adjustYAxis();
                 }
             });
@@ -217,7 +243,7 @@ public class ChartLayout extends FrameLayout {
         chartView.updateTheme();
         if (rangeBorderView != null) rangeBorderView.updateTheme();
         infoView.updateTheme();
-        chartNameView.setTextColor(Utils.getColor(getContext(), Utils.PRIMARY_TEXT_COLOR));
+        if (chartNameView != null) chartNameView.setTextColor(Utils.getColor(getContext(), Utils.PRIMARY_TEXT_COLOR));
         dateView.updateTheme();
     }
 
