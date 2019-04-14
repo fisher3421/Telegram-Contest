@@ -49,10 +49,16 @@ class XAxis {
 
         xAxisTextHeight = Utils.getFontHeight(axisTextPaint);
 
-        xAxisDateFormat = new SimpleDateFormat("MMM d", Utils.getLocale(chart.getContext()));
+        if (!chart.isZoomed) {
+            xAxisDateFormat = new SimpleDateFormat("MMM d", Utils.getLocale(chart.getContext()));
+        } else {
+            xAxisDateFormat = new SimpleDateFormat("HH:mm", Utils.getLocale(chart.getContext()));
+        }
     }
 
     void init(float scaleX) {
+        xAxisPoints.clear();
+        pointToHideAnimated.clear();
         int endX = (int) ((chart.availableChartWidth) / scaleX);
         int stepXAxis = Math.round(xAxisTextWidthWithMargins / scaleX);
 

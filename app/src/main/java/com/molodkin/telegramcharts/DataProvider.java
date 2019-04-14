@@ -12,21 +12,6 @@ import java.util.List;
 
 public class DataProvider {
 
-    static List<ChartData> getData(Context context) throws IOException {
-        InputStream raw = context.getResources().openRawResource(R.raw.chart_data);
-        JsonReader reader = new JsonReader(new BufferedReader(new InputStreamReader(raw, "UTF8")));
-
-        ArrayList<ChartData> charts = new ArrayList<>();
-
-        reader.beginArray();
-        while (reader.hasNext()) {
-            charts.add(parseChartData(reader));
-        }
-        reader.endArray();
-
-        return charts;
-    }
-
     static ChartData getData(Context context, int resId) throws IOException {
         InputStream raw = context.getResources().openRawResource(resId);
         JsonReader reader = new JsonReader(new BufferedReader(new InputStreamReader(raw, "UTF8")));

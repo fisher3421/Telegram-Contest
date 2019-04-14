@@ -6,8 +6,8 @@ import android.graphics.Color;
 
 public final class StackChartView extends BaseChart {
 
-    public StackChartView(Context context) {
-        super(context);
+    public StackChartView(Context context, boolean isBig) {
+        super(context, isBig);
         enablingWithAlphaAnimation = false;
     }
 
@@ -33,6 +33,8 @@ public final class StackChartView extends BaseChart {
         availableChartWidth = (float) getWidth() - sideMargin * 2;
 
         float scaleX = availableChartWidth / (xPoints.length - 1);
+
+        chartMatrix.reset();
 
         yAxis1 = new StackYAxis(this, chartMatrix);
         yAxis1.isHalfLine = false;

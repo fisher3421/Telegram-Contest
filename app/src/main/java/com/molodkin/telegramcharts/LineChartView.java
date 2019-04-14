@@ -7,8 +7,8 @@ import android.graphics.Color;
 
 public final class LineChartView extends BaseChart {
 
-    public LineChartView(Context context) {
-        super(context);
+    public LineChartView(Context context, boolean isBig) {
+        super(context, isBig);
     }
 
     @Override

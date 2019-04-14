@@ -91,9 +91,6 @@ abstract class BaseInfoView extends View {
     protected float xCoord = 0f;
     protected int xIndex = -1;
 
-    private float minX = 0;
-    private float maxX = 0;
-
     boolean showPercentage = false;
 
     private float percentageMaxWidth;
@@ -101,7 +98,6 @@ abstract class BaseInfoView extends View {
     private final DecimalFormat decimalFormat;
 
     private ZoomInListenr zoomInListenr;
-    private long prevDate = -1;
     private RectF tempRect = new RectF();
 
     private GestureDetector gestureDetector = new GestureDetector(this.getContext(), new GestureDetector.SimpleOnGestureListener(){
@@ -155,7 +151,11 @@ abstract class BaseInfoView extends View {
 
     BaseInfoView(Context c, BaseChart chartView) {
         super(c);
-        dateFormat = new SimpleDateFormat("EEE, d MMM yyyy", Utils.getLocale(c));
+        if (!chartView.isZoomed) {
+            dateFormat = new SimpleDateFormat("EEE, d MMM yyyy", Utils.getLocale(c));
+        } else {
+            dateFormat = new SimpleDateFormat("HH:mm", Utils.getLocale(c));
+        }
 
         this.chartView = chartView;
 
@@ -208,7 +208,7 @@ abstract class BaseInfoView extends View {
     }
 
     private void notifyZoomIn() {
-        if (zoomInListenr != null) zoomInListenr.zoomIn(xCoord);
+        if (zoomInListenr != null) zoomInListenr.zoomIn(chartView.xPoints[xIndex]);
     }
 
     protected void initTheme() {
@@ -217,18 +217,10 @@ abstract class BaseInfoView extends View {
         nameTextPaint.setColor(Utils.getColor(getContext(), Utils.PRIMARY_TEXT_COLOR));
     }
 
-    @Override
-    protected void onSizeChanged(int w, int h, int oldw, int oldh) {
-        super.onSizeChanged(w, h, oldw, oldh);
-        minX = chartView.sideMargin;
-        maxX = getWidth() - chartView.sideMargin;
-    }
-
-//    float downX = 0;
-
     @SuppressLint("ClickableViewAccessibility")
     @Override
     public boolean onTouchEvent(MotionEvent event) {
+        if (event.getY() < chartView.graphTopMargin) return false;
         return gestureDetector.onTouchEvent(event);
     }
 
@@ -385,6 +377,6 @@ abstract class BaseInfoView extends View {
     }
 
     public interface ZoomInListenr {
-        void zoomIn(float x);
+        void zoomIn(long date);
     }
 }

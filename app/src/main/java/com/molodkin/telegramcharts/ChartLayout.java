@@ -31,6 +31,7 @@ public class ChartLayout extends FrameLayout {
     int chartHeight = Utils.getDim(this, R.dimen.chartHeight);
     int sideMargin = Utils.getDim(this, R.dimen.margin20);
     int checkBoxMargin = Utils.dpToPx(this, 8);
+    boolean isRangeViewVisible = true;
 
     private Date tempDate = new Date();
     private SimpleDateFormat dateFormat = new SimpleDateFormat("d MMMM yyyy", Utils.getLocale(getContext()));
@@ -57,13 +58,12 @@ public class ChartLayout extends FrameLayout {
         switch (data.type) {
             case LINE:
             case LINE_SCALED:
-                chartView = new LineChartView(getContext());
+                chartView = new LineChartView(getContext(), isZoomed);
                 chartView.secondY = data.type == ChartData.Type.LINE_SCALED;
-                chartView.isBig = true;
                 infoView = new LineInfoView(getContext(), chartView);
                 break;
             case STACK:
-                chartView = new StackChartView(getContext());
+                chartView = new StackChartView(getContext(), isZoomed);
                 infoView = new StackInfoView(getContext(), chartView);
                 break;
             case STACK_PERCENTAGE:
@@ -77,31 +77,6 @@ public class ChartLayout extends FrameLayout {
         chartView.setLayoutParams(chartLp);
 
         infoView.setLayoutParams(new FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, chartHeight - chartView.xAxisHeight));
-
-        rangeChartView = new RangeChartView(getContext(), chartView);
-        rangeChartView.setBackground(getContext().getDrawable(R.drawable.bg_range));
-        rangeChartView.setClipToOutline(true);
-        if (data.type == STACK_PERCENTAGE) {
-            rangeChartView.addTopMargin = false;
-            rangeChartView.yScale = 125f/100;
-            rangeChartView.translateY = 25;
-        }
-        rangeBorderView = new RangeBorderView(getContext(), chartView);
-
-        LayoutParams scrollLP = new LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, scrollHeight);
-        scrollLP.topMargin = chartHeight + scrollPadding;
-        scrollLP.leftMargin = sideMargin;
-        scrollLP.rightMargin = sideMargin;
-        scrollLP.bottomMargin = sideMargin;
-        rangeChartView.setLayoutParams(scrollLP);
-
-        LayoutParams scrollBorderLP = new LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, scrollHeight + scrollPadding * 2);
-        scrollBorderLP.topMargin = chartHeight;
-        scrollBorderLP.leftMargin = sideMargin;
-        scrollBorderLP.rightMargin = sideMargin;
-        scrollBorderLP.bottomMargin = sideMargin;
-
-        rangeBorderView.setLayoutParams(scrollBorderLP);
 
         chartNameView = new TextView(getContext());
         chartNameView.setTextSize(TypedValue.COMPLEX_UNIT_PX, Utils.getDim(this, R.dimen.chartNameTextSize));
@@ -132,8 +107,48 @@ public class ChartLayout extends FrameLayout {
         addView(chartNameView);
         addView(dateView);
         addView(infoView);
-        addView(rangeChartView);
-        addView(rangeBorderView);
+        if (isRangeViewVisible) {
+            rangeChartView = new RangeChartView(getContext(), chartView);
+            rangeChartView.setBackground(getContext().getDrawable(R.drawable.bg_range));
+            rangeChartView.setClipToOutline(true);
+            if (data.type == STACK_PERCENTAGE) {
+                rangeChartView.addTopMargin = false;
+                rangeChartView.yScale = 125f/100;
+                rangeChartView.translateY = 25;
+            }
+            rangeBorderView = new RangeBorderView(getContext(), chartView);
+
+            LayoutParams scrollLP = new LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, scrollHeight);
+            scrollLP.topMargin = chartHeight + scrollPadding;
+            scrollLP.leftMargin = sideMargin;
+            scrollLP.rightMargin = sideMargin;
+            scrollLP.bottomMargin = sideMargin;
+            rangeChartView.setLayoutParams(scrollLP);
+
+            LayoutParams scrollBorderLP = new LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, scrollHeight + scrollPadding * 2);
+            scrollBorderLP.topMargin = chartHeight;
+            scrollBorderLP.leftMargin = sideMargin;
+            scrollBorderLP.rightMargin = sideMargin;
+            scrollBorderLP.bottomMargin = sideMargin;
+
+            rangeBorderView.setLayoutParams(scrollBorderLP);
+
+            addView(rangeChartView);
+            addView(rangeBorderView);
+            rangeBorderView.setOnRangeChanged(new RangeBorderView.OnRangeChanged() {
+                @Override
+                public void onChanged(int start, int end) {
+                    infoView.move();
+                    long dateStartMills = chartView.xPoints[start];
+                    tempDate.setTime(dateStartMills);
+                    String dateStartStr = dateFormat.format(tempDate);
+                    long dateEndMills = chartView.xPoints[end - 1];
+                    tempDate.setTime(dateEndMills);
+                    String dateEndStr = dateFormat.format(tempDate);
+                    dateView.setText(String.format("%s - %s", dateStartStr, dateEndStr));
+                }
+            });
+        }
 
         chartView.setData(data);
 
@@ -146,37 +161,14 @@ public class ChartLayout extends FrameLayout {
             }
         });
 
-        rangeBorderView.setOnRangeChanged(new RangeBorderView.OnRangeChanged() {
-            @Override
-            public void onChanged(int start, int end) {
-                infoView.move();
-                long dateStartMills = chartView.xPoints[start];
-                tempDate.setTime(dateStartMills);
-                String dateStartStr = dateFormat.format(tempDate);
-                long dateEndMills = chartView.xPoints[end - 1];
-                tempDate.setTime(dateEndMills);
-                String dateEndStr = dateFormat.format(tempDate);
-                dateView.setText(String.format("%s - %s", dateStartStr, dateEndStr));
-            }
-        });
-
         infoView.setZoomInListenr(new BaseInfoView.ZoomInListenr() {
             @Override
-            public void zoomIn(float x) {
+            public void zoomIn(long date) {
+                chartListener.onDaySelected(date);
             }
         });
 
-        if (!isZoomed) {
-            chartNameView.setOnClickListener(new OnClickListener() {
-                @Override
-                public void onClick(View v) {
-                    chartListener.onDaySelected(100);
-//                chartView.zoom(400, true);
-//                zoomChartView.zoom(100, false);
-//                infoView.setChartView(chartView);
-                }
-            });
-        } else {
+        if (isZoomed) {
             chartNameView.setOnClickListener(new OnClickListener() {
                 @Override
                 public void onClick(View v) {
@@ -187,23 +179,6 @@ public class ChartLayout extends FrameLayout {
                 }
             });
         }
-//
-//        dateView.setOnClickListener(new OnClickListener() {
-//            @Override
-//            public void onClick(View v) {
-//                ChartData zoomData;
-//                try {
-//                    zoomData = DataProvider.getData(getContext(), R.raw.c_1_2018_04_07);
-//                } catch (IOException ignore) { return; }
-//                chartListener.onZoomOut();
-////                chartView.zoom(400, false);
-////                infoView.setChartView(zoomChartView);
-////                zoomChartView.setData(zoomData);
-////                zoomChartView.zoom(100, true);
-//            }
-//        });
-
-
     }
 
     private void initCheckboxes() {
@@ -222,7 +197,7 @@ public class ChartLayout extends FrameLayout {
                 @Override
                 public void onClick(View v) {
                     chartView.enableGraph(finalI, checkBox.isChecked());
-                    rangeChartView.adjustYAxis();
+                    if (rangeChartView != null) rangeChartView.adjustYAxis();
                 }
             });
 
@@ -247,7 +222,7 @@ public class ChartLayout extends FrameLayout {
     public void updateTheme() {
         if (chartView == null) return;
         chartView.updateTheme();
-        rangeBorderView.updateTheme();
+        if (rangeBorderView != null) rangeBorderView.updateTheme();
         infoView.updateTheme();
         chartNameView.setTextColor(Utils.getColor(getContext(), Utils.PRIMARY_TEXT_COLOR));
         dateView.setTextColor(Utils.getColor(getContext(), Utils.PRIMARY_TEXT_COLOR));
@@ -258,7 +233,10 @@ public class ChartLayout extends FrameLayout {
         super.onMeasure(widthMeasureSpec, heightMeasureSpec);
         if (checkBoxes.size()  < 2) return;
 
-        int top = chartHeight + scrollHeight + scrollPadding * 2 + sideMargin * 3 + checkBoxes.get(0).getMeasuredHeight();
+        int top = chartHeight + scrollHeight + scrollPadding * 2 + sideMargin * 2 + checkBoxes.get(0).getMeasuredHeight();
+        if (!isRangeViewVisible) {
+            top -= scrollHeight + scrollPadding * 2 + sideMargin;
+        }
         int left = sideMargin;
 
         for (TCheckBox checkBox : checkBoxes) {
@@ -279,7 +257,10 @@ public class ChartLayout extends FrameLayout {
 
         if (checkBoxes.size()  < 2) return;
 
-        int topChild = chartHeight + scrollHeight + sideMargin * 2 + scrollPadding * 2;
+        int topChild = chartHeight + scrollHeight + sideMargin + scrollPadding * 2;
+        if (!isRangeViewVisible) {
+            topChild -= scrollHeight + scrollPadding * 2 + sideMargin;
+        }
         int leftChild = sideMargin;
 
         for (TCheckBox checkBox : checkBoxes) {

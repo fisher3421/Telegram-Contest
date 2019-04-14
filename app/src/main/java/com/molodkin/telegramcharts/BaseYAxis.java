@@ -64,7 +64,7 @@ abstract class BaseYAxis {
 
     void draw(Canvas canvas) {
         if (chart.zoomAnimator != null && chart.zoomAnimator.isRunning()) {
-            drawZoom(canvas, chart.zoomAnimator.getAnimatedFraction(), chart.isBig, chart.isOpening);
+            drawZoom(canvas, chart.zoomAnimator.getAnimatedFraction(), chart.isZoomed, chart.isOpening);
         } else {
             drawInner(canvas);
         }

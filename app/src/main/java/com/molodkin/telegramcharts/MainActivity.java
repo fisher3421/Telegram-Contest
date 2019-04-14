@@ -14,7 +14,7 @@ import java.util.List;
 
 public class MainActivity extends Activity {
 
-    ArrayList<ChartLayout> charts = new ArrayList<>();
+    ArrayList<ChartGroupLayout> charts = new ArrayList<>();
     private LinearLayout actionBarLayout;
     private TextView title;
     private ImageView switchDayNightIcon;
@@ -29,11 +29,11 @@ public class MainActivity extends Activity {
 
         try {
 //            data = DataProvider.getData(this);
-            data.add(DataProvider.getData(this, R.raw.c1));
-            data.add(DataProvider.getData(this, R.raw.c2));
-            data.add(DataProvider.getData(this, R.raw.c3));
+//            data.add(DataProvider.getData(this, R.raw.c1));
+//            data.add(DataProvider.getData(this, R.raw.c2));
+//            data.add(DataProvider.getData(this, R.raw.c3));
             data.add(DataProvider.getData(this, R.raw.c4));
-            data.add(DataProvider.getData(this, R.raw.c5));
+//            data.add(DataProvider.getData(this, R.raw.c5));
         } catch (Throwable e) {
             e.printStackTrace();
             return;
@@ -50,7 +50,8 @@ public class MainActivity extends Activity {
         int layoutTopMargin = Utils.getDim(this, R.dimen.margin20);
 
         for (int i = 0; i < data.size(); i++) {
-            ChartLayout chartLayout = new ChartLayout(this);
+//            ChartGroupLayout chartLayout = new ChartGroupLayout(this, i + 1);
+            ChartGroupLayout chartLayout = new ChartGroupLayout(this, 4);
 
             chartLayout.setPadding(0, layoutTopMargin, 0, 0);
 
@@ -89,7 +90,7 @@ public class MainActivity extends Activity {
         getWindow().getDecorView().setBackgroundColor(Utils.getColor(MainActivity.this, Utils.WINDOW_BACKGROUND_COLOR));
         actionBarLayout.setBackgroundColor(Utils.getColor(MainActivity.this, Utils.PRIMARY_COLOR));
         title.setTextColor(Utils.getColor(this, Utils.PRIMARY_TEXT_COLOR));
-        for (ChartLayout chart : charts) {
+        for (ChartGroupLayout chart : charts) {
             chart.setBackgroundColor(Utils.getColor(MainActivity.this, Utils.CHART_BACKGROUND_COLOR));
             chart.updateTheme();
         }

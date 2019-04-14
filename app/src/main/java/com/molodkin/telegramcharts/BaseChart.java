@@ -18,7 +18,7 @@ abstract class BaseChart extends View {
     static final long SCALE_ANIMATION_DURATION = 250L;
     static final long FADE_ANIMATION_DURATION = 250L;
 
-    public XAxis xAxis = new XAxis(this);
+    public XAxis xAxis;
 
     public int sideMargin = Utils.getDim(this, R.dimen.margin20);
     public int clipMargin = Utils.dpToPx(this, 1);
@@ -57,14 +57,16 @@ abstract class BaseChart extends View {
 
     ValueAnimator zoomAnimator;
     boolean isGone = false;
-    boolean isBig = false;
+    boolean isZoomed;
     boolean isOpening = false;
     private float lastZoomedX;
 
     private ChartListener chartListener;
 
-    public BaseChart(Context context) {
+    public BaseChart(Context context, boolean isZoomed) {
         super(context);
+        this.isZoomed = isZoomed;
+        xAxis = new XAxis(this);
         init();
     }
 
@@ -263,13 +265,13 @@ abstract class BaseChart extends View {
         this.isOpening = isOpening;
         isGone = false;
         final float[] prev = new float[1];
-        float scale = isBig ? 20f : 0.01f;
+        float scale = isZoomed ? 20f : 0.01f;
         float fromScale = isOpening ? scale : 1;
         float toScale = isOpening ? 1 : scale;
         prev[0] = fromScale;
-        if (isBig && !isOpening) {
+        if (isZoomed && !isOpening) {
             lastZoomedX = x;
-        } else if (!isBig && isOpening){
+        } else if (!isZoomed && isOpening){
             chartMatrix.postScale(scale, 1, availableChartWidth / 2, 0);
             chartMatrix2.postScale(scale, 1, availableChartWidth / 2, 0);
         }
@@ -286,7 +288,7 @@ abstract class BaseChart extends View {
                 float scale = value / prev[0];
                 prev[0] = value;
                 float newX = x;
-                if (isBig) {
+                if (isZoomed) {
                     if (isOpening) newX = lastZoomedX;
                 } else {
                     newX = availableChartWidth / 2;
