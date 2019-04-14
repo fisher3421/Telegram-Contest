@@ -1,5 +1,6 @@
 package com.molodkin.telegramcharts;
 
+import android.animation.ValueAnimator;
 import android.annotation.SuppressLint;
 import android.content.Context;
 import android.graphics.Canvas;
@@ -9,6 +10,7 @@ import android.graphics.RectF;
 import android.graphics.Typeface;
 import android.graphics.drawable.NinePatchDrawable;
 import android.text.TextPaint;
+import android.text.TextUtils;
 import android.view.GestureDetector;
 import android.view.MotionEvent;
 import android.view.View;
@@ -25,6 +27,8 @@ abstract class BaseInfoView extends View {
 
     protected final static long MOVE_ANIMATION = 200L;
 
+    private static final String DATE_SEPARATOR = "_";
+
     @SuppressWarnings("FieldCanBeLocal")
     private final int dateTextSize = Utils.spToPx(getContext(), 12);
     @SuppressWarnings("FieldCanBeLocal")
@@ -34,6 +38,7 @@ abstract class BaseInfoView extends View {
 
     private float dateTextHeight;
     private float nameTextHeight;
+    private float valueTextHeight;
 
     @SuppressWarnings("FieldCanBeLocal")
     private final int topBottomPadding = Utils.dpToPx(getContext(), 8);
@@ -67,10 +72,17 @@ abstract class BaseInfoView extends View {
     private float contentWidth;
 
     private final float dateTextY;
-    private String dateText;
+    private String prevDateText1;
+    private String dateText1;
+    private String prevDateText2;
+    private String dateText2;
+    private float preDateText1Width;
+    private float dateText1Width;
+    private float dateMargin;
 
     private final ArrayList<Float> leftValues = new ArrayList<>();
     private final ArrayList<Float> topValues = new ArrayList<>();
+    private final ArrayList<String> preTextValues = new ArrayList<>();
     private final ArrayList<String> textValues = new ArrayList<>();
     private final ArrayList<String> textNames = new ArrayList<>();
     private final ArrayList<String> textPercentage = new ArrayList<>();
@@ -93,6 +105,8 @@ abstract class BaseInfoView extends View {
 
     boolean showPercentage = false;
 
+    private ValueAnimator changeValueAnimator;
+
     private float percentageMaxWidth;
 
     private final DecimalFormat decimalFormat;
@@ -100,7 +114,7 @@ abstract class BaseInfoView extends View {
     private ZoomInListenr zoomInListenr;
     private RectF tempRect = new RectF();
 
-    private GestureDetector gestureDetector = new GestureDetector(this.getContext(), new GestureDetector.SimpleOnGestureListener(){
+    private GestureDetector gestureDetector = new GestureDetector(this.getContext(), new GestureDetector.SimpleOnGestureListener() {
         @Override
         public boolean onScroll(MotionEvent e1, MotionEvent e2, float distanceX, float distanceY) {
             if (Math.abs(distanceX) > Math.abs(distanceY)) {
@@ -136,6 +150,13 @@ abstract class BaseInfoView extends View {
             } else {
                 isScrolling = false;
                 isVisible = false;
+                preTextValues.clear();
+                prevDateText1 = null;
+                dateText1 = null;
+                prevDateText2 = null;
+                dateText2 = null;
+                preDateText1Width = 0;
+                textValues.clear();
                 invalidate();
             }
 
@@ -152,7 +173,7 @@ abstract class BaseInfoView extends View {
     BaseInfoView(Context c, BaseChart chartView) {
         super(c);
         if (!chartView.isZoomed) {
-            dateFormat = new SimpleDateFormat("EEE, d MMM yyyy", Utils.getLocale(c));
+            dateFormat = new SimpleDateFormat("EEE, d" + DATE_SEPARATOR + "MMM yyyy", Utils.getLocale(c));
         } else {
             dateFormat = new SimpleDateFormat("HH:mm", Utils.getLocale(c));
         }
@@ -171,9 +192,12 @@ abstract class BaseInfoView extends View {
         dateTextPaint.setTypeface(Typeface.DEFAULT_BOLD);
         dateTextHeight = Utils.getFontHeight(dateTextPaint);
 
+        dateMargin = dateTextPaint.measureText(" ");
+
         valueTextPaint.setTextSize(valueTextSize);
         valueTextPaint.setAntiAlias(true);
         valueTextPaint.setTypeface(Typeface.DEFAULT_BOLD);
+        valueTextHeight = Utils.getFontHeight(valueTextPaint);
 
         nameTextPaint.setTextSize(nameTextSize);
         nameTextPaint.setAntiAlias(true);
@@ -226,18 +250,47 @@ abstract class BaseInfoView extends View {
 
     protected void onActionDown(float x) {
     }
+
     protected void onActionMove(float x) {
     }
+
     void measureWindow(int newXIndex) {
         long date = chartView.xPoints[newXIndex];
-//        if (date == prevDate) return;
-//        prevDate = date;
+
+        if (changeValueAnimator != null) changeValueAnimator.cancel();
+
+        if (!TextUtils.isEmpty(prevDateText1)) {
+            changeValueAnimator = ValueAnimator.ofFloat(0, 1);
+//            changeValueAnimator.setDuration(3000);
+            changeValueAnimator.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
+                @Override
+                public void onAnimationUpdate(ValueAnimator animation) {
+                    invalidate();
+                }
+            });
+            changeValueAnimator.start();
+        }
 
         tempDate.setTime(date);
 
-        dateText = dateFormat.format(tempDate);
+        prevDateText1 = dateText1;
+        prevDateText2 = dateText2;
+        preDateText1Width = dateText1Width;
+
+        if (chartView.isZoomed) {
+            dateText1 = dateFormat.format(tempDate);
+        } else {
+            String [] dateText = dateFormat.format(tempDate).split(DATE_SEPARATOR);
+
+            dateText1 = dateText[0];
+            dateText1Width = dateTextPaint.measureText(dateText1) + dateMargin;
+            dateText2 = dateText[1];
+        }
 
         float top = dateTextY + dateTextHeight + rowMargin;
+
+        preTextValues.clear();
+        preTextValues.addAll(textValues);
 
         textNames.clear();
         textValues.clear();
@@ -334,8 +387,7 @@ abstract class BaseInfoView extends View {
         }
 
 
-
-        canvas.translate(0 , windowTopMargin);
+        canvas.translate(0, windowTopMargin);
 
         canvas.translate(windowLeftMargin, 0);
 
@@ -343,7 +395,20 @@ abstract class BaseInfoView extends View {
 
         canvas.translate(left, 0);
 
-        canvas.drawText(dateText, 0, dateTextY, dateTextPaint);
+        if (chartView.isZoomed) {
+            drawAnimatedText(canvas, prevDateText1, dateText1, dateTextPaint, 0, dateTextY, dateTextHeight);
+        } else {
+            drawAnimatedText(canvas, prevDateText1, dateText1, dateTextPaint, 0, dateTextY, dateTextHeight);
+            canvas.save();
+            if (changeValueAnimator != null && changeValueAnimator.isRunning() && preDateText1Width > 0) {
+                float fraction = changeValueAnimator.getAnimatedFraction();
+                canvas.translate(preDateText1Width * (1 - fraction) + dateText1Width * fraction, 0);
+            } else {
+                canvas.translate(dateText1Width, 0);
+            }
+            drawAnimatedText(canvas, prevDateText2, dateText2, dateTextPaint, 0, dateTextY, dateTextHeight);
+            canvas.restore();
+        }
 
         for (int i = 0; i < textValues.size(); i++) {
             float alpha = alphas.get(i);
@@ -361,14 +426,47 @@ abstract class BaseInfoView extends View {
             valueTextPaint.setColor(color);
             valueTextPaint.setAlpha((int) (255 * alpha));
 
-            canvas.drawText(textValue, leftValues.get(i), topValues.get(i), valueTextPaint);
-
+            String pre = preTextValues.size() > i ? preTextValues.get(i) : null;
+            drawAnimatedText(canvas, pre, textValue, valueTextPaint, leftValues.get(i), topValues.get(i), valueTextHeight);
         }
 
         canvas.restore();
     }
 
-    protected void drawContent(Canvas canvas){
+    void drawAnimatedText(Canvas canvas, String from, String to, TextPaint paint, float x, float y, float height) {
+        canvas.save();
+        canvas.translate(x, y);
+
+        if (TextUtils.isEmpty(from) || from.equals(to)) {
+            paint.setAlpha(255);
+            canvas.drawText(to, 0, 0, paint);
+            canvas.restore();
+            return;
+        }
+
+        float fraction = 1;
+        if (changeValueAnimator != null && changeValueAnimator.isRunning()) {
+            fraction = changeValueAnimator.getAnimatedFraction();
+        }
+
+        canvas.save();
+        canvas.scale((1 - fraction), (1 - fraction), 0, -height);
+        paint.setAlpha((int) (255 * (1 - fraction)));
+        canvas.drawText(from, 0, 0, paint);
+        canvas.restore();
+
+
+        paint.setAlpha((int) (255 * fraction));
+
+        canvas.save();
+        canvas.scale(fraction, fraction, 0, height);
+        canvas.drawText(to, 0, 0, paint);
+        canvas.restore();
+
+        canvas.restore();
+    }
+
+    protected void drawContent(Canvas canvas) {
     }
 
     void updateTheme() {
