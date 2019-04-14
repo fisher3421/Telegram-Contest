@@ -11,10 +11,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.FrameLayout;
 import android.widget.TextView;
-
-import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-import java.util.Date;
 
 import static com.molodkin.telegramcharts.ChartData.Type.STACK_PERCENTAGE;
 
@@ -33,13 +30,10 @@ public class ChartLayout extends FrameLayout {
     int checkBoxMargin = Utils.dpToPx(this, 8);
     boolean isRangeViewVisible = true;
 
-    private Date tempDate = new Date();
-    private SimpleDateFormat dateFormat = new SimpleDateFormat("d MMMM yyyy", Utils.getLocale(getContext()));
-
     ArrayList<TCheckBox> checkBoxes = new ArrayList<>();
 
     private TextView chartNameView;
-    private TextView dateView;
+    private DateTextView dateView;
     private ChartData data;
 
     private ChartListener chartListener;
@@ -91,13 +85,9 @@ public class ChartLayout extends FrameLayout {
             chartNameView.setText("Zoom Out");
         }
 
-        dateView = new TextView(getContext());
-        dateView.setTextSize(TypedValue.COMPLEX_UNIT_PX, Utils.getDim(this, R.dimen.chartDateTextSize));
-        dateView.setGravity(Gravity.END);
-        dateView.setTextColor(Utils.getColor(getContext(), R.color.chartName));
-        dateView.setTypeface(Typeface.DEFAULT_BOLD);
+        dateView = new DateTextView(getContext());
 
-        FrameLayout.LayoutParams dateViewLP = new LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+        FrameLayout.LayoutParams dateViewLP = new LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
         dateViewLP.gravity = Gravity.END;
         dateViewLP.topMargin = Utils.dpToPx(this, 2);
         dateViewLP.rightMargin = sideMargin;
@@ -139,13 +129,7 @@ public class ChartLayout extends FrameLayout {
                 @Override
                 public void onChanged(int start, int end) {
                     infoView.move();
-                    long dateStartMills = chartView.xPoints[start];
-                    tempDate.setTime(dateStartMills);
-                    String dateStartStr = dateFormat.format(tempDate);
-                    long dateEndMills = chartView.xPoints[end - 1];
-                    tempDate.setTime(dateEndMills);
-                    String dateEndStr = dateFormat.format(tempDate);
-                    dateView.setText(String.format("%s - %s", dateStartStr, dateEndStr));
+                    dateView.updateDate(chartView.xPoints[start], chartView.xPoints[end - 1]);
                 }
             });
         }
@@ -234,7 +218,7 @@ public class ChartLayout extends FrameLayout {
         if (rangeBorderView != null) rangeBorderView.updateTheme();
         infoView.updateTheme();
         chartNameView.setTextColor(Utils.getColor(getContext(), Utils.PRIMARY_TEXT_COLOR));
-        dateView.setTextColor(Utils.getColor(getContext(), Utils.PRIMARY_TEXT_COLOR));
+        dateView.updateTheme();
     }
 
     @Override

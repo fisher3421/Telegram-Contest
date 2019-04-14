@@ -453,36 +453,7 @@ abstract class BaseInfoView extends View {
     }
 
     void drawAnimatedText(Canvas canvas, String from, String to, TextPaint paint, float x, float y, float height) {
-        canvas.save();
-        canvas.translate(x, y);
-
-        if (TextUtils.isEmpty(from) || from.equals(to)) {
-            paint.setAlpha(255);
-            canvas.drawText(to, 0, 0, paint);
-            canvas.restore();
-            return;
-        }
-
-        float fraction = 1;
-        if (changeValueAnimator != null && changeValueAnimator.isRunning()) {
-            fraction = changeValueAnimator.getAnimatedFraction();
-        }
-
-        canvas.save();
-        canvas.scale((1 - fraction), (1 - fraction), 0, -height);
-        paint.setAlpha((int) (255 * (1 - fraction)));
-        canvas.drawText(from, 0, 0, paint);
-        canvas.restore();
-
-
-        paint.setAlpha((int) (255 * fraction));
-
-        canvas.save();
-        canvas.scale(fraction, fraction, 0, height);
-        canvas.drawText(to, 0, 0, paint);
-        canvas.restore();
-
-        canvas.restore();
+        Utils.drawAnimatedText(canvas, from, to, paint, x, y, height, changeValueAnimator);
     }
 
     protected void drawContent(Canvas canvas) {

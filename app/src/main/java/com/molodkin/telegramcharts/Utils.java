@@ -1,13 +1,15 @@
 package com.molodkin.telegramcharts;
 
+import android.animation.ValueAnimator;
 import android.content.Context;
 import android.content.res.Configuration;
+import android.graphics.Canvas;
 import android.graphics.Paint;
 import android.text.TextPaint;
+import android.text.TextUtils;
 import android.util.Log;
 import android.view.View;
 
-import java.text.DecimalFormat;
 import java.util.HashMap;
 import java.util.Locale;
 
@@ -16,6 +18,8 @@ import static android.os.Build.VERSION.SDK_INT;
 class Utils {
 
     static boolean isDayMode = true;
+
+    static boolean DEBUG = false;
 
     private static HashMap<String, Integer> dayResource = new HashMap<>();
     private static HashMap<String, Integer> nightResource = new HashMap<>();
@@ -126,7 +130,7 @@ class Utils {
     }
 
     public static void log(String message) {
-        Log.d("telegramcharts", message);
+        if (DEBUG) Log.d("telegramcharts", message);
     }
 
     public static int mixTwoColors( int color1, int color2, float amount ) {
@@ -147,5 +151,38 @@ class Utils {
                 ((float)(color2 & 0xff )*inverseAmount))) & 0xff;
 
         return a << ALPHA_CHANNEL | r << RED_CHANNEL | g << GREEN_CHANNEL | b << BLUE_CHANNEL;
+    }
+
+    static void drawAnimatedText(Canvas canvas, String from, String to, TextPaint paint, float x, float y, float height, ValueAnimator changeValueAnimator) {
+        canvas.save();
+        canvas.translate(x, y);
+
+        if (TextUtils.isEmpty(from) || from.equals(to)) {
+            paint.setAlpha(255);
+            canvas.drawText(to, 0, 0, paint);
+            canvas.restore();
+            return;
+        }
+
+        float fraction = 1;
+        if (changeValueAnimator != null && changeValueAnimator.isRunning()) {
+            fraction = changeValueAnimator.getAnimatedFraction();
+        }
+
+        canvas.save();
+        canvas.scale((1 - fraction), (1 - fraction), 0, -height);
+        paint.setAlpha((int) (255 * (1 - fraction)));
+        canvas.drawText(from, 0, 0, paint);
+        canvas.restore();
+
+
+        paint.setAlpha((int) (255 * fraction));
+
+        canvas.save();
+        canvas.scale(fraction, fraction, 0, height);
+        canvas.drawText(to, 0, 0, paint);
+        canvas.restore();
+
+        canvas.restore();
     }
 }
