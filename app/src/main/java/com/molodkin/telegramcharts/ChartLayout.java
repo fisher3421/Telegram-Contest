@@ -79,7 +79,7 @@ public class ChartLayout extends FrameLayout {
         LayoutParams chartLp = new LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, chartHeight);
         chartView.setLayoutParams(chartLp);
 
-        if (infoView != null) infoView.setLayoutParams(new FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, chartHeight - chartView.xAxisHeight));
+        if (infoView != null) infoView.setLayoutParams(new FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, chartHeight));
 
 
 
@@ -160,8 +160,7 @@ public class ChartLayout extends FrameLayout {
             rangeBorderView.setOnRangeChanged(new RangeBorderView.OnRangeChanged() {
                 @Override
                 public void onChanged(int start, int end) {
-                    if (infoView != null) infoView.move();
-                    dateView.updateDate(chartView.xPoints[start], chartView.xPoints[end - 1]);
+                    updateRange(start, end);
                 }
             });
         }
@@ -195,6 +194,11 @@ public class ChartLayout extends FrameLayout {
                 }
             });
         }
+    }
+
+    private void updateRange(int start, int end) {
+        if (infoView != null) infoView.move();
+        dateView.updateDate(chartView.xPoints[start], chartView.xPoints[end - 1]);
     }
 
     private void initCheckboxes() {
@@ -241,6 +245,11 @@ public class ChartLayout extends FrameLayout {
             init();
         } else {
             chartView.setData(data);
+            if (rangeBorderView != null) {
+                rangeBorderView.notifyListener();
+            } else {
+                updateRange(chartView.start, chartView.end);
+            }
         }
     }
 

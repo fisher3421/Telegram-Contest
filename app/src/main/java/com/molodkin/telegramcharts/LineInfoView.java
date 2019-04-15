@@ -133,7 +133,7 @@ class LineInfoView extends BaseInfoView {
 
     @Override
     protected void drawContent(Canvas canvas) {
-        canvas.drawLine(xCoord, verticalLineTopMargin, xCoord, getHeight(), verticalLinePaint);
+        canvas.drawLine(xCoord, verticalLineTopMargin, xCoord, getHeight() - chartView.xAxisHeight, verticalLinePaint);
 
         for (int i = 0; i < yCoords.size(); i++) {
             float yCoord = yCoords.get(i);
