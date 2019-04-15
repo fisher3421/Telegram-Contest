@@ -25,8 +25,8 @@ class LineInfoView extends BaseInfoView {
     private ValueAnimator.AnimatorUpdateListener finisMovementAnimatorUpdate = new ValueAnimator.AnimatorUpdateListener() {
         @Override
         public void onAnimationUpdate(ValueAnimator animation) {
-            log("finisMovementAnimatorUpdate" + finisMovementAnimator.hashCode() + " time: " + finisMovementAnimator.getCurrentPlayTime());
-            log("finisMovementAnimatorUpdate" + finisMovementAnimator.hashCode() + " fraction: " + finisMovementAnimator.getAnimatedFraction());
+//            log("finisMovementAnimatorUpdate" + finisMovementAnimator.hashCode() + " time: " + finisMovementAnimator.getCurrentPlayTime());
+//            log("finisMovementAnimatorUpdate" + finisMovementAnimator.hashCode() + " fraction: " + finisMovementAnimator.getAnimatedFraction());
             updateXCoord(((float) animation.getAnimatedValue()));
         }
     };

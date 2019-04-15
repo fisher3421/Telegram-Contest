@@ -113,8 +113,8 @@ public class RangeChartView extends View {
 
         this.maxYValueTemp = newTempMaxYValue;
 
-        Utils.log("adjustYAxis_scroll_fromScale: " + fromScale);
-        Utils.log("adjustYAxis_scroll_toScale: " + toScale);
+//        Utils.log("adjustYAxis_scroll_fromScale: " + fromScale);
+//        Utils.log("adjustYAxis_scroll_toScale: " + toScale);
 
         final float [] prev = new float[1];
         prev[0] = fromScale;

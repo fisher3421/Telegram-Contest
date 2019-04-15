@@ -432,8 +432,8 @@ abstract class BaseInfoView extends View {
 
         canvas.translate(0, windowTopMargin);
 
-        Utils.log("onDraw preWindowLeftMargin: " + preWindowLeftMargin);
-        Utils.log("onDraw windowLeftMargin: " + windowLeftMargin);
+//        Utils.log("onDraw preWindowLeftMargin: " + preWindowLeftMargin);
+//        Utils.log("onDraw windowLeftMargin: " + windowLeftMargin);
 
         if (changeValueAnimator != null && changeValueAnimator.isRunning() && preWindowLeftMargin > 0) {
             float fraction = changeValueAnimator.getAnimatedFraction();

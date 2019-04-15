@@ -203,8 +203,8 @@ abstract class BaseYAxis {
 
         final float toScale = range * 1f / newRange;
 
-        log("adjustYAxis_fromScale: " + fromScale);
-        log("adjustYAxis_toScale: " + toScale);
+//        log("adjustYAxis_fromScale: " + fromScale);
+//        log("adjustYAxis_toScale: " + toScale);
 
         final float[] prev = new float[1];
         prev[0] = fromScale;

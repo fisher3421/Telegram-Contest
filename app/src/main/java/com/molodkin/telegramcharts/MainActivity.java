@@ -19,6 +19,8 @@ public class MainActivity extends Activity {
     private TextView title;
     private ImageView switchDayNightIcon;
 
+    private String [] names = {"Followers", "Interactions", "Messages", "Views", "Apps"};
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -29,10 +31,10 @@ public class MainActivity extends Activity {
 
         try {
 //            data = DataProvider.getData(this);
-//            data.add(DataProvider.getData(this, R.raw.c1));
-//            data.add(DataProvider.getData(this, R.raw.c2));
-//            data.add(DataProvider.getData(this, R.raw.c3));
-//            data.add(DataProvider.getData(this, R.raw.c4));
+            data.add(DataProvider.getData(this, R.raw.c1));
+            data.add(DataProvider.getData(this, R.raw.c2));
+            data.add(DataProvider.getData(this, R.raw.c3));
+            data.add(DataProvider.getData(this, R.raw.c4));
             data.add(DataProvider.getData(this, R.raw.c5));
         } catch (Throwable e) {
             e.printStackTrace();
@@ -50,13 +52,13 @@ public class MainActivity extends Activity {
         int layoutTopMargin = Utils.getDim(this, R.dimen.margin20);
 
         for (int i = 0; i < data.size(); i++) {
-//            ChartGroupLayout chartLayout = new ChartGroupLayout(this, i + 1);
-            ChartGroupLayout chartLayout = new ChartGroupLayout(this, 5);
+            ChartGroupLayout chartLayout = new ChartGroupLayout(this, i + 1);
+//            ChartGroupLayout chartLayout = new ChartGroupLayout(this, 5);
 
             chartLayout.setPadding(0, layoutTopMargin, 0, 0);
 
             chartLayout.setData(data.get(i));
-            chartLayout.setChartName(String.format("Chart %s", String.valueOf(i + 1)));
+            chartLayout.setChartName(names[i]);
 
             charts.add(chartLayout);
             LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
