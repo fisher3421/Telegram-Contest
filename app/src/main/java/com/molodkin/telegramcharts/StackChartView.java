@@ -6,6 +6,8 @@ import android.graphics.Color;
 
 public final class StackChartView extends BaseChart {
 
+    float [] tops;
+
     public StackChartView(Context context, boolean isBig) {
         super(context, isBig);
         enablingWithAlphaAnimation = false;
@@ -16,6 +18,8 @@ public final class StackChartView extends BaseChart {
         if (getWidth() == 0 || getHeight() == 0 || data == null) return;
 
         xPoints = data.x;
+
+        tops = new float[xPoints.length];
 
         start = 0;
         end = data.x.length;
@@ -89,7 +93,7 @@ public final class StackChartView extends BaseChart {
             top = yAxis1.maxValue;
             for (BaseChartGraph graph : graphs) {
 
-                if (graph.alpha == 0) continue;
+                if (!graph.isVisible()) continue;
 
                 int k = i * 4;
 
@@ -101,6 +105,7 @@ public final class StackChartView extends BaseChart {
                 top -= value;
                 graph.points[k + 3] = top;
             }
+            tops[i] = top;
         }
     }
 
