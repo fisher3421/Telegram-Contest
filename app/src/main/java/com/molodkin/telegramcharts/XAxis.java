@@ -56,11 +56,12 @@ class XAxis {
         }
     }
 
-    void init(float scaleX) {
+    void init() {
         xAxisPoints.clear();
         pointToHideAnimated.clear();
-        int endX = (int) ((chart.availableChartWidth) / scaleX);
-        int stepXAxis = Math.round(xAxisTextWidthWithMargins / scaleX);
+        int endX = chart.end - 1;
+        int range = chart.end - chart.start - 1;
+        int stepXAxis = Math.round(range * xAxisTextWidthWithMargins / chart.availableChartWidth);
 
         while (endX > 0) {
             xAxisPoints.add(0, buildXPoint(endX));
@@ -75,6 +76,11 @@ class XAxis {
     void adjustXAxis() {
         final ArrayList<XAxisPoint> pointsToShow = new ArrayList<>();
         final ArrayList<XAxisPoint> pointsToHide = new ArrayList<>();
+        if (xAxisPoints.size() < 2) {
+            init();
+            chart.invalidate();
+            return;
+        }
         XAxisPoint first = xAxisPoints.get(0);
         XAxisPoint second = xAxisPoints.get(1);
         int currentStepX = second.x - first.x;
@@ -84,7 +90,7 @@ class XAxis {
         if (currentDistance > xAxisTextWidthWithMargins) {
             int numberToAdd = (int) (currentDistance / xAxisTextWidthWithMargins) - 1;
             currentStepX = currentStepX / (numberToAdd + 1);
-            for (int i = 0; i < xAxisPoints.size() - numberToAdd; i+= numberToAdd + 1) {
+            for (int i = 0; i < xAxisPoints.size(); i+= numberToAdd + 1) {
                 for (int j = 1; j <= numberToAdd; j++) {
                     int newX = xAxisPoints.get(i).x + currentStepX * j;
                     if (newX >= chart.xPoints.length) break;
@@ -136,7 +142,7 @@ class XAxis {
         Iterator<XAxisPoint> iterator = xAxisPoints.iterator();
         while (iterator.hasNext()) {
             XAxisPoint point = iterator.next();
-            if (isXTextGone(point)) iterator.remove();
+            if (!isXTextVisible(point)) iterator.remove();
             else break;
         }
 
@@ -144,7 +150,7 @@ class XAxis {
         ListIterator<XAxisPoint> reverse = xAxisPoints.listIterator(xAxisPoints.size());
         while (reverse.hasPrevious()) {
             XAxisPoint point = reverse.previous();
-            if (isXTextGone(point)) reverse.remove();
+            if (!isXTextVisible(point)) reverse.remove();
             else break;
         }
 
@@ -197,14 +203,17 @@ class XAxis {
         return new XAxisPoint(x, dateSring, alpha, axisTextPaint.measureText(dateSring));
     }
 
-    private boolean isXTextGone(XAxisPoint point) {
-        float xCoord = chart.xCoordByIndex(point.x) + chart.sideMargin;
-        return !(xCoord + point.width / 2 > 0) || !(xCoord - point.width / 2 < chart.getWidth());
+    private boolean isXTextVisible(XAxisPoint point) {
+        return isXTextVisible(point.x, point.width);
     }
 
     private boolean isXTextVisible(int x) {
-        float xCoord = chart.xCoordByIndex(x) + chart.sideMargin;
-        return xCoord + xAxisHalfOfTextWidth > 0 && xCoord - xAxisHalfOfTextWidth < chart.getWidth();
+        return isXTextVisible(x, xAxisHalfOfTextWidth);
+    }
+
+    private boolean isXTextVisible(int x, float width) {
+        float xCoord = chart.xCoordByIndex(x);
+        return xCoord + width > 0 && xCoord - width < chart.getWidth();
     }
 
     void draw(Canvas canvas) {
@@ -212,7 +221,7 @@ class XAxis {
 
         canvas.save();
 
-        canvas.translate(0, chart.availableChartHeight + xTextMargin + xAxisTextHeight);
+        canvas.translate(-chart.sideMargin, chart.availableChartHeight + xTextMargin + xAxisTextHeight);
 
         for (XAxisPoint point : xAxisPoints) {
             float xCoord = chart.xCoordByIndex(point.x);

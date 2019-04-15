@@ -153,10 +153,8 @@ abstract class BaseChart extends View {
         if (start == this.start) return;
 
         float toScale = availableChartWidth / (xCoordByIndex(end - 1) - xCoordByIndex(start));
-        startScaleAnimation(toScale, true);
         this.start = start;
-
-        adjustYAxis();
+        startScaleAnimation(toScale, true);
     }
 
     public void setEnd(int end) {
@@ -166,11 +164,9 @@ abstract class BaseChart extends View {
         if (end == this.end) return;
 
         float toScale = availableChartWidth / (xCoordByIndex(end - 1) - xCoordByIndex(start));
-        startScaleAnimation(toScale, false);
-
         this.end = end;
 
-        adjustYAxis();
+        startScaleAnimation(toScale, false);
     }
 
     public void setStartEnd(int start, int end) {
@@ -197,41 +193,41 @@ abstract class BaseChart extends View {
         invalidate();
     }
 
-    public void setStartEnd2(int start, int end) {
-        if (end > xPoints.length) return;
-        if (start >= end - 1) return;
-
-        if (start == this.start && end == this.end) return;
-
-        final float[] prev = new float[1];
-        prev[0] = 0f;
-
-        float fromCoordStart = xCoordByIndex(this.start);
-        float toCoordStart = xCoordByIndex(start);
-
-        ValueAnimator valueAnimator = ValueAnimator.ofFloat(0, fromCoordStart - toCoordStart);
-        valueAnimator.setDuration(SCALE_ANIMATION_DURATION);
-        valueAnimator.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
-            @Override
-            public void onAnimationUpdate(ValueAnimator animation) {
-                float value = (float) animation.getAnimatedValue();
-                chartMatrix.postTranslate(value - prev[0], 0);
-                chartMatrix2.postTranslate(value - prev[0], 0);
-                visibleStart = xIndexByCoord(0);
-                visibleEnd = xIndexByCoord(getWidth()) + 1;
-                prev[0] = value;
-                xAxis.adjustXAxis();
-                invalidate();
-
-            }
-        });
-        valueAnimator.start();
-
-        this.start = start;
-        this.end = end;
-
-        adjustYAxis();
-    }
+//    public void setStartEnd2(int start, int end) {
+//        if (end > xPoints.length) return;
+//        if (start >= end - 1) return;
+//
+//        if (start == this.start && end == this.end) return;
+//
+//        final float[] prev = new float[1];
+//        prev[0] = 0f;
+//
+//        float fromCoordStart = xCoordByIndex(this.start);
+//        float toCoordStart = xCoordByIndex(start);
+//
+//        ValueAnimator valueAnimator = ValueAnimator.ofFloat(0, fromCoordStart - toCoordStart);
+//        valueAnimator.setDuration(SCALE_ANIMATION_DURATION);
+//        valueAnimator.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
+//            @Override
+//            public void onAnimationUpdate(ValueAnimator animation) {
+//                float value = (float) animation.getAnimatedValue();
+//                chartMatrix.postTranslate(value - prev[0], 0);
+//                chartMatrix2.postTranslate(value - prev[0], 0);
+//                visibleStart = xIndexByCoord(0);
+//                visibleEnd = xIndexByCoord(getWidth()) + 1;
+//                prev[0] = value;
+//                xAxis.adjustXAxis();
+//                invalidate();
+//
+//            }
+//        });
+//        valueAnimator.start();
+//
+//        this.start = start;
+//        this.end = end;
+//
+//        adjustYAxis();
+//    }
 
     private void startScaleAnimation(float toScale, final boolean isStart) {
         chartMatrix.postScale(toScale, 1, isStart ? availableChartWidth : 0f, 0f);
@@ -239,36 +235,37 @@ abstract class BaseChart extends View {
         visibleStart = xIndexByCoord(0);
         visibleEnd = xIndexByCoord(getWidth()) + 1;
         xAxis.adjustXAxis();
+        adjustYAxis();
         invalidate();
     }
 
-    private void startScaleAnimation2(float toScale, final boolean isStart) {
-        float fromScale = availableChartWidth / (xCoordByIndex(end - 1) - xCoordByIndex(start));
-
-        log("fromScale: " + fromScale);
-        log("toScale: " + toScale);
-
-        final float[] prev = new float[1];
-        prev[0] = fromScale;
-
-        ValueAnimator valueAnimator = ValueAnimator.ofFloat(fromScale, toScale);
-        valueAnimator.setDuration(SCALE_ANIMATION_DURATION);
-        valueAnimator.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
-            @Override
-            public void onAnimationUpdate(ValueAnimator animation) {
-                float value = (float) animation.getAnimatedValue();
-                chartMatrix.postScale(value / prev[0], 1, isStart ? availableChartWidth : 0f, 0f);
-                chartMatrix2.postScale(value / prev[0], 1, isStart ? availableChartWidth : 0f, 0f);
-                visibleStart = xIndexByCoord(0);
-                visibleEnd = xIndexByCoord(getWidth()) + 1;
-                prev[0] = value;
-                xAxis.adjustXAxis();
-                invalidate();
-
-            }
-        });
-        valueAnimator.start();
-    }
+//    private void startScaleAnimation2(float toScale, final boolean isStart) {
+//        float fromScale = availableChartWidth / (xCoordByIndex(end - 1) - xCoordByIndex(start));
+//
+//        log("fromScale: " + fromScale);
+//        log("toScale: " + toScale);
+//
+//        final float[] prev = new float[1];
+//        prev[0] = fromScale;
+//
+//        ValueAnimator valueAnimator = ValueAnimator.ofFloat(fromScale, toScale);
+//        valueAnimator.setDuration(SCALE_ANIMATION_DURATION);
+//        valueAnimator.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
+//            @Override
+//            public void onAnimationUpdate(ValueAnimator animation) {
+//                float value = (float) animation.getAnimatedValue();
+//                chartMatrix.postScale(value / prev[0], 1, isStart ? availableChartWidth : 0f, 0f);
+//                chartMatrix2.postScale(value / prev[0], 1, isStart ? availableChartWidth : 0f, 0f);
+//                visibleStart = xIndexByCoord(0);
+//                visibleEnd = xIndexByCoord(getWidth()) + 1;
+//                prev[0] = value;
+//                xAxis.adjustXAxis();
+//                invalidate();
+//
+//            }
+//        });
+//        valueAnimator.start();
+//    }
 
     public void setData(ChartData data) {
         this.data = data;

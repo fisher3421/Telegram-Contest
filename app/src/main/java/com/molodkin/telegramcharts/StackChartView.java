@@ -42,7 +42,7 @@ public final class StackChartView extends BaseChart {
 
         chartMatrix.postScale(scaleX, 1, 0, 0);
 
-        xAxis.init(scaleX);
+        xAxis.init();
 
         buildLines();
 

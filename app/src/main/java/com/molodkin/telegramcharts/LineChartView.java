@@ -55,7 +55,7 @@ public final class LineChartView extends BaseChart {
         chartMatrix.postScale(scaleX, 1, 0, 0);
         chartMatrix2.postScale(scaleX, 1, 0, 0);
 
-        xAxis.init(scaleX);
+        xAxis.init();
 
         for (int i = 0; i < end - 1; i++) {
             for (int j = 0; j < graphs.length; j++) {

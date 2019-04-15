@@ -65,7 +65,7 @@ public final class StackPercentageChartView extends BaseChart {
 
         chartMatrix.postScale(scaleX, 1, 0, 0);
 
-        xAxis.init(scaleX);
+        xAxis.init();
 
         buildRectangles();
     }
