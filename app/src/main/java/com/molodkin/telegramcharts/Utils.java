@@ -185,4 +185,8 @@ class Utils {
 
         canvas.restore();
     }
+
+    static float getAnimationFraction(ValueAnimator valueAnimator) {
+        return valueAnimator != null && valueAnimator.isRunning() ? valueAnimator.getAnimatedFraction() : 1f;
+    }
 }

@@ -18,6 +18,7 @@ public class ChartGroupLayout extends FrameLayout {
     private ValueAnimator valueAnimator;
 
     private SimpleDateFormat format = new SimpleDateFormat("yyyy_MM_dd", Locale.US);
+    private ChartData data;
 
     public ChartGroupLayout(Context context, final int number) {
         super(context);
@@ -26,11 +27,16 @@ public class ChartGroupLayout extends FrameLayout {
             @Override
             public void onDaySelected(long date) {
                 ChartData zoomData;
-                try {
-                    String resName = String.format("c_%s_%s", String.valueOf(number), format.format(new Date(date)));
-                    int resId = getContext().getResources().getIdentifier(resName, "raw", getContext().getPackageName());
-                    zoomData = DataProvider.getData(getContext(), resId);
-                } catch (IOException ignore) { return; }
+                if (number != 5) {
+                    try {
+                        String resName = String.format("c_%s_%s", String.valueOf(number), format.format(new Date(date)));
+                        int resId = getContext().getResources().getIdentifier(resName, "raw", getContext().getPackageName());
+                        zoomData = DataProvider.getData(getContext(), resId);
+                    } catch (IOException ignore) { return; }
+                } else {
+                    zoomData = data;
+                }
+
                 zoomLayout.setData(zoomData);
                 zoomLayout.updateTheme();
 
@@ -88,6 +94,7 @@ public class ChartGroupLayout extends FrameLayout {
     }
 
     public void setData(ChartData data) {
+        this.data = data;
         chartLayout.setData(data);
     }
 

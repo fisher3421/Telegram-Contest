@@ -115,6 +115,10 @@ class XAxis {
             }
         }
 
+        if (xAxisPoints.size() < 2) {
+            return;
+        }
+
         first = xAxisPoints.get(0);
         second = xAxisPoints.get(1);
         currentStepX = second.x - first.x;

@@ -31,9 +31,9 @@ public class MainActivity extends Activity {
 //            data = DataProvider.getData(this);
 //            data.add(DataProvider.getData(this, R.raw.c1));
 //            data.add(DataProvider.getData(this, R.raw.c2));
-            data.add(DataProvider.getData(this, R.raw.c3));
+//            data.add(DataProvider.getData(this, R.raw.c3));
 //            data.add(DataProvider.getData(this, R.raw.c4));
-//            data.add(DataProvider.getData(this, R.raw.c5));
+            data.add(DataProvider.getData(this, R.raw.c5));
         } catch (Throwable e) {
             e.printStackTrace();
             return;
@@ -50,8 +50,8 @@ public class MainActivity extends Activity {
         int layoutTopMargin = Utils.getDim(this, R.dimen.margin20);
 
         for (int i = 0; i < data.size(); i++) {
-            ChartGroupLayout chartLayout = new ChartGroupLayout(this, i + 1);
-//            ChartGroupLayout chartLayout = new ChartGroupLayout(this, 4);
+//            ChartGroupLayout chartLayout = new ChartGroupLayout(this, i + 1);
+            ChartGroupLayout chartLayout = new ChartGroupLayout(this, 5);
 
             chartLayout.setPadding(0, layoutTopMargin, 0, 0);
 

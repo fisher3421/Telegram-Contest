@@ -89,37 +89,41 @@ abstract class BaseChart extends View {
         initTheme();
     }
 
-    public void enableAll(boolean enable, int exceptionIndex) {
+    public void enableAll(boolean enable, int exceptionIndex, boolean exceptionEnable) {
         ArrayList<BaseChartGraph> graphsToChange = new ArrayList<>();
+
+        if (graphs[exceptionIndex].isEnable != exceptionEnable) graphsToChange.add(graphs[exceptionIndex]);
+
         for (int i = 0; i < graphs.length; i++) {
             if (i == exceptionIndex) continue;
             BaseChartGraph graph = graphs[i];
             if (graph.isEnable != enable) graphsToChange.add(graph);
         }
-        enableGraph(enable, graphsToChange.toArray(new BaseChartGraph[graphsToChange.size()]));
+        enableGraph(graphsToChange.toArray(new BaseChartGraph[graphsToChange.size()]));
     }
 
-    public void enableGraph(final int index, boolean enable) {
-        enableGraph(enable, graphs[index]);
+    public void enableGraph(final int index) {
+        enableGraph(graphs[index]);
     }
 
-    private void enableGraph(boolean enable, final BaseChartGraph... graphs) {
+    private void enableGraph(final BaseChartGraph... graphs) {
         if (graphs == null || graphs.length == 0) return;
 
         for (BaseChartGraph graph : graphs) {
-            graph.isEnable = enable;
+            graph.isEnable = !graph.isEnable;
         }
 
-        float fromAlpha = enable ? 0 : 1f;
-        final float toAlpha = enable ? 1f : 0f;
-
-        ValueAnimator valueAnimator = ValueAnimator.ofFloat(fromAlpha, toAlpha);
+        ValueAnimator valueAnimator = ValueAnimator.ofFloat(0f, 1f);
         valueAnimator.setDuration(enablingWithAlphaAnimation ? FADE_ANIMATION_DURATION : FADE_ANIMATION_DURATION / 2);
         valueAnimator.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
             @Override
             public void onAnimationUpdate(ValueAnimator animation) {
                 for (BaseChartGraph graph : graphs) {
-                    graph.alpha = (float) animation.getAnimatedValue();
+                    if (graph.isEnable) {
+                        graph.alpha = (float) animation.getAnimatedValue();
+                    } else {
+                        graph.alpha = 1 - (float) animation.getAnimatedValue();
+                    }
                 }
                 graphAlphaChanged();
                 chartListener.updateInfoView();
@@ -144,9 +148,13 @@ abstract class BaseChart extends View {
         } else {
             adjustYAxis();
         }
+
+        graphEnablingChanged();
     }
 
     protected void graphAlphaChanged() {}
+    protected void graphEnablingChanged() {}
+    protected void rangeChanged() {}
 
     public void setStart(int start) {
         if (start >= end - 2) return;
@@ -154,6 +162,9 @@ abstract class BaseChart extends View {
 
         float toScale = availableChartWidth / (xCoordByIndex(end - 1) - xCoordByIndex(start));
         this.start = start;
+
+        rangeChanged();
+
         startScaleAnimation(toScale, true);
     }
 
@@ -165,6 +176,8 @@ abstract class BaseChart extends View {
 
         float toScale = availableChartWidth / (xCoordByIndex(end - 1) - xCoordByIndex(start));
         this.end = end;
+
+        rangeChanged();
 
         startScaleAnimation(toScale, false);
     }
@@ -189,6 +202,8 @@ abstract class BaseChart extends View {
 
         xAxis.adjustXAxis();
         adjustYAxis();
+
+        rangeChanged();
 
         invalidate();
     }

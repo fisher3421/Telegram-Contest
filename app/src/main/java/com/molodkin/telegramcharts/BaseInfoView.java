@@ -111,7 +111,15 @@ abstract class BaseInfoView extends View {
 
     private float percentageMaxWidth;
 
-    private final DecimalFormat decimalFormat;
+    public static final DecimalFormat DECIMAL_FORMAT;
+
+    static {
+        DECIMAL_FORMAT = new DecimalFormat("###,###");
+        DecimalFormatSymbols symbols = DECIMAL_FORMAT.getDecimalFormatSymbols();
+
+        symbols.setGroupingSeparator(' ');
+        DECIMAL_FORMAT.setDecimalFormatSymbols(symbols);
+    }
 
     private ZoomInListenr zoomInListenr;
     private RectF tempRect = new RectF();
@@ -184,13 +192,6 @@ abstract class BaseInfoView extends View {
         }
 
         this.chartView = chartView;
-
-        decimalFormat = new DecimalFormat("###,###");
-
-        DecimalFormatSymbols symbols = decimalFormat.getDecimalFormatSymbols();
-
-        symbols.setGroupingSeparator(' ');
-        decimalFormat.setDecimalFormatSymbols(symbols);
 
         dateTextPaint.setTextSize(dateTextSize);
         dateTextPaint.setAntiAlias(true);
@@ -373,7 +374,7 @@ abstract class BaseInfoView extends View {
                 textNames.add(graph.name);
 
                 sum += graph.values[newXIndex];
-                String valueText = decimalFormat.format(graph.values[newXIndex]);
+                String valueText = DECIMAL_FORMAT.format(graph.values[newXIndex]);
                 textValues.add(valueText);
                 textColors.add(graph.paint.getColor());
                 alphas.add(graph.alpha);
@@ -391,7 +392,7 @@ abstract class BaseInfoView extends View {
         if (showAll) {
             textNames.add("All");
 
-            String valueText = decimalFormat.format(sum);
+            String valueText = DECIMAL_FORMAT.format(sum);
             textValues.add(valueText);
             textColors.add(Utils.getColor(getContext(), Utils.PRIMARY_TEXT_COLOR));
             alphas.add(1f);

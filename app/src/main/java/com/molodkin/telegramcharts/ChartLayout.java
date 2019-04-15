@@ -65,16 +65,21 @@ public class ChartLayout extends FrameLayout {
                 infoView.showAll = true;
                 break;
             case STACK_PERCENTAGE:
-                chartView = new StackPercentageChartView(getContext());
-                infoView = new StackPercentageInfoView(getContext(), chartView);
-                infoView.showPercentage = true;
+                if (!isZoomed) {
+                    chartView = new StackPercentageChartView(getContext());
+                    infoView = new StackPercentageInfoView(getContext(), chartView);
+                    infoView.showPercentage = true;
+                } else {
+                    chartView = new StackPercentagePieChartView(getContext());
+                }
+
                 break;
         }
 
         LayoutParams chartLp = new LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, chartHeight);
         chartView.setLayoutParams(chartLp);
 
-        infoView.setLayoutParams(new FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, chartHeight - chartView.xAxisHeight));
+        if (infoView != null) infoView.setLayoutParams(new FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, chartHeight - chartView.xAxisHeight));
 
 
 
@@ -123,7 +128,7 @@ public class ChartLayout extends FrameLayout {
 
 
         addView(dateView);
-        addView(infoView);
+        if (infoView != null) addView(infoView);
         if (isRangeViewVisible) {
             rangeChartView = new RangeChartView(getContext(), chartView);
             rangeChartView.setBackground(getContext().getDrawable(R.drawable.bg_range));
@@ -155,7 +160,7 @@ public class ChartLayout extends FrameLayout {
             rangeBorderView.setOnRangeChanged(new RangeBorderView.OnRangeChanged() {
                 @Override
                 public void onChanged(int start, int end) {
-                    infoView.move();
+                    if (infoView != null) infoView.move();
                     dateView.updateDate(chartView.xPoints[start], chartView.xPoints[end - 1]);
                 }
             });
@@ -168,11 +173,11 @@ public class ChartLayout extends FrameLayout {
         chartView.setChartListener(new BaseChart.AbsChartListenr() {
             @Override
             public void updateInfoView() {
-                infoView.move();
+                if (infoView != null) infoView.move();
             }
         });
 
-        infoView.setZoomInListenr(new BaseInfoView.ZoomInListenr() {
+        if (infoView != null) infoView.setZoomInListenr(new BaseInfoView.ZoomInListenr() {
             @Override
             public void zoomIn(long date) {
                 chartListener.onDaySelected(date);
@@ -207,7 +212,7 @@ public class ChartLayout extends FrameLayout {
             checkBox.setLongClickListener(new TCheckBox.CheckBoxListener() {
                 @Override
                 public void onClick() {
-                    chartView.enableGraph(finalI, checkBox.isChecked());
+                    chartView.enableGraph(finalI);
                     if (rangeChartView != null) rangeChartView.adjustYAxis();
                 }
 
@@ -216,7 +221,7 @@ public class ChartLayout extends FrameLayout {
                     for (TCheckBox box : checkBoxes) {
                         if (checkBox != box) box.setChecked(false);
                     }
-                    chartView.enableAll(false, finalI);
+                    chartView.enableAll(false, finalI, true);
                     if (rangeChartView != null) rangeChartView.adjustYAxis();
                 }
             });
@@ -227,7 +232,7 @@ public class ChartLayout extends FrameLayout {
     }
 
     public void setChartName(String chartName) {
-        chartNameView.setText(chartName);
+        if (chartNameView != null) chartNameView.setText(chartName);
     }
 
     public void setData(ChartData data) {
@@ -243,7 +248,7 @@ public class ChartLayout extends FrameLayout {
         if (chartView == null) return;
         chartView.updateTheme();
         if (rangeBorderView != null) rangeBorderView.updateTheme();
-        infoView.updateTheme();
+        if (infoView != null) infoView.updateTheme();
         if (chartNameView != null) chartNameView.setTextColor(Utils.getColor(getContext(), Utils.PRIMARY_TEXT_COLOR));
         dateView.updateTheme();
     }

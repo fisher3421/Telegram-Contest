@@ -16,6 +16,7 @@ abstract class BaseChartGraph {
     float alpha = 1;
 
     Paint paint;
+    Paint piePaint;
 
     Paint scrollPaint;
 
