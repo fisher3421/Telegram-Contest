@@ -259,6 +259,17 @@ public class ChartLayout extends FrameLayout {
         if (rangeBorderView != null) rangeBorderView.updateTheme();
         if (infoView != null) infoView.updateTheme();
         if (chartNameView != null) chartNameView.setTextColor(Utils.getColor(getContext(), Utils.PRIMARY_TEXT_COLOR));
+        if (zoomOutView != null) {
+            zoomOutView.setTextColor(Utils.getColor(getContext(), Utils.ZOOM_OUT_COLOR));
+            Drawable[] compoundDrawables = zoomOutView.getCompoundDrawables();
+            if (compoundDrawables.length > 0) {
+                Drawable compoundDrawable = compoundDrawables[0];
+                if (compoundDrawable != null) {
+                    compoundDrawable.setColorFilter(Utils.getColor(getContext(), R.color.chartName), PorterDuff.Mode.SRC_ATOP);
+                }
+            }
+
+        }
         dateView.updateTheme();
     }
 

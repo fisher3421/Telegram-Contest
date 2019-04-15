@@ -20,6 +20,20 @@ class StackInfoView extends BaseInfoView {
     }
 
     @Override
+    void updateTheme() {
+        super.updateTheme();
+        if (Utils.isDayMode) {
+            coverPaint.setColor(Color.WHITE);
+            coverPaint.setAlpha((int) (255*0.5));
+            coverPaint.setStyle(Paint.Style.FILL);
+        } else {
+            coverPaint.setColor(Color.parseColor("#242F3E"));
+            coverPaint.setAlpha((int) (255*0.5));
+            coverPaint.setStyle(Paint.Style.FILL);
+        }
+    }
+
+    @Override
     protected void onActionMove(float x) {
         super.onActionMove(x);
         xIndex = chartView.xIndexByCoord(x);

@@ -5,9 +5,11 @@ import android.annotation.SuppressLint;
 import android.content.Context;
 import android.graphics.Canvas;
 import android.graphics.Paint;
+import android.graphics.PorterDuff;
 import android.graphics.Rect;
 import android.graphics.RectF;
 import android.graphics.Typeface;
+import android.graphics.drawable.Drawable;
 import android.graphics.drawable.NinePatchDrawable;
 import android.text.TextPaint;
 import android.text.TextUtils;
@@ -127,6 +129,8 @@ abstract class BaseInfoView extends View {
     float preWindowLeftMargin;
     float windowLeftMargin;
 
+    private Drawable arrow = null;
+
     private GestureDetector gestureDetector = new GestureDetector(this.getContext(), new GestureDetector.SimpleOnGestureListener() {
         @Override
         public boolean onScroll(MotionEvent e1, MotionEvent e2, float distanceX, float distanceY) {
@@ -186,6 +190,10 @@ abstract class BaseInfoView extends View {
     BaseInfoView(Context c, BaseChart chartView) {
         super(c);
         if (!chartView.isZoomed) {
+            arrow = getContext().getDrawable(R.drawable.baseline_chevron_right_black_18);
+            int arrowSize = Utils.dpToPx(this, 20);
+            int arrowLeft = windowWidth - arrowSize - dataSideMargin - Utils.dpToPx(this, 2);
+            arrow.setBounds(arrowLeft, topBottomPadding, arrowLeft + arrowSize, topBottomPadding + arrowSize);
             dateFormat = new SimpleDateFormat("EEE, d" + DATE_SEPARATOR + "MMM yyyy", Utils.getLocale(c));
         } else {
             dateFormat = new SimpleDateFormat("HH:mm", Utils.getLocale(c));
@@ -275,6 +283,8 @@ abstract class BaseInfoView extends View {
 
         dateTextPaint.setColor(Utils.getColor(getContext(), Utils.PRIMARY_TEXT_COLOR));
         nameTextPaint.setColor(Utils.getColor(getContext(), Utils.PRIMARY_TEXT_COLOR));
+
+        if (arrow != null) arrow.setColorFilter(Utils.getColor(getContext(), Utils.ARROW_COLOR), PorterDuff.Mode.SRC_ATOP);
     }
 
     @SuppressLint("ClickableViewAccessibility")
@@ -443,6 +453,8 @@ abstract class BaseInfoView extends View {
         }
 
         background.draw(canvas);
+
+        if (arrow != null) arrow.draw(canvas);
 
         canvas.translate(left, 0);
 

@@ -35,6 +35,8 @@ class Utils {
     static final String SCROLL_BORDER_COLOR = "SCROLL_BORDER_COLOR";
     static final String INFO_VIEW_BACKGROUND = "INFO_VIEW_BACKGROUND";
     static final String INFO_VIEW_CIRCLE_COLOR = "CIRCLE_COLOR";
+    static final String ZOOM_OUT_COLOR = "ZOOM_OUT_COLOR";
+    static final String ARROW_COLOR = "ARROW_COLOR";
 
     static {
         dayResource.put(PRIMARY_COLOR, R.color.colorPrimary);
@@ -69,6 +71,12 @@ class Utils {
 
         dayResource.put(INFO_VIEW_CIRCLE_COLOR, R.color.chart_background_day);
         nightResource.put(INFO_VIEW_CIRCLE_COLOR, R.color.chart_background_night);
+
+        dayResource.put(ZOOM_OUT_COLOR, R.color.zoom_out_day);
+        nightResource.put(ZOOM_OUT_COLOR, R.color.zoom_out_day);
+
+        dayResource.put(ARROW_COLOR, R.color.arrow_day);
+        nightResource.put(ARROW_COLOR, R.color.arrow_night);
     }
 
     static int dpToPx(Context c, int dp) {

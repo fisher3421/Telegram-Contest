@@ -37,4 +37,11 @@
     <color name="scroll_border_day">#7F86A9C4</color>
     <color name="scroll_border_night">#7F6F899E</color>
 
+    <color name="zoom_out_day">#108BE3</color>
+    <color name="zoom_out_night">#48AAF0</color>
+
+    <color name="arrow_day">#D2D5D7</color>
+    <color name="arrow_night">#D2D5D7</color>
+
+
 </resources>
