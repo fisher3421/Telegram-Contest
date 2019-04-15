@@ -62,6 +62,7 @@ public class ChartLayout extends FrameLayout {
             case STACK:
                 chartView = new StackChartView(getContext(), isZoomed);
                 infoView = new StackInfoView(getContext(), chartView);
+                infoView.showAll = true;
                 break;
             case STACK_PERCENTAGE:
                 chartView = new StackPercentageChartView(getContext());

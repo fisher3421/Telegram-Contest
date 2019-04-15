@@ -105,6 +105,7 @@ abstract class BaseInfoView extends View {
     protected int xIndex = -1;
 
     boolean showPercentage = false;
+    boolean showAll = false;
 
     private ValueAnimator changeValueAnimator;
 
@@ -355,11 +356,13 @@ abstract class BaseInfoView extends View {
 
         Iterator<Float> textPercentageWidthsIterator = textPercentageWidths.iterator();
 
+        int sum = 0;
         for (int i = 0; i < chartView.graphs.length; i++) {
             BaseChartGraph graph = chartView.graphs[i];
             if (graph.isVisible()) {
                 textNames.add(graph.name);
 
+                sum += graph.values[newXIndex];
                 String valueText = decimalFormat.format(graph.values[newXIndex]);
                 textValues.add(valueText);
                 textColors.add(graph.paint.getColor());
@@ -374,6 +377,19 @@ abstract class BaseInfoView extends View {
 
                 top += nameTextHeight * graph.alpha + rowMargin;
             }
+        }
+        if (showAll) {
+            textNames.add("All");
+
+            String valueText = decimalFormat.format(sum);
+            textValues.add(valueText);
+            textColors.add(Utils.getColor(getContext(), Utils.PRIMARY_TEXT_COLOR));
+            alphas.add(1f);
+            float valueWidth = valueTextPaint.measureText(valueText);
+            leftValues.add(contentWidth - valueWidth);
+            topValues.add(top);
+
+            top += nameTextHeight + rowMargin;
         }
         top -= rowMargin;
 
