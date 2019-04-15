@@ -35,13 +35,15 @@ class StackInfoView extends BaseInfoView {
 
     @Override
     protected void onActionMove(float x) {
-        super.onActionMove(x);
-        xIndex = chartView.xIndexByCoord(x);
-        xCoord = chartView.xCoordByIndex(xIndex);
-        measureWindow(xIndex);
-        preWindowLeftMargin = windowLeftMargin;
-        calcWindowMargin();
-        invalidate();
+        int newXIndex = chartView.xIndexByCoord(x);
+        if (newXIndex != xIndex) {
+            measureWindow(newXIndex);
+            xCoord = chartView.xCoordByIndex(newXIndex);
+            xIndex = newXIndex;
+            preWindowLeftMargin = windowLeftMargin;
+            calcWindowMargin();
+            invalidate();
+        }
     }
 
     @Override
