@@ -250,6 +250,9 @@ public class ChartLayout extends FrameLayout {
             } else {
                 updateRange(chartView.start, chartView.end);
             }
+            for (int i = 0; i < checkBoxes.size(); i++) {
+                checkBoxes.get(i).setText(data.names.get(i));
+            }
         }
     }
 
@@ -289,7 +292,7 @@ public class ChartLayout extends FrameLayout {
                 top += checkBox.getMeasuredHeight() + checkBoxMargin;
                 left = sideMargin + checkBox.getMeasuredWidth() + checkBoxMargin;
             } else {
-                left += sideMargin + checkBox.getMeasuredWidth();
+                left += checkBoxMargin + checkBox.getMeasuredWidth();
             }
         }
 
