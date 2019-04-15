@@ -262,6 +262,16 @@ abstract class BaseInfoView extends View {
 
     protected void initTheme() {
         background = (NinePatchDrawable) getContext().getResources().getDrawable(Utils.getResId(Utils.INFO_VIEW_BACKGROUND), getContext().getTheme());
+        backgroundSize.left = 0;
+        backgroundSize.top = 0;
+        backgroundSize.right = windowWidth;
+        backgroundSize.bottom = (int) windowHeight;
+        background.setBounds(backgroundSize);
+
+        if (showAll && textColors.size() > 0) {
+            textColors.set(textColors.size() - 1, Utils.getColor(getContext(), Utils.PRIMARY_TEXT_COLOR));
+        }
+
         dateTextPaint.setColor(Utils.getColor(getContext(), Utils.PRIMARY_TEXT_COLOR));
         nameTextPaint.setColor(Utils.getColor(getContext(), Utils.PRIMARY_TEXT_COLOR));
     }
