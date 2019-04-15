@@ -33,7 +33,7 @@ public class MainActivity extends Activity {
 //            data.add(DataProvider.getData(this, R.raw.c2));
 //            data.add(DataProvider.getData(this, R.raw.c3));
 //            data.add(DataProvider.getData(this, R.raw.c4));
-//            data.add(DataProvider.getData(this, R.raw.c5));
+            data.add(DataProvider.getData(this, R.raw.c5));
         } catch (Throwable e) {
             e.printStackTrace();
             return;

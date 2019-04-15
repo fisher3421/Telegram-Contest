@@ -86,6 +86,7 @@ abstract class BaseInfoView extends View {
     private final ArrayList<String> textValues = new ArrayList<>();
     private final ArrayList<String> textNames = new ArrayList<>();
     private final ArrayList<String> textPercentage = new ArrayList<>();
+    private final ArrayList<String> preTextPercentage = new ArrayList<>();
     private final ArrayList<Float> textPercentageWidths = new ArrayList<>();
     private final ArrayList<Float> textPercentageLeft = new ArrayList<>();
     protected final ArrayList<Integer> textColors = new ArrayList<>();
@@ -154,6 +155,7 @@ abstract class BaseInfoView extends View {
                 isScrolling = false;
                 isVisible = false;
                 preTextValues.clear();
+                preTextPercentage.clear();
                 prevDateText1 = null;
                 dateText1 = null;
                 prevDateText2 = null;
@@ -320,6 +322,9 @@ abstract class BaseInfoView extends View {
         preTextValues.clear();
         preTextValues.addAll(textValues);
 
+        preTextPercentage.clear();
+        preTextPercentage.addAll(textPercentage);
+
         textNames.clear();
         textValues.clear();
         textPercentage.clear();
@@ -335,10 +340,10 @@ abstract class BaseInfoView extends View {
             float sum = 0;
             percentageMaxWidth = 0;
             for (BaseChartGraph graph : chartView.graphs) {
-                if (graph.alpha > 0) sum += graph.values[newXIndex];
+                if (graph.isVisible()) sum += graph.values[newXIndex];
             }
             for (BaseChartGraph graph : chartView.graphs) {
-                if (graph.alpha > 0) {
+                if (graph.isVisible()) {
                     String value = String.format("%s %%", String.valueOf(Math.round(100 * graph.values[newXIndex] / sum)));
                     float textWidth = dateTextPaint.measureText(value);
                     textPercentageWidths.add(textWidth);
@@ -433,7 +438,8 @@ abstract class BaseInfoView extends View {
             float alpha = alphas.get(i);
             nameTextPaint.setAlpha((int) (255 * alpha));
             if (showPercentage) {
-                canvas.drawText(textPercentage.get(i), textPercentageLeft.get(i), topValues.get(i), dateTextPaint);
+                String pre = preTextPercentage.size() > i ? preTextPercentage.get(i) : null;
+                drawAnimatedText(canvas, pre, textPercentage.get(i), dateTextPaint, textPercentageLeft.get(i), topValues.get(i), dateTextHeight);
                 canvas.drawText(textNames.get(i), percentageMaxWidth + dataSideMargin, topValues.get(i), nameTextPaint);
             } else {
                 canvas.drawText(textNames.get(i), 0, topValues.get(i), nameTextPaint);
@@ -445,7 +451,7 @@ abstract class BaseInfoView extends View {
             valueTextPaint.setColor(color);
             valueTextPaint.setAlpha((int) (255 * alpha));
 
-            String pre = preTextValues.size() > i ? preTextValues.get(i) : null;
+            String pre = preTextValues.size() == textValues.size() ? preTextValues.get(i) : null;
             drawAnimatedText(canvas, pre, textValue, valueTextPaint, leftValues.get(i), topValues.get(i), valueTextHeight);
         }
 

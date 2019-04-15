@@ -17,7 +17,7 @@ public final class StackPercentageChartView extends BaseChart {
     private Paint sideRectanglePaint;
 
     public StackPercentageChartView(Context context) {
-        super(context, true);
+        super(context, false);
         enablingWithAlphaAnimation = false;
     }
 
