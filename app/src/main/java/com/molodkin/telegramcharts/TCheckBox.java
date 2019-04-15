@@ -29,6 +29,7 @@ public class TCheckBox extends CompoundButton {
     private float roundDim = Utils.dpToPx(this, 40);
     private float checkSideMargin = Utils.dpToPx(this, 12);
     private float textSideMargin = Utils.dpToPx(this, 8);
+    private float padding = Utils.dpToPx(this, 2);
 
     private float animatorFraction;
 
@@ -217,9 +218,9 @@ public class TCheckBox extends CompoundButton {
     @Override
     protected void onDraw(Canvas canvas) {
 
-        canvas.drawRoundRect(0, 0, getWidth(), getHeight(), roundDim, roundDim, borderPaint);
+        canvas.drawRoundRect(padding, padding, getWidth() - padding, getHeight() - padding, roundDim, roundDim, borderPaint);
 
-        canvas.drawRoundRect(0, 0, getWidth(), getHeight(), roundDim, roundDim, rectanglePaint);
+        canvas.drawRoundRect(padding, padding, getWidth() - padding, getHeight() - padding, roundDim, roundDim, rectanglePaint);
 
         canvas.save();
 

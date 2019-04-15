@@ -29,7 +29,7 @@ public class ChartLayout extends FrameLayout {
     final int scrollPadding = Utils.getDim(this, R.dimen.range_top_bottom_padding);
     int chartHeight = Utils.getDim(this, R.dimen.chartHeight);
     int sideMargin = Utils.getDim(this, R.dimen.margin20);
-    int checkBoxMargin = Utils.dpToPx(this, 8);
+    int checkBoxMargin = Utils.dpToPx(this, 4);
     boolean isRangeViewVisible = true;
 
     ArrayList<TCheckBox> checkBoxes = new ArrayList<>();
