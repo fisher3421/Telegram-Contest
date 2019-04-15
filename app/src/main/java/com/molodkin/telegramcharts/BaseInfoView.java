@@ -236,9 +236,9 @@ abstract class BaseInfoView extends View {
 
         measureWindow(xIndex);
 
-        calcWindowMargin();
-
         onActionDown(xCoord);
+
+        calcWindowMargin();
 
         invalidate();
     }
@@ -445,12 +445,12 @@ abstract class BaseInfoView extends View {
 //        Utils.log("onDraw preWindowLeftMargin: " + preWindowLeftMargin);
 //        Utils.log("onDraw windowLeftMargin: " + windowLeftMargin);
 
-        if (changeValueAnimator != null && changeValueAnimator.isRunning() && preWindowLeftMargin > 0) {
-            float fraction = changeValueAnimator.getAnimatedFraction();
-            canvas.translate(preWindowLeftMargin * (1 - fraction) + windowLeftMargin * fraction, 0);
-        } else {
+//        if (changeValueAnimator != null && changeValueAnimator.isRunning() && preWindowLeftMargin > 0) {
+//            float fraction = changeValueAnimator.getAnimatedFraction();
+//            canvas.translate(preWindowLeftMargin * (1 - fraction) + windowLeftMargin * fraction, 0);
+//        } else {
             canvas.translate(windowLeftMargin, 0);
-        }
+//        }
 
         background.draw(canvas);
 
