@@ -12,6 +12,14 @@ class LineYAxis extends BaseYAxis {
     }
 
     @Override
+    public void adjustYAxis(boolean init) {
+        if (isHalfLine) {
+            if (!chart.graphs[isRight ? 1 : 0].isEnable) return;
+        }
+        super.adjustYAxis(init);
+    }
+
+    @Override
     int getMaxValue() {
         if (isHalfLine) {
             if (!isRight) {

@@ -145,7 +145,7 @@ abstract class BaseYAxis {
         adjustYAxis(false);
     }
 
-    private void adjustYAxis(boolean init) {
+    public void adjustYAxis(boolean init) {
         int dirtyMin = getMinValue();
         int dirtyMax = getMaxValue();
         int delta = dirtyMax - dirtyMin;
