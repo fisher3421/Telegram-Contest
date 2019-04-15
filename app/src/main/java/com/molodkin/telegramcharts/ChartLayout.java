@@ -319,6 +319,7 @@ public class ChartLayout extends FrameLayout {
                 leftChild += checkBoxMargin + checkBox.getMeasuredWidth();
             }
         }
+        updateRange(chartView.start, chartView.end);
     }
 
     public interface ChartListener {

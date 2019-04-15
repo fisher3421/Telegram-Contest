@@ -74,7 +74,7 @@ class RangeBorderView extends View {
         super.onSizeChanged(w, h, oldw, oldh);
         scaleX = getWidth() * 1f / (chartView.xPoints.length - 1);
         scrollWindowMinWidthInSteps = Math.round(scrollWindowMinWidth / scaleX);
-        notifyListener();
+//        notifyListener();
     }
 
     @Override
