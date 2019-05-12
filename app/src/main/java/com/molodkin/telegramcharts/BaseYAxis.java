@@ -1,25 +1,27 @@
 package com.molodkin.telegramcharts;
 
 import android.animation.ValueAnimator;
+import android.content.Context;
 import android.graphics.Canvas;
 import android.graphics.Matrix;
 import android.graphics.Paint;
 import android.text.TextPaint;
+import android.view.View;
 
 import java.text.DecimalFormat;
 
 import static com.molodkin.telegramcharts.BaseChart.SCALE_ANIMATION_DURATION;
 import static com.molodkin.telegramcharts.Utils.log;
 
-abstract class BaseYAxis {
+abstract class BaseYAxis extends View {
     private static final float ROW_AXIS_ALPHA = 0.1f;
     private static String [] NUMBER_SUFFIXES = {"", "K", "M", "B", "T"};
 
     final BaseChart chart;
     private final Matrix matrix;
-    private int xTextMargin;
-    private int axesTextSize;
-    private int xAxisWidth;
+    private int xTextMargin = Utils.dpToPx(this, 4);
+    private int axesTextSize = Utils.spToPx(this, 12);
+    private int xAxisWidth = Utils.getDim(this, R.dimen.xAxisWidth);
     boolean isRight;
     boolean isHalfLine = false;
     int maxValue;
@@ -41,28 +43,38 @@ abstract class BaseYAxis {
     boolean adjustValues = true;
 
     private static DecimalFormat decimalFormat = new DecimalFormat("#.#");
+    private ValueAnimator.AnimatorUpdateListener alphaAnimatorUpdateListener = new ValueAnimator.AnimatorUpdateListener() {
+        @Override
+        public void onAnimationUpdate(ValueAnimator animation) {
+            rowYValuesAlpha = (int) animation.getAnimatedValue();
+            invalidate();
+            chart.invalidate();
 
-    BaseYAxis(BaseChart chart, Matrix matrix) {
+        }
+    };
+    private ValueAnimator alphaAnimator;
+
+    public BaseYAxis(Context context, BaseChart chart, Matrix matrix) {
+        super(context);
         this.chart = chart;
         this.matrix = matrix;
-        xTextMargin = Utils.dpToPx(chart, 4);
-        axesTextSize = Utils.spToPx(chart, 12);
-        xAxisWidth = Utils.getDim(chart, R.dimen.xAxisWidth);
-    }
 
-    void init() {
         axisPaint.setStyle(Paint.Style.STROKE);
         axisPaint.setStrokeWidth(xAxisWidth);
 
         axisTextPaint.setTextSize(axesTextSize);
         axisTextPaint.setAntiAlias(true);
+    }
 
+     void init() {
         adjustYAxis(true);
-
         updateTheme();
     }
 
-    void draw(Canvas canvas) {
+    @Override
+    protected void onDraw(Canvas canvas) {
+        super.onDraw(canvas);
+        if (rowYTextsValues[0] == null) return;
         if (chart.zoomAnimator != null && chart.zoomAnimator.isRunning()) {
             drawZoom(canvas, chart.zoomAnimator.getAnimatedFraction(), chart.isZoomed, chart.isOpening);
         } else {
@@ -76,7 +88,7 @@ abstract class BaseYAxis {
         drawLines(canvas, rowYValuesAlpha, rowYValues, rowYTextsValues, rowYTextsValuesWidth);
 
         if (rowYValuesAlpha < 255) {
-            drawLines(canvas, 255 -rowYValuesAlpha, rowYValuesToHide, rowYTextsValuesToHide, rowYTextsValuesToHideWidth);
+            drawLines(canvas, 255 - rowYValuesAlpha, rowYValuesToHide, rowYTextsValuesToHide, rowYTextsValuesToHideWidth);
         }
 
         canvas.restore();
@@ -132,6 +144,8 @@ abstract class BaseYAxis {
         if (!isHalfLine) {
             axisTextPaint.setColor(Utils.getColor(chart.getContext(), Utils.AXIS_TEXT_COLOR));
         } else {
+            if (chart.graphs == null) return;
+
             if (!isRight) {
                 axisTextPaint.setColor(chart.graphs[0].color);
             } else {
@@ -209,11 +223,17 @@ abstract class BaseYAxis {
         final float[] prev = new float[1];
         prev[0] = fromScale;
 
+        long playTime = 0;
+
         if (scaleAnimator != null) {
+            if (scaleAnimator.isRunning()) {
+                playTime = scaleAnimator.getCurrentPlayTime();
+            }
             scaleAnimator.cancel();
         }
 
         scaleAnimator = ValueAnimator.ofFloat(fromScale, toScale);
+//        scaleAnimator.setCurrentPlayTime(playTime);
         scaleAnimator.setDuration(SCALE_ANIMATION_DURATION);
         scaleAnimator.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
             @Override
@@ -237,25 +257,33 @@ abstract class BaseYAxis {
                 }
 
                 prev[0] = value;
+                invalidate();
                 chart.yAxisAdjusted();
             }
         });
 
         scaleAnimator.start();
 
-        rowYValuesAlpha = 0;
+        if (alphaAnimator != null) {
+            alphaAnimator.cancel();
+        }
 
-        ValueAnimator alphaAnimator = ValueAnimator.ofInt(0, 255);
+        alphaAnimator = ValueAnimator.ofInt(0, 255);
         alphaAnimator.setDuration(SCALE_ANIMATION_DURATION);
-        alphaAnimator.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
+//        alphaAnimator.setCurrentPlayTime(playTime);
+        alphaAnimatorUpdateListener = new ValueAnimator.AnimatorUpdateListener() {
             @Override
             public void onAnimationUpdate(ValueAnimator animation) {
                 rowYValuesAlpha = (int) animation.getAnimatedValue();
+                invalidate();
                 chart.invalidate();
 
             }
-        });
+        };
+        alphaAnimator.addUpdateListener(alphaAnimatorUpdateListener);
         alphaAnimator.start();
+
+        invalidate();
     }
 
     String formatValue(int value) {

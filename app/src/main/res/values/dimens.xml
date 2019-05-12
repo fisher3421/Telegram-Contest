@@ -4,7 +4,7 @@
     <dimen name="margin16">16dp</dimen>
     <dimen name="xAxisWidth">1dp</dimen>
     <dimen name="scrollHeight">40dp</dimen>
-    <dimen name="chartHeight">340dp</dimen>
+    <dimen name="chartHeight">307dp</dimen>
     <dimen name="xAxisHeight">33dp</dimen>
     <dimen name="checkboxHeight">40dp</dimen>
     <dimen name="checkboxDividerLeftMargin">60dp</dimen>

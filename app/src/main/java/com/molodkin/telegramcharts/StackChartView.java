@@ -33,15 +33,12 @@ public final class StackChartView extends BaseChart {
             graphs[i] = new StackChartGraph(data.values.get(i), Color.parseColor(data.colors.get(i)), graphLineWidth, data.names.get(i));
         }
 
-        availableChartHeight = (float) getHeight() - xAxisHeight;
+        availableChartHeight = (float) getHeight();
         availableChartWidth = (float) getWidth() - sideMargin * 2;
 
         float scaleX = availableChartWidth / (xPoints.length - 1);
 
         chartMatrix.reset();
-
-        yAxis1 = new StackYAxis(this, chartMatrix);
-        yAxis1.isHalfLine = false;
         yAxis1.init();
 
         chartMatrix.postScale(scaleX, 1, 0, 0);
@@ -71,18 +68,9 @@ public final class StackChartView extends BaseChart {
 
         canvas.translate(sideMargin, 0);
 
-        canvas.save();
-
         canvas.clipRect(-sideMargin, 0, availableChartWidth + sideMargin, availableChartHeight + clipMargin);
 
         drawPoints(canvas);
-
-        if (yAxis1 != null) yAxis1.draw(canvas);
-        if (yAxis2 != null) yAxis2.draw(canvas);
-
-        canvas.restore();
-
-        xAxis.draw(canvas);
     }
 
     private void buildLines() {

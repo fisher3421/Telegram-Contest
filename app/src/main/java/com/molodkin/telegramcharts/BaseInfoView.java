@@ -38,6 +38,8 @@ abstract class BaseInfoView extends View {
     @SuppressWarnings("FieldCanBeLocal")
     private final int nameTextSize = Utils.spToPx(getContext(), 12);
 
+    protected final int circleRadius = Utils.dpToPx(getContext(), 4);
+
     private float dateTextHeight;
     private float nameTextHeight;
     private float valueTextHeight;

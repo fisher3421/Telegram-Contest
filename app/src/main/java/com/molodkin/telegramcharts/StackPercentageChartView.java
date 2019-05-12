@@ -48,15 +48,13 @@ public final class StackPercentageChartView extends BaseChart {
             graphs[i] = new StackPercentageChartGraph(data.values.get(i), Color.parseColor(data.colors.get(i)), data.names.get(i));
         }
 
-        availableChartHeight = (float) getHeight() - xAxisHeight;
+        availableChartHeight = (float) getHeight();// - xAxisHeight;
         availableChartWidth = (float) getWidth() - sideMargin * 2;
 
         topOffset = 25 * availableChartHeight / 125;
 
         float scaleX = availableChartWidth / (xPoints.length - 1);
 
-        yAxis1 = new StackPercentageYAxis(this, chartMatrix);
-        yAxis1.isHalfLine = false;
         yAxis1.init();
 
         bitmap = Bitmap.createBitmap((int) availableChartWidth + sideMargin * 2, (int) (availableChartHeight - topOffset), Bitmap.Config.RGB_565);
@@ -84,15 +82,7 @@ public final class StackPercentageChartView extends BaseChart {
 
         canvas.translate(sideMargin, 0);
 
-        canvas.save();
-
         drawData(canvas);
-
-        if (yAxis1 != null) yAxis1.draw(canvas);
-
-        canvas.restore();
-
-        xAxis.draw(canvas);
     }
 
     private void buildRectangles() {

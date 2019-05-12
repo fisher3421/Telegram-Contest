@@ -62,8 +62,8 @@ public final class StackPercentagePieChartView extends BaseChart {
     public void initTheme() {
         super.initTheme();
 
-        windowWidth = Utils.spToPx(getContext(), 160);
-        windowHeight = Utils.spToPx(getContext(), 35);
+        windowWidth = Utils.dpToPx(getContext(), 160);
+        windowHeight = Utils.dpToPx(getContext(), 35);
 
         textPaint = new TextPaint();
         textPaint.setAntiAlias(true);
@@ -114,13 +114,13 @@ public final class StackPercentagePieChartView extends BaseChart {
             graphs[i] = new StackPercentageChartGraph(data.values.get(i), Color.parseColor(data.colors.get(i)), data.names.get(i));
         }
 
-        availableChartHeight = (float) getHeight() - xAxisHeight;
+        availableChartHeight = (float) getHeight();// - xAxisHeight;
         availableChartWidth = (float) getWidth() - sideMargin * 2;
 
         float scaleX = availableChartWidth / (xPoints.length - 1);
 
-        yAxis1 = new StackPercentageYAxis(this, chartMatrix);
-        yAxis1.isHalfLine = false;
+//        yAxis1 = new StackPercentageYAxis(this, chartMatrix);
+//        yAxis1.isHalfLine = false;
         yAxis1.init();
 
         chartMatrix.postScale(scaleX, 1, 0, 0);

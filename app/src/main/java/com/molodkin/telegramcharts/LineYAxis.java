@@ -1,5 +1,6 @@
 package com.molodkin.telegramcharts;
 
+import android.content.Context;
 import android.graphics.Matrix;
 
 import java.util.ArrayList;
@@ -7,8 +8,8 @@ import java.util.Collections;
 
 class LineYAxis extends BaseYAxis {
 
-    LineYAxis(BaseChart chart, Matrix matrix) {
-        super(chart, matrix);
+    LineYAxis(Context context, BaseChart chart, Matrix matrix) {
+        super(context, chart, matrix);
     }
 
     @Override

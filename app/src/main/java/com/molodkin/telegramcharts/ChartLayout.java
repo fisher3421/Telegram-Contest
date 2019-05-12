@@ -28,6 +28,7 @@ public class ChartLayout extends FrameLayout {
     final int scrollHeight = Utils.getDim(this, R.dimen.scrollHeight);
     final int scrollPadding = Utils.getDim(this, R.dimen.range_top_bottom_padding);
     int chartHeight = Utils.getDim(this, R.dimen.chartHeight);
+    int xAxisHeight = Utils.getDim(this, R.dimen.xAxisHeight);
     int sideMargin = Utils.getDim(this, R.dimen.margin20);
     int checkBoxMargin = Utils.dpToPx(this, 4);
     boolean isRangeViewVisible = true;
@@ -52,16 +53,26 @@ public class ChartLayout extends FrameLayout {
     }
 
     private void init() {
+        BaseYAxis yAxis1 = null;
+        BaseYAxis yAxis2 = null;
         switch (data.type) {
             case LINE:
             case LINE_SCALED:
                 chartView = new LineChartView(getContext(), isZoomed);
-                chartView.secondY = data.type == ChartData.Type.LINE_SCALED;
+                yAxis1 = new LineYAxis(getContext(), chartView, chartView.chartMatrix);
+                if (data.type == ChartData.Type.LINE_SCALED) {
+                    yAxis1.isHalfLine = true;
+                    yAxis2 = new LineYAxis(getContext(), chartView, chartView.chartMatrix2);
+                    yAxis2.isHalfLine = true;
+                    yAxis2.isRight = true;
+                }
+                chartView.yAxis2 = yAxis2;
                 infoView = new LineInfoView(getContext(), chartView);
                 break;
             case STACK:
                 chartView = new StackChartView(getContext(), isZoomed);
                 infoView = new StackInfoView(getContext(), chartView);
+                yAxis1 = new StackYAxis(getContext(), chartView, chartView.chartMatrix);
                 infoView.showAll = true;
                 break;
             case STACK_PERCENTAGE:
@@ -69,17 +80,23 @@ public class ChartLayout extends FrameLayout {
                     chartView = new StackPercentageChartView(getContext());
                     infoView = new StackPercentageInfoView(getContext(), chartView);
                     infoView.showPercentage = true;
+
+                    yAxis1 = new StackPercentageYAxis(getContext(), chartView, chartView.chartMatrix);
+
                 } else {
                     chartView = new StackPercentagePieChartView(getContext());
+                    yAxis1 = new StackPercentageYAxis(getContext(), chartView, chartView.chartMatrix);
                 }
 
                 break;
         }
 
+        chartView.yAxis1 = yAxis1;
+
         LayoutParams chartLp = new LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, chartHeight);
         chartView.setLayoutParams(chartLp);
 
-        if (infoView != null) infoView.setLayoutParams(new FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, chartHeight));
+        if (infoView != null) infoView.setLayoutParams(new FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, chartHeight +  Utils.dpToPx(getContext(), 4)));
 
 
 
@@ -93,7 +110,29 @@ public class ChartLayout extends FrameLayout {
 
         addView(chartView);
 
+        FrameLayout.LayoutParams axesLP = new LayoutParams(chartLp);
+        axesLP.leftMargin = sideMargin;
 
+        if (data.type != STACK_PERCENTAGE || !isZoomed) {
+            yAxis1.setLayoutParams(axesLP);
+            addView(yAxis1);
+        }
+        if (yAxis2 != null) {
+            yAxis2.setLayoutParams(axesLP);
+            addView(yAxis2);
+        }
+
+        XAxis xAxis = new XAxis(getContext(), chartView);
+        chartView.xAxis = xAxis;
+
+        LayoutParams xAxisLp = new LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, xAxisHeight);
+        xAxisLp.topMargin = chartHeight;
+
+        xAxis.setLayoutParams(xAxisLp);
+
+        if (data.type != STACK_PERCENTAGE || !isZoomed) {
+            addView(xAxis);
+        }
 
         if (isZoomed) {
             zoomOutView = new TextView(getContext());
@@ -141,14 +180,14 @@ public class ChartLayout extends FrameLayout {
             rangeBorderView = new RangeBorderView(getContext(), chartView);
 
             LayoutParams scrollLP = new LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, scrollHeight);
-            scrollLP.topMargin = chartHeight + scrollPadding;
+            scrollLP.topMargin = chartHeight + scrollPadding + xAxisHeight;
             scrollLP.leftMargin = sideMargin;
             scrollLP.rightMargin = sideMargin;
             scrollLP.bottomMargin = sideMargin;
             rangeChartView.setLayoutParams(scrollLP);
 
             LayoutParams scrollBorderLP = new LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, scrollHeight + scrollPadding * 2);
-            scrollBorderLP.topMargin = chartHeight;
+            scrollBorderLP.topMargin = chartHeight + xAxisHeight;
             scrollBorderLP.leftMargin = sideMargin;
             scrollBorderLP.rightMargin = sideMargin;
             scrollBorderLP.bottomMargin = sideMargin;
@@ -281,7 +320,7 @@ public class ChartLayout extends FrameLayout {
         super.onMeasure(widthMeasureSpec, heightMeasureSpec);
         if (checkBoxes.size()  < 2) return;
 
-        int top = chartHeight + scrollHeight + scrollPadding * 2 + sideMargin * 2 + checkBoxes.get(0).getMeasuredHeight();
+        int top = chartHeight + xAxisHeight + scrollHeight + scrollPadding * 2 + sideMargin * 2 + checkBoxes.get(0).getMeasuredHeight();
         if (!isRangeViewVisible) {
             top -= scrollHeight + scrollPadding * 2 + sideMargin;
         }
@@ -305,7 +344,7 @@ public class ChartLayout extends FrameLayout {
 
         if (checkBoxes.size()  < 2) return;
 
-        int topChild = chartHeight + scrollHeight + sideMargin + scrollPadding * 2;
+        int topChild = chartHeight + xAxisHeight + scrollHeight + sideMargin + scrollPadding * 2;
         if (!isRangeViewVisible) {
             topChild -= scrollHeight + scrollPadding * 2 + sideMargin;
         }

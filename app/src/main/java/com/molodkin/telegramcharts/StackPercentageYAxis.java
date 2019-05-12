@@ -1,13 +1,12 @@
 package com.molodkin.telegramcharts;
 
+import android.content.Context;
 import android.graphics.Matrix;
 
 class StackPercentageYAxis extends BaseYAxis {
 
-
-    StackPercentageYAxis(BaseChart chart, Matrix matrix) {
-
-        super(chart, matrix);
+    StackPercentageYAxis(Context context,  BaseChart chart, Matrix matrix) {
+        super(context, chart, matrix);
         adjustValues = false;
         rowNumber = 5;
     }

@@ -1,8 +1,10 @@
 package com.molodkin.telegramcharts;
 
 import android.animation.ValueAnimator;
+import android.content.Context;
 import android.graphics.Canvas;
 import android.text.TextPaint;
+import android.view.View;
 
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
@@ -13,7 +15,7 @@ import java.util.ListIterator;
 
 import static com.molodkin.telegramcharts.BaseChart.FADE_ANIMATION_DURATION;
 
-class XAxis {
+class XAxis extends View {
 
     private final BaseChart chart;
 
@@ -22,27 +24,22 @@ class XAxis {
 
     private float xAxisTextHeight;
 
-    private int xTextMargin;
-    private int xAxisHalfOfTextWidth;
+    private final int xTextMargin = Utils.dpToPx(this, 4);
+    private final int xAxisHalfOfTextWidth = Utils.dpToPx(this, 27);
 
-    private int xAxisTextWidth;
-    private int xAxisTextWidthWithMargins;
+    private final int xAxisTextWidth = xAxisHalfOfTextWidth * 2;
+    private final int xAxisTextWidthWithMargins = xAxisTextWidth + 2 * Utils.dpToPx(this, 4);
 
     private TextPaint axisTextPaint = new TextPaint();
 
     private Date tempDate = new Date();
     private DateFormat xAxisDateFormat;
 
-    XAxis(BaseChart baseChart) {
+    public XAxis(Context context, BaseChart baseChart) {
+        super(context);
         this.chart = baseChart;
 
         int axesTextSize = Utils.spToPx(chart, 12);
-        xTextMargin = Utils.dpToPx(chart, 4);
-        xAxisHalfOfTextWidth = Utils.dpToPx(chart, 27);
-        xAxisTextWidth = xAxisHalfOfTextWidth * 2;
-
-
-        xAxisTextWidthWithMargins = xAxisTextWidth + 2 * Utils.dpToPx(chart, 4);
 
         axisTextPaint.setTextSize(axesTextSize);
         axisTextPaint.setAntiAlias(true);
@@ -79,6 +76,7 @@ class XAxis {
         if (xAxisPoints.size() < 2) {
             init();
             chart.invalidate();
+            invalidate();
             return;
         }
         XAxisPoint first = xAxisPoints.get(0);
@@ -167,6 +165,7 @@ class XAxis {
                     for (XAxisPoint point : pointsToShow) {
                         point.alpha = (int) animation.getAnimatedValue();
                     }
+                    invalidate();
                     chart.invalidate();
 
                 }
@@ -185,11 +184,12 @@ class XAxis {
                         point.alpha = (int) animation.getAnimatedValue();
                     }
                     chart.invalidate();
-
+                    invalidate();
                 }
             });
             valueAnimator.start();
         }
+        invalidate();
     }
 
     private XAxisPoint buildXPoint(int x) {
@@ -220,12 +220,11 @@ class XAxis {
         return xCoord + width > 0 && xCoord - width < chart.getWidth();
     }
 
-    void draw(Canvas canvas) {
+    @Override
+    protected void onDraw(Canvas canvas) {
         if (xAxisPoints.size() == 0) return;
 
-        canvas.save();
-
-        canvas.translate(-chart.sideMargin, chart.availableChartHeight + xTextMargin + xAxisTextHeight);
+        canvas.translate(-chart.sideMargin, xTextMargin + xAxisTextHeight);
 
         for (XAxisPoint point : xAxisPoints) {
             float xCoord = chart.xCoordByIndex(point.x);
@@ -245,8 +244,5 @@ class XAxis {
             axisTextPaint.setAlpha(point.alpha);
             canvas.drawText(point.date, xCoord - point.width / 2f, 0, axisTextPaint);
         }
-
-        canvas.restore();
-
     }
 }

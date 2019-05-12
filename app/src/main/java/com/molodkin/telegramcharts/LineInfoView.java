@@ -35,7 +35,6 @@ class LineInfoView extends BaseInfoView {
     private int verticalLineWidth = Utils.dpToPx(getContext(), 1);
     @SuppressWarnings("FieldCanBeLocal")
     private int circleStrokeWidth = Utils.dpToPx(getContext(), 2);
-    private int circleRadius = Utils.dpToPx(getContext(), 4);
 
     private AnimatorListenerAdapter listener = new AnimatorListenerAdapter() {
         @Override
@@ -122,7 +121,7 @@ class LineInfoView extends BaseInfoView {
                 float fraction = xValue - xBefore;
                 float y = y2 * fraction + y1 * (1 - fraction);
 
-                float yCoord = chartView.secondY && i == 1 ? chartView.yCoordByValue2(y) : chartView.yCoordByValue(y);
+                float yCoord = chartView.yAxis2 != null && i == 1 ? chartView.yCoordByValue2(y) : chartView.yCoordByValue(y);
                 yCoords.add(yCoord);
                 if (yCoord < maxYCoord) {
                     maxYCoord = yCoord;
@@ -133,7 +132,7 @@ class LineInfoView extends BaseInfoView {
 
     @Override
     protected void drawContent(Canvas canvas) {
-        canvas.drawLine(xCoord, verticalLineTopMargin, xCoord, getHeight() - chartView.xAxisHeight, verticalLinePaint);
+        canvas.drawLine(xCoord, verticalLineTopMargin, xCoord, getHeight() - circleRadius, verticalLinePaint);
 
         for (int i = 0; i < yCoords.size(); i++) {
             float yCoord = yCoords.get(i);

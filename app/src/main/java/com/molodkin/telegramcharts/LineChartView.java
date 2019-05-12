@@ -29,7 +29,7 @@ public final class LineChartView extends BaseChart {
             graphs[i] = new LineChartGraph(data.values.get(i), Color.parseColor(data.colors.get(i)), graphLineWidth, data.names.get(i));
         }
 
-        availableChartHeight = (float) getHeight() - xAxisHeight;
+        availableChartHeight = (float) getHeight();// - xAxisHeight;
         availableChartWidth = (float) getWidth() - sideMargin * 2;
 
         float scaleX = availableChartWidth / (xPoints.length - 1);
@@ -37,20 +37,8 @@ public final class LineChartView extends BaseChart {
         chartMatrix.reset();
         chartMatrix2.reset();
 
-        if (!secondY) {
-            yAxis1 = new LineYAxis(this, chartMatrix);
-            yAxis1.isHalfLine = false;
-            yAxis1.init();
-        } else {
-            yAxis1 = new LineYAxis(this, chartMatrix);
-            yAxis1.isHalfLine = true;
-            yAxis1.init();
-
-            yAxis2 = new LineYAxis(this, chartMatrix2);
-            yAxis2.isHalfLine = true;
-            yAxis2.isRight = true;
-            yAxis2.init();
-        }
+        yAxis1.init();
+        if (yAxis2 != null) yAxis2.init();
 
         chartMatrix.postScale(scaleX, 1, 0, 0);
         chartMatrix2.postScale(scaleX, 1, 0, 0);
@@ -92,25 +80,16 @@ public final class LineChartView extends BaseChart {
 
         canvas.translate(sideMargin, 0);
 
-        canvas.save();
-
         canvas.clipRect(-sideMargin, 0, availableChartWidth + sideMargin, availableChartHeight + clipMargin);
 
         drawPoints(canvas);
-
-        if (yAxis1 != null) yAxis1.draw(canvas);
-        if (yAxis2 != null) yAxis2.draw(canvas);
-
-        canvas.restore();
-
-        xAxis.draw(canvas);
     }
 
     private void drawPoints(Canvas canvas) {
         for (int i = 0; i < graphs.length; i++) {
             BaseChartGraph graph = graphs[i];
             if (graph.alpha > 0) {
-                if (secondY && i == 1) {
+                if (yAxis2 != null && i == 1) {
                     graph.draw(canvas, chartMatrix2, Math.max(visibleStart, 0), Math.min(visibleEnd, xPoints.length));
                 } else {
                     graph.draw(canvas, chartMatrix, Math.max(visibleStart, 0), Math.min(visibleEnd, xPoints.length));

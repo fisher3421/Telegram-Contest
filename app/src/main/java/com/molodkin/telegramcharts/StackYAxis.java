@@ -1,5 +1,6 @@
 package com.molodkin.telegramcharts;
 
+import android.content.Context;
 import android.graphics.Matrix;
 
 import java.util.HashMap;
@@ -9,21 +10,21 @@ class StackYAxis extends BaseYAxis {
     private HashMap<String, int[][]> maxValuesMap = new HashMap<>();
 
 
-    StackYAxis(BaseChart chart, Matrix matrix) {
-        super(chart, matrix);
+    StackYAxis(Context context,  BaseChart chart, Matrix matrix) {
+        super(context, chart, matrix);
     }
 
     @Override
     int getMaxValueFullRange() {
-        return getMatrix()[0][chart.xPoints.length - 1];
+        return getMatrixValues()[0][chart.xPoints.length - 1];
     }
 
     @Override
     int getMaxValue() {
-        return getMatrix()[chart.visibleStart][chart.visibleEnd - 1];
+        return getMatrixValues()[chart.visibleStart][chart.visibleEnd - 1];
     }
 
-    private int[][] getMatrix() {
+    private int[][] getMatrixValues() {
         StringBuilder keyBuilder = new StringBuilder();
         for (BaseChartGraph graph : chart.graphs) {
             if (graph.isEnable) keyBuilder.append(graph.name);

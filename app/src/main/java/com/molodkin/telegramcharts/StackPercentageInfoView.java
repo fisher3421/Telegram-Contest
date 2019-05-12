@@ -51,6 +51,6 @@ class StackPercentageInfoView extends BaseInfoView {
 
     @Override
     protected void drawContent(Canvas canvas) {
-        canvas.drawLine(xCoord, verticalLineTopMargin, xCoord, getHeight() - chartView.xAxisHeight, verticalLinePaint);
+        canvas.drawLine(xCoord, verticalLineTopMargin, xCoord, getHeight() - circleRadius, verticalLinePaint);
     }
 }
