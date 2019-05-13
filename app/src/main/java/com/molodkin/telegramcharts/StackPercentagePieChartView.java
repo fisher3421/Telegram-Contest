@@ -119,8 +119,6 @@ public final class StackPercentagePieChartView extends BaseChart {
 
         float scaleX = availableChartWidth / (xPoints.length - 1);
 
-//        yAxis1 = new StackPercentageYAxis(this, chartMatrix);
-//        yAxis1.isHalfLine = false;
         yAxis1.init();
 
         chartMatrix.postScale(scaleX, 1, 0, 0);
@@ -254,7 +252,6 @@ public final class StackPercentagePieChartView extends BaseChart {
             }
             values.add(String.format("%s %%", String.valueOf(Math.round(percent * 100))));
         }
-//        startAnimation();
     }
 
     @Override
@@ -353,10 +350,6 @@ public final class StackPercentagePieChartView extends BaseChart {
                 canvas.save();
 
                 canvas.translate(selectedDX, selectedDY);
-
-//                String preText = preValues.size() > i ? preValues.get(i) : null;
-
-//                Utils.drawAnimatedText(canvas, preText, text, textPaint, textX, textY, textHeight, animator);
 
                 canvas.drawText(values.get(i), textX, textY, textPaint);
 
