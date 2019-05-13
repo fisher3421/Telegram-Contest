@@ -1,6 +1,6 @@
-# Telegram-Contest-Challange
+# Telegram Contest
 
-Charts app for Telegram Contest Challange.  
+Charts app for Telegram Contest.  
 
 Here are implemented charts for the 1st and the 2nd stages. 
 
